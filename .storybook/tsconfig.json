@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS"
+  },
+  "include": ["**/*.ts", "../src/Components/ReactDevtools/react-devtools-inline"]
+}

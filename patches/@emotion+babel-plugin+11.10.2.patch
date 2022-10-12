@@ -1,0 +1,13 @@
+diff --git a/node_modules/@emotion/babel-plugin/dist/emotion-babel-plugin.cjs.dev.js b/node_modules/@emotion/babel-plugin/dist/emotion-babel-plugin.cjs.dev.js
+index 67e8614..e9af997 100644
+--- a/node_modules/@emotion/babel-plugin/dist/emotion-babel-plugin.cjs.dev.js
++++ b/node_modules/@emotion/babel-plugin/dist/emotion-babel-plugin.cjs.dev.js
+@@ -1344,7 +1344,7 @@ function index (babel, options) {
+         }
+       },
+       JSXAttribute: function JSXAttribute(path, state) {
+-        if (path.node.name.name !== 'css' || !state.transformCssProp) {
++        if (!['sx', 'css'].includes(path.node.name.name) || !state.transformCssProp) {
+           return;
+         }
+ 

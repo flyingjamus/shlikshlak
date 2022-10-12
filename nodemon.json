@@ -1,0 +1,5 @@
+{
+  "watch": ["src/server"],
+  "exec": "yarn vite-node ./src/server/index",
+  "ext": "js ts"
+}
