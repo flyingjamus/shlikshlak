@@ -1,9 +1,9 @@
 import { Box } from '@mui/material'
-import { useFileStore } from '../store'
+import { useFileStore, useIframeStore } from '../store'
 import MonacoEditor from './MonacoEditor'
 
 export const EditorWrapper = () => {
+  const tsInit = useIframeStore((v) => v.tsInit)
+  // return tsInit ? <MonacoEditor /> : null
   return <MonacoEditor />
-  // const readFile = useFileStore((v) => v.readFile)
-  // return readFile ? <MonacoEditor /> : null
 }

@@ -10,9 +10,11 @@ import {
   Diagnostic,
   DiagnosticRelatedInformation,
   IExtraLibs,
-  TypeScriptWorker as ITypeScriptWorker
+  TypeScriptWorker as ITypeScriptWorker,
 } from './monaco.contribution'
 import { type Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
+import { fillCacheFromStore, getFile } from './fileGetter'
+import { expose } from 'comlink'
 
 export {
   Uri,
@@ -43,8 +45,6 @@ export function fileNameIsLib(resource: Uri | string): boolean {
 }
 
 const documentRegistry = ts.typescript.createDocumentRegistry()
-console.log(documentRegistry
-)
 
 export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
@@ -56,6 +56,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   private _inlayHintsOptions?: ts.UserPreferences
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
+    console.log(this)
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
@@ -125,7 +126,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       // extra lib
       text = this._extraLibs[fileName].content
     } else {
-      return
+      return getFile(fileName)
     }
 
     return text
@@ -508,10 +509,19 @@ export function create(ctx: worker.IWorkerContext, createData: ICreateData): Typ
   return new TSWorkerClass(ctx, createData)
 }
 
+console.log('Exposing')
+expose({
+  init: async (cb: () => void) => {
+    console.log('Git init int tsWorker')
+    await fillCacheFromStore()
+
+    cb()
+  },
+})
 
 self.onmessage = () => {
-  // ignore the first message
   edworker.initialize((ctx: worker.IWorkerContext, createData: ICreateData) => {
+    console.log('creating ts')
     return create(ctx, createData)
   })
 }

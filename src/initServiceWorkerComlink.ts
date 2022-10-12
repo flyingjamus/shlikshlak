@@ -1,6 +1,6 @@
 import { Remote, wrap } from 'comlink'
 import { useFileStore, useIframeStore } from './Components/store'
-import { WorkerAPI } from './Shared/workerAPI'
+import { ServiceWorkerAPI } from './Shared/serviceWorkerAPI'
 
 async function initComlink() {
   const { port1, port2 } = new MessageChannel()
@@ -10,7 +10,7 @@ async function initComlink() {
   }
   navigator.serviceWorker.controller?.postMessage(msg, [port1])
 
-  const swProxy: Remote<WorkerAPI> = wrap<WorkerAPI>(port2)
+  const swProxy: Remote<ServiceWorkerAPI> = wrap<ServiceWorkerAPI>(port2)
   useIframeStore.setState({ swProxy })
 }
 

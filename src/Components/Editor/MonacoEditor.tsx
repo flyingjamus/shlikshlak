@@ -32,6 +32,7 @@ const bindEditor = (editor: IStandaloneCodeEditor) => {
 export const MonacoEditor = () => {
   // const monaco: Monaco | null = useMonaco()
   const [monacoInstance, setMonacoInstance] = useState<IStandaloneCodeEditor>()
+  console.log(monacoInstance)
   const files = useFileStore((v) => v.files)
   const allFiles = useFileStore((v) => v.allFiles)
 

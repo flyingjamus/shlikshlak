@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react'
 import { Button, Accordion } from '@mui/material'
-
+const A = (v: ReactNode) => v
 const Comp = ({ children }: { children: ReactNode }) => {
   return (
     <Accordion>
@@ -14,11 +14,11 @@ const Comp = ({ children }: { children: ReactNode }) => {
     </Accordion>
   )
 }
-
-export default function () {
-  return (
-    <div>
-      <Comp>Hello!!!1</Comp>
-    </div>
-  )
-}
+//
+// export default function () {
+//   return (
+//     <div>
+//       <Comp>Hello!!!1</Comp>
+//     </div>
+//   )
+// }

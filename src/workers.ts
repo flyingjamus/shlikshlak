@@ -3,7 +3,8 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from '../src/tsworker/tsWorker?worker'
-// import tsWorker from './override.worker?worker'
+import { proxy, wrap } from 'comlink'
+import { useIframeStore } from './Components/store'
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -17,7 +18,18 @@ self.MonacoEnvironment = {
       return new htmlWorker()
     }
     if (label === 'typescript' || label === 'javascript') {
-      return new tsWorker()
+      return new Promise((resolve) => {
+        const tsWorkerInstance = new tsWorker()
+
+        const obj = wrap(tsWorkerInstance)
+        obj.init(
+          proxy(() => {
+            console.log('Git init callback')
+            useIframeStore.setState({ tsInit: true })
+            resolve(tsWorkerInstance)
+          })
+        )
+      })
     }
     return new editorWorker()
   },

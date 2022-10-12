@@ -5,7 +5,7 @@ import { Methods } from './Preview/xebug/lib/methods'
 import { AsyncMethodReturns } from 'penpal'
 import Protocol from 'devtools-protocol'
 import { Remote, wrap } from 'comlink'
-import { WorkerAPI } from '../Shared/workerAPI'
+import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 
 export type AppFile = {
   path: string
@@ -34,7 +34,8 @@ export const useIframeStore = create<{
   rootNode?: Protocol.DOM.Node
   nodesMap?: Map<number, Protocol.DOM.Node>
   expandedIds: string[]
-  swProxy?: Remote<WorkerAPI>
+  swProxy?: Remote<ServiceWorkerAPI>
+  tsInit?: true
 }>(() => ({
   frontendReady: false,
   expandedIds: [],
