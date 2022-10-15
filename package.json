@@ -43,6 +43,8 @@
     "react-virtualized-auto-sizer": "^1.0.7",
     "react-window": "^1.8.7",
     "serve-index": "^1.9.1",
+    "ts-morph": "^16.0.0",
+    "tsutils": "^3.21.0",
     "vite-plugin-monaco-editor": "^1.1.0",
     "vite-plugin-pwa": "^0.13.1",
     "workbox-cacheable-response": "^6.5.4",

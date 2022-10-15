@@ -32,7 +32,6 @@ const bindEditor = (editor: IStandaloneCodeEditor) => {
 export const MonacoEditor = () => {
   // const monaco: Monaco | null = useMonaco()
   const [monacoInstance, setMonacoInstance] = useState<IStandaloneCodeEditor>()
-  console.log(monacoInstance)
   const files = useFileStore((v) => v.files)
   const allFiles = useFileStore((v) => v.allFiles)
 
@@ -104,7 +103,6 @@ export const MonacoEditor = () => {
     if (openFile) {
       const model = editor.getModel(monaco.Uri.file(openFile))
       if (monacoInstance?.getModel() !== model) {
-        console.log('Setting model', model)
         monacoInstance?.setModel(model)
       }
     }
@@ -180,7 +178,7 @@ window.monaco = monaco
 //   })
 // })
 
-const COMPILER_OPTIONS: monaco.languages.typescript.CompilerOptions = defaults(
+export const COMPILER_OPTIONS: monaco.languages.typescript.CompilerOptions = defaults(
   {
     allowJs: true,
     allowSyntheticDefaultImports: true,

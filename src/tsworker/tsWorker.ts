@@ -15,6 +15,10 @@ import {
 import { type Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
 import { fillCacheFromStore, getFile } from './fileGetter'
 import { expose } from 'comlink'
+import { DocumentRegistry, TypeFlags } from 'typescript'
+import type * as tstype from 'typescript'
+import { Project, FileSystemHost, RuntimeDirEntry, createWrappedNode, printNode } from 'ts-morph'
+import { getWrappedNodeAtPosition, getAstNodeAtPosition } from 'tsutils'
 
 export {
   Uri,
@@ -26,6 +30,7 @@ export {
   type IExtraLibs,
   type TypeScriptWorker as ITypeScriptWorker,
 }
+
 /**
  * Loading a default lib as a source file will mess up TS completely.
  * So our strategy is to hide such a text model from TS.
@@ -44,8 +49,8 @@ export function fileNameIsLib(resource: Uri | string): boolean {
   return false
 }
 
-const documentRegistry = ts.typescript.createDocumentRegistry()
-
+const typescript = (ts as any).typescript as typeof tstype
+const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistry()
 export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
 
@@ -56,7 +61,6 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   private _inlayHintsOptions?: ts.UserPreferences
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
-    console.log(this)
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
@@ -272,6 +276,67 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     if (fileNameIsLib(fileName)) {
       return undefined
     }
+
+    const host = new MyFileSystemHost(this)
+    const program = this._languageService.getProgram()!
+
+    const sourceFile = program.getSourceFile('file:///1/1.tsx')
+    self.s = sourceFile
+    const checker = program.getTypeChecker()
+
+    self.c = checker
+
+    const file = program.getSourceFile('file:///1/1.tsx')
+
+    const detectedComponents = []
+    for (const statement of sourceFile!.statements) {
+      // console.log(statement)
+      if (typescript.isVariableStatement(statement)) {
+        for (const declaration of statement.declarationList.declarations) {
+          // const node = createWrappedNode(declaration.name, {
+          //   compilerOptions: program.getCompilerOptions(),
+          //   sourceFile: file,
+          //   typeChecker: program.getTypeChecker(),
+          // })
+          // console.log(11111, node)
+          //
+          // self.node = node
+
+          // 🚀 This is where the magic happens.
+          const type = checker.getTypeAtLocation(declaration.name)
+
+          // A type that has call signatures is a function type.
+          for (const callSignature of type.getCallSignatures()) {
+            // console.log(checker.getSignatureFromDeclaration(callSignature.getDeclaration()))
+            // console.log(typescript.SyntaxKind.StringKeyword)
+            const pType = checker.getTypeOfSymbolAtLocation(
+              callSignature.getParameters()[0],
+              declaration.name
+            )
+
+            for (const prop of pType.getProperties()) {
+              const sType = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, declaration.name))
+              const typeNode = checker.typeToTypeNode(sType, declaration.name, undefined)
+              checker.isTypeAssignableTo
+              if (
+                checker.isTypeAssignableTo(sType, checker.getStringType()) ||
+                checker.isTypeAssignableTo(checker.getStringType(), sType)
+              ) {
+                // console.log(sType, typeNode)
+                console.log(prop.name, sType, typeNode)
+              }
+            }
+
+            // console.log(321312312, callSignature.getParameters()[0], callSignature.parameters)
+            const returnType = callSignature.getReturnType()
+            if (returnType.symbol?.getEscapedName().toString() === 'Element') {
+              detectedComponents.push(declaration.name.text)
+            }
+          }
+        }
+      }
+    }
+    self.ls = this._languageService
     return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
   }
 
@@ -464,6 +529,88 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   }
 }
 
+class MyFileSystemHost implements FileSystemHost {
+  constructor(private tsWorker: TypeScriptWorker) {}
+
+  copy(srcPath: string, destPath: string): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+
+  copySync(srcPath: string, destPath: string): void {}
+
+  delete(path: string): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+
+  deleteSync(path: string): void {}
+
+  directoryExists(dirPath: string): Promise<boolean> {
+    return Promise.resolve(false)
+  }
+
+  directoryExistsSync(dirPath: string): boolean {
+    return false
+  }
+
+  async fileExists(filePath: string): Promise<boolean> {
+    return this.tsWorker.fileExists(filePath)
+  }
+
+  fileExistsSync(filePath: string): boolean {
+    return this.tsWorker.fileExists(filePath)
+  }
+
+  getCurrentDirectory(): string {
+    return ''
+  }
+
+  glob(patterns: ReadonlyArray<string>): Promise<string[]> {
+    return Promise.resolve([])
+  }
+
+  globSync(patterns: ReadonlyArray<string>): string[] {
+    return []
+  }
+
+  isCaseSensitive(): boolean {
+    return false
+  }
+
+  mkdir(dirPath: string): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+
+  mkdirSync(dirPath: string): void {}
+
+  move(srcPath: string, destPath: string): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+
+  moveSync(srcPath: string, destPath: string): void {}
+
+  readDirSync(dirPath: string): RuntimeDirEntry[] {
+    return []
+  }
+
+  async readFile(filePath: string, encoding?: string): Promise<string> {
+    return this.tsWorker.readFile(filePath) || '' //TODO?
+  }
+
+  readFileSync(filePath: string, encoding?: string): string {
+    return this.tsWorker.readFile(filePath) || '' //TODO?
+  }
+
+  realpathSync(path: string): string {
+    return ''
+  }
+
+  writeFile(filePath: string, fileText: string): Promise<void> {
+    return Promise.resolve(undefined)
+  }
+
+  writeFileSync(filePath: string, fileText: string): void {}
+}
+
 export interface ICreateData {
   compilerOptions: ts.CompilerOptions
   extraLibs: IExtraLibs
@@ -509,10 +656,8 @@ export function create(ctx: worker.IWorkerContext, createData: ICreateData): Typ
   return new TSWorkerClass(ctx, createData)
 }
 
-console.log('Exposing')
 expose({
   init: async (cb: () => void) => {
-    console.log('Git init int tsWorker')
     await fillCacheFromStore()
 
     cb()
@@ -521,7 +666,6 @@ expose({
 
 self.onmessage = () => {
   edworker.initialize((ctx: worker.IWorkerContext, createData: ICreateData) => {
-    console.log('creating ts')
     return create(ctx, createData)
   })
 }
