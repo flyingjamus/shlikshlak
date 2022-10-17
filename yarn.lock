@@ -6336,7 +6336,7 @@ flat-cache@^3.0.4:
     flatted "^3.1.0"
     rimraf "^3.0.2"
 
-flatted@^3.1.0:
+flatted@^3.1.0, flatted@^3.2.7:
   version "3.2.7"
   resolved "https://registry.yarnpkg.com/flatted/-/flatted-3.2.7.tgz#609f39207cb614b89d0765b477cb2d437fbf9787"
   integrity sha512-5nqDSxl8nn5BSNxyR3n4I6eDmbolI6WT+QqR547RwxQapgjQBmtktdP+HTBb/a/zLsbzERTONyUB5pefh5TtjQ==
@@ -11209,6 +11209,13 @@ ts-dedent@^2.0.0, ts-dedent@^2.2.0:
   resolved "https://registry.yarnpkg.com/ts-dedent/-/ts-dedent-2.2.0.tgz#39e4bd297cd036292ae2394eb3412be63f563bb5"
   integrity sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==
 
+ts-is-defined@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/ts-is-defined/-/ts-is-defined-3.0.4.tgz#0e9b20fa9bcabb67ffd1a950a220690cdea21c97"
+  integrity sha512-8RA5u2M65QSkfdMqpsNH0fqK/Jdd9eyKpGqjL2Sck+loVuuvkFqFa7AStmuKGWiEjcrezJtlxJt0URl3lIc7dA==
+  dependencies:
+    ts-tiny-invariant "^2.0.4"
+
 ts-morph@^16.0.0:
   version "16.0.0"
   resolved "https://registry.yarnpkg.com/ts-morph/-/ts-morph-16.0.0.tgz#35caca7c286dd70e09e5f72af47536bf3b6a27af"
@@ -11240,6 +11247,11 @@ ts-pnp@^1.1.6:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/ts-pnp/-/ts-pnp-1.2.0.tgz#a500ad084b0798f1c3071af391e65912c86bca92"
   integrity sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==
+
+ts-tiny-invariant@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/ts-tiny-invariant/-/ts-tiny-invariant-2.0.4.tgz#88b20adbbaf03b0f5349b0462d07c9c58ffd37d1"
+  integrity sha512-6AIQGf3rbMyci4fZU5aq5AUJN2O3sMPPY+R8waCguQOPRJDh0n/vmxVISCp72TJr4k5kikaU1yqX8bTwfTFjcQ==
 
 tslib@^1.8.1, tslib@^1.9.3:
   version "1.14.1"

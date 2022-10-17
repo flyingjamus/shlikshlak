@@ -5,26 +5,28 @@ import {
   Diagnostic,
   DiagnosticRelatedInformation,
   IExtraLibs,
-  TypeScriptWorker as ITypeScriptWorker,
+  TypeScriptWorker as ITypeScriptWorker
 } from './monaco.contribution'
-import { type Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
+import type { Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
 import { fillCacheFromStore, getFile } from './fileGetter'
 import { expose } from 'comlink'
 import type * as tstype from 'typescript'
 import type { DocumentRegistry } from 'typescript'
-import { FileSystemHost, Node, Project } from 'ts-morph'
-import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
+import { FileSystemHost, RuntimeDirEntry } from 'ts-morph'
+import { parse, stringify } from 'flatted'
+import { PanelMatch, PanelsResponse } from '../Shared/PanelTypes'
+import { isDefined } from 'ts-is-defined'
 
-export {
-  Uri,
-  type worker,
-  libFileMap,
-  ts,
-  type Diagnostic,
-  type DiagnosticRelatedInformation,
-  type IExtraLibs,
-  type TypeScriptWorker as ITypeScriptWorker,
-}
+// export {
+//   Uri,
+//   type worker,
+//   libFileMap,
+//   ts,
+//   type Diagnostic,
+//   type DiagnosticRelatedInformation,
+//   type IExtraLibs,
+//   type TypeScriptWorker as ITypeScriptWorker,
+// }
 
 /**
  * Loading a default lib as a source file will mess up TS completely.
@@ -45,28 +47,88 @@ export function fileNameIsLib(resource: Uri | string): boolean {
 }
 
 const typescript = (ts as any).typescript as typeof tstype
-const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistryInternal(true, '', {
-  setDocument: (key: string, path: ts.Path, sourceFile: ts.SourceFile) => {
-    console.log(key, path, sourceFile)
-  },
-  getDocument: () => {
+const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistry()
+// const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistryInternal(true, '', {
+//   setDocument: (key: string, path: ts.Path, sourceFile: ts.SourceFile) => {
+//     const KEY =
+//       '99|99|true|1|true|undefined|2|undefined|undefined|undefined|undefined|undefined|undefined|true|undefined|undefined|undefined|true|undefined|undefinedundefined'
+//     const PATH = 'lib.esnext.intl.d.ts'
+//     const S =
+//       '[{"pos":0,"end":1194,"flags":16777216,"modifierFlagsCache":0,"transformFlags":1,"kind":305,"statements":"1","endOfFileToken":"2","fileName":"3","text":"4","languageVersion":99,"languageVariant":0,"scriptKind":3,"isDeclarationFile":true,"hasNoDefaultLib":true,"bindDiagnostics":"5","pragmas":"6","referencedFiles":"7","typeReferenceDirectives":"8","libReferenceDirectives":"9","amdDependencies":"10","nodeCount":52,"identifierCount":14,"identifiers":"11","parseDiagnostics":"12","version":"13","scriptSnapshot":"14"},[null],{"pos":1193,"end":1194,"flags":16777216,"modifierFlagsCache":0,"transformFlags":0,"kind":1},"lib.esnext.intl.d.ts","/*! *****************************************************************************\\nCopyright (c) Microsoft Corporation. All rights reserved.\\nLicensed under the Apache License, Version 2.0 (the \\"License\\"); you may not use\\nthis file except in compliance with the License. You may obtain a copy of the\\nLicense at http://www.apache.org/licenses/LICENSE-2.0\\n\\nTHIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\\nKIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED\\nWARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,\\nMERCHANTABLITY OR NON-INFRINGEMENT.\\n\\nSee the Apache Version 2.0 License for specific language governing permissions\\nand limitations under the License.\\n***************************************************************************** */\\n\\n\\n\\n/// <reference no-default-lib=\\"true\\"/>\\n\\n\\ndeclare namespace Intl {\\n  interface NumberRangeFormatPart extends NumberFormatPart {\\n    source: \\"startRange\\" | \\"endRange\\" | \\"shared\\"\\n  }\\n\\n  interface NumberFormat {\\n    formatRange(start: number | bigint, end: number | bigint): string;\\n    formatRangeToParts(start: number | bigint, end: number | bigint): NumberRangeFormatPart[];\\n  }\\n}\\n",[],{},[],[],[],[],{},[],"",{}]\n'
+//     if (key === KEY && path === PATH) {
+//       const o = parse(S, (key: any, value: any) => {
+//         // console.log(key, value)
+//         return value
+//       })
+//       const s = stringify(
+//         sourceFile,
+//
+//         // (k, v) => {
+//         //   console.log(k,v)
+//         //   return v
+//         // }
+//       )
+//       console.log(sourceFile, s === S, parse(s))
+//     }
+//   },
+//   getDocument: () => {},
+// })
 
-  }
-})
-
-const proxy = <T extends any>(o: T, v: keyof T) => {
-  const old = o[v]
-  o[v] = function (...args: unknown[]) {
-    console.log(`Called ${v} with `, args.length > 1 ? args : args[0])
-    const res = old.apply(this, args)
-    console.log(`Got ${v} with `, res)
-    return res
-  }
-}
+// const proxy = <T extends any>(o: T, v: keyof T) => {
+//   const old = o[v]
+//   o[v] = function (...args: unknown[]) {
+//     console.log(`Called ${v} with `, args.length > 1 ? args : args[0])
+//     const res = old.apply(this, args)
+//     console.log(`Got ${v} with `, res)
+//     return res
+//   }
+// }
 // proxy(documentRegistry, 'acquireDocument')
 // proxy(documentRegistry, 'acquireDocumentWithKey')
 // console.log(documentRegistry)
 // documentRegistry.updateDocument =
+
+export const PANELS: { matcher: (type: ts.Type, checker: TypeChecker) => PanelMatch | undefined }[] = [
+  {
+    matcher: (type: ts.Type, checker: TypeChecker) => {
+      if (checker.isTypeAssignableTo(checker.getBooleanType(), type)) {
+        return { name: 'boolean' }
+      }
+    },
+  },
+  {
+    matcher: (type, checker) => {
+      if (type.isUnionOrIntersection()) {
+        const values = type.types
+          .map((v) => {
+            if (v.isStringLiteral()) {
+              return v.value
+            }
+          })
+          .filter(isDefined)
+        if (values.length) {
+          return {
+            name: 'enum',
+            parameters: { values },
+          }
+        }
+      }
+    },
+  },
+  {
+    matcher: (type: ts.Type, checker: TypeChecker) => {
+      if (checker.isTypeAssignableTo(checker.getStringType(), type)) {
+        return { name: 'string' }
+      }
+    },
+  },
+]
+
+type TypeChecker = ts.TypeChecker & {
+  isTypeAssignableTo: (source: ts.Type, target: ts.Type) => boolean
+  getStringType: () => ts.Type
+  getBooleanType: () => ts.Type
+}
 
 export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
@@ -290,36 +352,47 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     return TypeScriptWorker.clearFiles(diagnostics)
   }
 
-  async getTypeAtPosition(fileName: string, position: number) {
+  getTypeChecker() {
+    return this._languageService.getProgram()!.getTypeChecker() as TypeChecker
+  }
+
+  async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
     const program = this._languageService.getProgram()!
     const sourceFile = program.getSourceFile(fileName)
-    const checker = program.getTypeChecker()
+    const checker = this.getTypeChecker()
+    const token = typescript.getTokenAtPosition(sourceFile, position)
+    // checker.getTypeFromTypeNode()
+    const parent = token.parent
+    if (typescript.isJsxSelfClosingElement(parent) || typescript.isJsxOpeningElement(parent)) {
+      const existingAttributes = parent.attributes.properties
+        .map((attr) => {
+          if (typescript.isJsxAttribute(attr)) {
+            return {
+              name: attr.name.escapedText.toString(),
+              value: attr.initializer?.getText(),
+            }
+          }
+        })
+        .filter(isDefined)
+      const typeAtLocation = checker.getContextualType(parent.attributes)
+      if (typeAtLocation) {
+        const attributes = typeAtLocation.getProperties().map((prop) => {
+          const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, token))
+          // const typeNode = checker.typeToTypeNode(type, token, undefined)
+          return {
+            name: prop.name,
+            panels: PANELS.map((v) => {
+              return v.matcher(type, checker)
+            }).filter(isDefined),
+          }
+        })
 
-    const project = this.project
-    self.p = project
-
-    const { printNode } = typescript.createPrinter()
-
-    const node = typescript.getTokenAtPosition(sourceFile, position)
-
-    if (!sourceFile || !node) throw new Error('Source file missing')
-
-    // const typeAtLocation = project.getTypeChecker().getContextualType(node.parent.attributes)
-    const typeAtLocation = checker.getContextualType(node.parent.attributes)
-
-    const changes: ts.TextChange[] = [{ span: { start: 1194, length: 1207 - 1194 }, newText: 'HELLO' }]
-    // console.log(typeAtLocation, node)
-    if (typeAtLocation) {
-      const typeProps = typeAtLocation.getProperties().map((prop) => {
-        const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, node))
-        const typeNode = checker.typeToTypeNode(type, node, undefined)
-        return { name: prop.name, typeNode, type }
-      })
-
-      console.log(typeProps)
+        return { attributes, existingAttributes }
+      }
     }
+    return { attributes: [], existingAttributes: [] }
 
-    // const wrappedNode = createWrappedNode(node, {
+    // const wrappedNode = createWrappedNode(token, {
     //   compilerOptions: program.getCompilerOptions(),
     //   sourceFile: sourceFile,
     //   typeChecker: program.getTypeChecker(),
@@ -333,6 +406,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     // // console.log(wrappedSourceFile.print())
     // // wrappedNode._project = this._languageService
   }
+
   async getCompletionsAtPosition(fileName: string, position: number): Promise<ts.CompletionInfo | undefined> {
     console.log(fileName, position)
     if (fileNameIsLib(fileName)) {
@@ -342,13 +416,10 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     const program = this._languageService.getProgram()!
 
     const sourceFile = program.getSourceFile(fileName)
-    self.a = sourceFile
     const checker = program.getTypeChecker()
     self.c = checker
-
     self.ls = this._languageService
     checker.getTypeOfSymbolAtLocation
-    this.getTypeAtPosition(fileName, position)
 
     return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
 

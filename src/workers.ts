@@ -6,6 +6,8 @@ import tsWorker from '../src/tsworker/tsWorker?worker'
 import { proxy, wrap } from 'comlink'
 import { useIframeStore } from './Components/store'
 
+const tsWorkerInstance = new tsWorker()
+
 self.MonacoEnvironment = {
   getWorker(_, label) {
     if (label === 'json') {
@@ -19,8 +21,6 @@ self.MonacoEnvironment = {
     }
     if (label === 'typescript' || label === 'javascript') {
       return new Promise((resolve) => {
-        const tsWorkerInstance = new tsWorker()
-
         const obj = wrap(tsWorkerInstance)
         obj.init(
           proxy(() => {

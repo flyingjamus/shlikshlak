@@ -8,6 +8,7 @@ import { initVimMode } from 'monaco-vim'
 import { getFile } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
+import type { TypeScriptWorker } from '../../tsworker/tsWorker'
 
 // const useTv
 
@@ -97,6 +98,7 @@ export const MonacoEditor = () => {
     }
   }, [monacoInstance, files])
   const openFile = useFileStore((v) => v.openFile)
+  const [delay, setDelay] = useState({})
   useEffect(() => {
     ;(async () => {
       if (openFile) {
@@ -106,13 +108,20 @@ export const MonacoEditor = () => {
           const fileCode = files?.[absolutePath]?.code || getFile(absolutePath)
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
           if (monacoInstance && model) {
-            monaco.languages.typescript.getTypeScriptWorker().then(async (v) => {
-              const message = await v()
-              message.getCompletionsAtPosition(
+            try {
+              const workerGetter = await monaco.languages.typescript.getTypeScriptWorker()
+              const message = (await workerGetter()) as TypeScriptWorker
+
+              const panels = await message.getPanelsAtPosition(
                 uri.toString(),
                 model.getOffsetAt({ column: +openFile.columnNumber, lineNumber: +openFile.lineNumber })
               )
-            })
+              useFileStore.setState({ panels: panels })
+            } catch (e) {
+              setTimeout(() => {
+                setDelay({})
+              }, 500)
+            }
             if (monacoInstance?.getModel() !== model) {
               monacoInstance.setModel(model)
             }
@@ -122,7 +131,7 @@ export const MonacoEditor = () => {
         }
       }
     })()
-  }, [openFile])
+  }, [openFile, delay])
 
   // useTypingWorker()
 
