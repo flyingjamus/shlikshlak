@@ -1,5 +1,5 @@
 const { mergeConfig } = require('vite')
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+const monacoEditorPlugin = require('vite-plugin-monaco-editor')
 
 module.exports = {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
@@ -13,7 +13,8 @@ module.exports = {
   },
   async viteFinal(config, { configType }) {
     return mergeConfig(config, {
-      plugins: [monacoEditorPlugin()],
+      // plugins: [monacoEditorPlugin.default()],
+      plugins: [],
       optimizeDeps: {
         include: [
           '@storybook/addon-a11y/preview.js',

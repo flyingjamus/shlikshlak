@@ -1,8 +1,3 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
 import * as ts from '../lib/typescriptServices'
 import * as edworker from 'monaco-editor-core/esm/vs/editor/editor.worker'
 import { libFileMap } from '../lib/lib'
@@ -15,10 +10,10 @@ import {
 import { type Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
 import { fillCacheFromStore, getFile } from './fileGetter'
 import { expose } from 'comlink'
-import { DocumentRegistry, TypeFlags } from 'typescript'
 import type * as tstype from 'typescript'
-import { Project, FileSystemHost, RuntimeDirEntry, createWrappedNode, printNode } from 'ts-morph'
-import { getWrappedNodeAtPosition, getAstNodeAtPosition } from 'tsutils'
+import type { DocumentRegistry } from 'typescript'
+import { FileSystemHost, Node, Project } from 'ts-morph'
+import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 
 export {
   Uri,
@@ -50,15 +45,38 @@ export function fileNameIsLib(resource: Uri | string): boolean {
 }
 
 const typescript = (ts as any).typescript as typeof tstype
-const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistry()
+const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistryInternal(true, '', {
+  setDocument: (key: string, path: ts.Path, sourceFile: ts.SourceFile) => {
+    console.log(key, path, sourceFile)
+  },
+  getDocument: () => {
+
+  }
+})
+
+const proxy = <T extends any>(o: T, v: keyof T) => {
+  const old = o[v]
+  o[v] = function (...args: unknown[]) {
+    console.log(`Called ${v} with `, args.length > 1 ? args : args[0])
+    const res = old.apply(this, args)
+    console.log(`Got ${v} with `, res)
+    return res
+  }
+}
+// proxy(documentRegistry, 'acquireDocument')
+// proxy(documentRegistry, 'acquireDocumentWithKey')
+// console.log(documentRegistry)
+// documentRegistry.updateDocument =
+
 export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
 
   private _ctx: worker.IWorkerContext
   private _extraLibs: IExtraLibs = Object.create(null)
-  private _languageService = ts.createLanguageService(this, documentRegistry)
   private _compilerOptions: ts.CompilerOptions
   private _inlayHintsOptions?: ts.UserPreferences
+
+  private _languageService = ts.createLanguageService(this, documentRegistry)
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
     this._ctx = ctx
@@ -272,72 +290,69 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     return TypeScriptWorker.clearFiles(diagnostics)
   }
 
+  async getTypeAtPosition(fileName: string, position: number) {
+    const program = this._languageService.getProgram()!
+    const sourceFile = program.getSourceFile(fileName)
+    const checker = program.getTypeChecker()
+
+    const project = this.project
+    self.p = project
+
+    const { printNode } = typescript.createPrinter()
+
+    const node = typescript.getTokenAtPosition(sourceFile, position)
+
+    if (!sourceFile || !node) throw new Error('Source file missing')
+
+    // const typeAtLocation = project.getTypeChecker().getContextualType(node.parent.attributes)
+    const typeAtLocation = checker.getContextualType(node.parent.attributes)
+
+    const changes: ts.TextChange[] = [{ span: { start: 1194, length: 1207 - 1194 }, newText: 'HELLO' }]
+    // console.log(typeAtLocation, node)
+    if (typeAtLocation) {
+      const typeProps = typeAtLocation.getProperties().map((prop) => {
+        const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, node))
+        const typeNode = checker.typeToTypeNode(type, node, undefined)
+        return { name: prop.name, typeNode, type }
+      })
+
+      console.log(typeProps)
+    }
+
+    // const wrappedNode = createWrappedNode(node, {
+    //   compilerOptions: program.getCompilerOptions(),
+    //   sourceFile: sourceFile,
+    //   typeChecker: program.getTypeChecker(),
+    // })
+    // const wrappedSourceFile = createWrappedNode(sourceFile, {
+    //   compilerOptions: program.getCompilerOptions(),
+    //   sourceFile: sourceFile,
+    //   typeChecker: program.getTypeChecker(),
+    // })
+    // wrappedSourceFile.applyTextChanges(changes)
+    // // console.log(wrappedSourceFile.print())
+    // // wrappedNode._project = this._languageService
+  }
   async getCompletionsAtPosition(fileName: string, position: number): Promise<ts.CompletionInfo | undefined> {
+    console.log(fileName, position)
     if (fileNameIsLib(fileName)) {
       return undefined
     }
 
-    const host = new MyFileSystemHost(this)
     const program = this._languageService.getProgram()!
 
-    const sourceFile = program.getSourceFile('file:///1/1.tsx')
-    self.s = sourceFile
+    const sourceFile = program.getSourceFile(fileName)
+    self.a = sourceFile
     const checker = program.getTypeChecker()
-
     self.c = checker
 
-    const file = program.getSourceFile('file:///1/1.tsx')
-
-    const detectedComponents = []
-    for (const statement of sourceFile!.statements) {
-      // console.log(statement)
-      if (typescript.isVariableStatement(statement)) {
-        for (const declaration of statement.declarationList.declarations) {
-          // const node = createWrappedNode(declaration.name, {
-          //   compilerOptions: program.getCompilerOptions(),
-          //   sourceFile: file,
-          //   typeChecker: program.getTypeChecker(),
-          // })
-          // console.log(11111, node)
-          //
-          // self.node = node
-
-          // 🚀 This is where the magic happens.
-          const type = checker.getTypeAtLocation(declaration.name)
-
-          // A type that has call signatures is a function type.
-          for (const callSignature of type.getCallSignatures()) {
-            // console.log(checker.getSignatureFromDeclaration(callSignature.getDeclaration()))
-            // console.log(typescript.SyntaxKind.StringKeyword)
-            const pType = checker.getTypeOfSymbolAtLocation(
-              callSignature.getParameters()[0],
-              declaration.name
-            )
-
-            for (const prop of pType.getProperties()) {
-              const sType = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, declaration.name))
-              const typeNode = checker.typeToTypeNode(sType, declaration.name, undefined)
-              checker.isTypeAssignableTo
-              if (
-                checker.isTypeAssignableTo(sType, checker.getStringType()) ||
-                checker.isTypeAssignableTo(checker.getStringType(), sType)
-              ) {
-                // console.log(sType, typeNode)
-                console.log(prop.name, sType, typeNode)
-              }
-            }
-
-            // console.log(321312312, callSignature.getParameters()[0], callSignature.parameters)
-            const returnType = callSignature.getReturnType()
-            if (returnType.symbol?.getEscapedName().toString() === 'Element') {
-              detectedComponents.push(declaration.name.text)
-            }
-          }
-        }
-      }
-    }
     self.ls = this._languageService
+    checker.getTypeOfSymbolAtLocation
+    this.getTypeAtPosition(fileName, position)
+
     return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
+
+    self.ls = this._languageService
   }
 
   async getCompletionEntryDetails(
@@ -553,11 +568,11 @@ class MyFileSystemHost implements FileSystemHost {
   }
 
   async fileExists(filePath: string): Promise<boolean> {
-    return this.tsWorker.fileExists(filePath)
+    return this.tsWorker.fileExists(fixPath(filePath))
   }
 
   fileExistsSync(filePath: string): boolean {
-    return this.tsWorker.fileExists(filePath)
+    return this.tsWorker.fileExists(fixPath(filePath))
   }
 
   getCurrentDirectory(): string {
@@ -593,11 +608,11 @@ class MyFileSystemHost implements FileSystemHost {
   }
 
   async readFile(filePath: string, encoding?: string): Promise<string> {
-    return this.tsWorker.readFile(filePath) || '' //TODO?
+    return this.tsWorker.readFile(fixPath(filePath)) || '' //TODO?
   }
 
   readFileSync(filePath: string, encoding?: string): string {
-    return this.tsWorker.readFile(filePath) || '' //TODO?
+    return this.tsWorker.readFile(fixPath(filePath)) || '' //TODO?
   }
 
   realpathSync(path: string): string {
@@ -609,6 +624,10 @@ class MyFileSystemHost implements FileSystemHost {
   }
 
   writeFileSync(filePath: string, fileText: string): void {}
+}
+
+const fixPath = (path: string) => {
+  return 'file:///' + path.slice('file:/'.length)
 }
 
 export interface ICreateData {

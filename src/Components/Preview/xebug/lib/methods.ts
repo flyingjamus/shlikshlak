@@ -10,6 +10,7 @@ import * as DOMStorage from '../domains/DOMStorage'
 import * as DOMDebugger from '../domains/DOMDebugger'
 
 import { noop } from './util'
+import { getNodeReactLocation } from '../domains/DOM'
 
 const methods = {
   Debugger: {
@@ -129,6 +130,7 @@ const methods = {
   'Storage.trackCacheStorageForOrigin': noop,
   'Storage.trackIndexedDBForOrigin': noop,
   'Storage.clearDataForOrigin': Storage.clearDataForOrigin,
+  getNodeReactLocation: getNodeReactLocation,
 } as const
 
 export type Methods = typeof methods

@@ -21,6 +21,7 @@ import * as stringifyNode from '../lib/stringifyNode'
 import { getNode, getNodeId } from '../lib/stringifyNode'
 import Protocol from 'devtools-protocol'
 import { parentConnection } from '../../../../StorybookFrame/Xebug'
+import { getElementCodeInfo, getElementInspect } from '../../../ReactDevInspectorUtils/inspect'
 
 type GetDocumentResponse = Protocol.DOM.GetDocumentResponse
 type RequestChildNodesRequest = Protocol.DOM.RequestChildNodesRequest
@@ -192,6 +193,14 @@ export function removeNode(params: any) {
   const node = getNode(params.nodeId)
 
   $(node).remove()
+}
+
+export async function getNodeReactLocation(nodeId: number) {
+  const node = getNode(nodeId)
+  const codeInfo = getElementCodeInfo(node)
+  if (codeInfo) {
+    await parentConnection.setReactFileLocation(nodeId, codeInfo)
+  }
 }
 
 export async function requestChildNodes({ depth = 1, nodeId }: RequestChildNodesRequest) {

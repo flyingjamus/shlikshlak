@@ -1,5 +1,5 @@
 import { $, h, isMobile, toNum, isStr, each, trim } from '../lib/util'
-import { pushNodesToFrontend } from './DOM'
+import { getNodeReactLocation, pushNodesToFrontend } from './DOM'
 import connector from '../lib/connector'
 import * as stringifyObj from '../lib/stringifyObj'
 import { getNode, getNodeId } from '../lib/stringifyNode'
@@ -208,8 +208,13 @@ function clickListener(e: any) {
   e.stopImmediatePropagation()
 
   const node = getElementFromPoint(e)
+
+
+
+  const nodeId = getNodeId(node)
+  getNodeReactLocation(nodeId)
   parentConnection.Overlay.inspectNodeRequested({
-    backendNodeId: getNodeId(node),
+    backendNodeId: nodeId,
   })
 
   hideHighlight()

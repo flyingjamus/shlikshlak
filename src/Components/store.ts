@@ -6,6 +6,7 @@ import { AsyncMethodReturns } from 'penpal'
 import Protocol from 'devtools-protocol'
 import { Remote, wrap } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
+import { CodeInfo } from './ReactDevInspectorUtils/inspect'
 
 export type AppFile = {
   path: string
@@ -20,12 +21,13 @@ export type FilesMap = Record<string, AppFile>
 export type FileStoreState = {
   files?: FilesMap
   allFiles?: Record<string, boolean>
-  openFile?: string
+  openFile?: CodeInfo
   readFile?: (fileName: string) => Promise<string | undefined>
 }
 export const useFileStore = create<FileStoreState>()(
   persist((set) => ({}), { name: 'files', getStorage: () => ({ getItem, setItem, removeItem }) })
 )
+useFileStore.setState({ openFile: {} })
 
 export const useIframeStore = create<{
   iframe?: HTMLIFrameElement | null

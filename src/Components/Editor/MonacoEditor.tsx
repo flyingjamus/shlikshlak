@@ -5,11 +5,9 @@ import { editor } from 'monaco-editor'
 import { useFileStore } from '../store'
 // @ts-ignore
 import { initVimMode } from 'monaco-vim'
-import { defaults } from 'lodash-es'
-import { useTypingWorker } from './UseTypingWorker'
+import { getFile } from '../../tsworker/fileGetter'
+import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
-import libEsnext from 'typescript/lib/lib.esnext.d.ts?raw'
-import lub from 'typescript/lib/lib.d.ts?raw'
 
 // const useTv
 
@@ -71,20 +69,20 @@ export const MonacoEditor = () => {
           model.dispose()
         }
       })
-      for (const file of Object.values(files)) {
-        const uri = monaco.Uri.file(file.path.slice(1))
-        if (file.path.includes('1.tsx')) {
-          // console.log('Creating', file, uri)
-          const existing = editor.getModel(uri)
-          if (existing) {
-            existing.setValue(file.code)
-          } else {
-            const newModel = editor.createModel(file.code, undefined, uri)
-          }
-        } else {
-          // monaco.languages.typescript.typescriptDefaults.addExtraLib(file.code, uri.toString())
-        }
-      }
+      // for (const file of object.values(files)) {
+      //   const uri = monaco.uri.file(file.path.slice(1))
+      //   if (file.path.includes('1.tsx')) {
+      //     // console.log('creating', file, uri)
+      //     const existing = editor.getmodel(uri)
+      //     if (existing) {
+      //       existing.setvalue(file.code)
+      //     } else {
+      //       const newmodel = editor.createmodel(file.code, undefined, uri)
+      //     }
+      //   } else {
+      //     // monaco.languages.typescript.typescriptdefaults.addextralib(file.code, uri.tostring())
+      //   }
+      // }
       // ;(async () => {
       //   const worker = await monaco.languages.typescript.getTypeScriptWorker()
       //   const uri = monaco.Uri.file('1/1.tsx')
@@ -100,12 +98,30 @@ export const MonacoEditor = () => {
   }, [monacoInstance, files])
   const openFile = useFileStore((v) => v.openFile)
   useEffect(() => {
-    if (openFile) {
-      const model = editor.getModel(monaco.Uri.file(openFile))
-      if (monacoInstance?.getModel() !== model) {
-        monacoInstance?.setModel(model)
+    ;(async () => {
+      if (openFile) {
+        const absolutePath = openFile.absolutePath?.slice('/home/danny/dev/shlikshlak'.length)
+        if (absolutePath) {
+          const uri = monaco.Uri.file(absolutePath)
+          const fileCode = files?.[absolutePath]?.code || getFile(absolutePath)
+          const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
+          if (monacoInstance && model) {
+            monaco.languages.typescript.getTypeScriptWorker().then(async (v) => {
+              const message = await v()
+              message.getCompletionsAtPosition(
+                uri.toString(),
+                model.getOffsetAt({ column: +openFile.columnNumber, lineNumber: +openFile.lineNumber })
+              )
+            })
+            if (monacoInstance?.getModel() !== model) {
+              monacoInstance.setModel(model)
+            }
+            monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
+          }
+        }
       }
-    }
+    })()
   }, [openFile])
 
   // useTypingWorker()
@@ -172,35 +188,6 @@ export const MonacoEditor = () => {
 // }
 window.monaco = monaco
 
-// monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-//   worker(monaco.Uri.file('/1/1.tsx')).then(function (proxy) {
-//     console.log(7777,proxy )
-//   })
-// })
-
-export const COMPILER_OPTIONS: monaco.languages.typescript.CompilerOptions = defaults(
-  {
-    allowJs: true,
-    allowSyntheticDefaultImports: true,
-    allowNonTsExtensions: true,
-    alwaysStrict: true,
-    esModuleInterop: true,
-    forceConsistentCasingInFileNames: true,
-    isolatedModules: true,
-    jsx: monaco.languages.typescript.JsxEmit.Preserve,
-    module: monaco.languages.typescript.ModuleKind.ESNext,
-    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-    // noEmit: false,
-    noEmit: true,
-    resolveJsonModule: true,
-    strict: true,
-    skipLibCheck: false,
-    // noLib: true,
-    target: monaco.languages.typescript.ScriptTarget.ESNext,
-    lib: ['dom', 'dom.iterable', 'esnext'],
-  } as monaco.languages.typescript.CompilerOptions,
-  monaco.languages.typescript.typescriptDefaults.getCompilerOptions()
-)
 // monaco.languages.typescript.typescriptDefaults.setWorkerOptions({ customWorkerPath: '../' })
 monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
 monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
