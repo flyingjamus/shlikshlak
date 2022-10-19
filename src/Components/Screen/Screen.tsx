@@ -13,7 +13,7 @@ const ELEMENT_MAP = {
   preview: <Preview />,
   editor: <EditorWrapper />,
   // inspector: <Inspector />,
-  // inspector: <InspectorTree />,
+  inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
 } as const
 
@@ -31,7 +31,11 @@ export const Screen = () => {
             second: 'editor',
             direction: 'row',
           },
-          second: 'props',
+          second: {
+            first: 'inspector',
+            second: 'props',
+            direction: 'row',
+          },
           direction: 'column',
         },
         second: 'preview',

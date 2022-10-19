@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
-import { useFileStore } from '../store'
+import { useFileStore, useIframeStore } from '../store'
 // @ts-ignore
 import { initVimMode } from 'monaco-vim'
 import { getFile } from '../../tsworker/fileGetter'
@@ -48,35 +48,42 @@ export const MonacoEditor = () => {
 
     const editor = monaco.editor.create(el, MONACO_OPTIONS)
     const vimMode = initVimMode(editor, statusBarRef.current)
+    monaco.editor.onDidCreateEditor((codeEditor) => {
+      // console.log(312312321, codeEditor)
+    })
     const listener = editor.onDidChangeCursorPosition((e) => {
-      console.log(1111, e)
+      useIframeStore.setState({
+        openFile: {
+          ...useIframeStore.getState().openFile,
+          lineNumber: e.position.lineNumber,
+          columnNumber: e.position.column,
+        },
+      })
     })
 
     bindEditor(editor)
     setMonacoInstance(editor)
 
     return () => {
-      listener.dispose()
+      // listener.dispose()
       // setMonacoInstance(undefined)
       // editor.dispose()
     }
   }, [monacoInstance])
 
   useEffect(() => {
-    if (monaco) {
-    }
     if (monaco && files) {
       const editor = monaco.editor
       const models = editor.getModels()
 
       // console.log('MODELS', models)
       const fileNames = Object.keys(files)
-      models.forEach((model) => {
-        if (!fileNames.includes(model.uri.path)) {
-          // console.log('Removing', model.uri)
-          model.dispose()
-        }
-      })
+      // models.forEach((model) => {
+      //   if (!fileNames.includes(model.uri.path)) {
+      //     // console.log('Removing', model.uri)
+      //     model.dispose()
+      //   }
+      // })
       // for (const file of object.values(files)) {
       //   const uri = monaco.uri.file(file.path.slice(1))
       //   if (file.path.includes('1.tsx')) {
@@ -104,10 +111,11 @@ export const MonacoEditor = () => {
       // return () => {}
     }
   }, [monacoInstance, files])
-  const openFile = useFileStore((v) => v.openFile)
+  const openFile = useIframeStore((v) => v.openFile)
   const [delay, setDelay] = useState({})
   useEffect(() => {
     ;(async () => {
+      console.log(openFile)
       if (openFile) {
         const absolutePath = openFile.absolutePath?.slice('/home/danny/dev/shlikshlak'.length)
         if (absolutePath) {
@@ -116,24 +124,28 @@ export const MonacoEditor = () => {
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
           if (monacoInstance && model) {
             try {
-              const worker = getTypescriptWorker()
+              const worker = await getTypescriptWorker()
               const uriString = uri.toString()
               const offset = model.getOffsetAt({
                 column: +openFile.columnNumber,
                 lineNumber: +openFile.lineNumber,
               })
               const panels = await worker.getPanelsAtPosition(uriString, offset)
-              useFileStore.setState({ panels: panels })
+              useIframeStore.setState({ panels: panels })
             } catch (e) {
+              console.log(e)
               setTimeout(() => {
                 setDelay({})
               }, 500)
             }
             if (monacoInstance?.getModel() !== model) {
               monacoInstance.setModel(model)
+              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            } else {
+              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
             }
-            monacoInstance?.revealLineInCenter(+openFile.lineNumber)
             monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
+            monacoInstance.focus()
           }
         }
       }

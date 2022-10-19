@@ -9,7 +9,8 @@ import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { CodeInfo } from './ReactDevInspectorUtils/inspect'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import { TypeScriptWorker } from '../tsworker/tsWorker'
-import { WorkerAdapter } from '../lib/workerAdapter'
+import { StateStorage } from 'zustand/middleware/persist'
+import { WorkerAdapter } from '../tsworker/workerAdapter'
 
 export type AppFile = {
   path: string
@@ -24,13 +25,24 @@ export type FilesMap = Record<string, AppFile>
 export type FileStoreState = {
   files?: FilesMap
   allFiles?: Record<string, boolean>
-  openFile?: CodeInfo
-  readFile?: (fileName: string) => Promise<string | undefined>
-  panels?: PanelsResponse
-  tsWorker?: TypeScriptWorker
+}
+
+const storage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    // console.log(name, 'has been retrieved')
+    return (await getItem(name)) || null
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    // console.log(name, 'with value', value, 'has been saved')
+    await setItem(name, value)
+  },
+  removeItem: async (name: string): Promise<void> => {
+    // console.log(name, 'has been deleted')
+    await removeItem(name)
+  },
 }
 export const useFileStore = create<FileStoreState>()(
-  persist((set) => ({}), { name: 'files', getStorage: () => ({ getItem, setItem, removeItem }) })
+  persist((set) => ({}), { name: 'files', getStorage: () => storage })
 )
 
 export const useIframeStore = create<{
@@ -43,6 +55,10 @@ export const useIframeStore = create<{
   swProxy?: Remote<ServiceWorkerAPI>
   tsInit?: true
   workerAdapter?: WorkerAdapter
+  openFile?: CodeInfo
+  readFile?: (fileName: string) => Promise<string | undefined>
+  panels?: PanelsResponse
+  tsWorker?: TypeScriptWorker
 }>(() => ({
   frontendReady: false,
   expandedIds: [],

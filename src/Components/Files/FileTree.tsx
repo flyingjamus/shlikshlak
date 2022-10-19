@@ -1,4 +1,4 @@
-import { FilesMap, useFileStore } from '../store'
+import { FilesMap, useFileStore, useIframeStore } from '../store'
 import TreeView from '@mui/lab/TreeView'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -40,7 +40,7 @@ const FilesTreeItemList = ({ prefixedPath, filesMap }: { prefixedPath: string; f
           nodeId={dir}
           label={dir.slice(prefixedPath.length)}
           onClick={() => {
-            useFileStore.setState({ openFile: dir })
+            useIframeStore.setState({ openFile: dir })
           }}
         />
       ))}
@@ -50,7 +50,7 @@ const FilesTreeItemList = ({ prefixedPath, filesMap }: { prefixedPath: string; f
 
 export const FileTree = () => {
   const filesMap = useFileStore((v) => v.files)
-  const openFile = useFileStore((v) => v.openFile)
+  const openFile = useIframeStore((v) => v.openFile)
   if (!filesMap) return null
 
   return (

@@ -1,8 +1,8 @@
 import { clientsClaim } from 'workbox-core'
 import { expose } from 'comlink'
-import { FilesMap, FileStoreState, useFileStore } from './Components/store'
+import { FileStoreState } from './Components/store'
 import { registerRoute } from 'workbox-routing'
-import { StaleWhileRevalidate, CacheFirst, Strategy, StrategyHandler } from 'workbox-strategies'
+import { CacheFirst, Strategy, StrategyHandler } from 'workbox-strategies'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 
 self.__WB_DISABLE_DEV_LOGS = true

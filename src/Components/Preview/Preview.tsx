@@ -57,7 +57,7 @@ export const parentMethods = {
     },
   } as ProtocolDispatchers),
   setReactFileLocation(nodeId: number, location: CodeInfo) {
-    useFileStore.setState({ openFile: location })
+    useIframeStore.setState({ openFile: location })
   },
 }
 

@@ -12,8 +12,8 @@ import {
 
 
 export interface CodeInfo {
-  lineNumber: string,
-  columnNumber: string,
+  lineNumber: number,
+  columnNumber: number,
   /**
    * code source file relative path to dev-server cwd(current working directory)
    * need use with `react-dev-inspector/plugins/babel`

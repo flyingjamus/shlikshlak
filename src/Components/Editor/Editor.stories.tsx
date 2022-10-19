@@ -3,6 +3,7 @@ import { ComponentMeta, ComponentStory } from '@storybook/react'
 import MonacoEditor from './MonacoEditor'
 import { Box } from '@mui/material'
 import { useFileStore } from '../store'
+import '../../workers'
 
 export default {
   title: 'Editor',
@@ -20,7 +21,16 @@ export default {
 
 const Template: ComponentStory<typeof MonacoEditor> = (args) => (
   <Box height={'500px'}>
-    <MonacoEditor {...args} />
+    <MonacoEditor
+      // width="800"
+      // height="600"
+      // language="javascript"
+      // theme="vs-dark"
+      // value={code}
+      // options={options}
+      // onChange={::this.onChange}
+      // editorDidMount={::this.editorDidMount}
+    />
   </Box>
 )
 

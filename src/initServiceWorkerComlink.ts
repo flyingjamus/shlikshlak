@@ -1,5 +1,5 @@
 import { Remote, wrap } from 'comlink'
-import { useFileStore, useIframeStore } from './Components/store'
+import { useIframeStore } from './Components/store'
 import { ServiceWorkerAPI } from './Shared/serviceWorkerAPI'
 
 async function initComlink() {

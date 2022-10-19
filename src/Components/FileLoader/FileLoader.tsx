@@ -1,7 +1,7 @@
 import React from 'react'
 import { get as getItem, set as setItem } from 'idb-keyval'
 import { Box, Button } from '@mui/material'
-import { AppFile, useFileStore } from '../store'
+import { AppFile, useFileStore, useIframeStore } from '../store'
 
 async function verifyPermission(fileHandle: FileSystemHandle, readWrite?: boolean) {
   const options: FileSystemHandlePermissionDescriptor = readWrite ? { mode: 'readwrite' } : {}
@@ -29,6 +29,8 @@ const readHandle = async (dirHandle: FileSystemDirectoryHandle) => {
   useFileStore.setState({
     files: res.files,
     allFiles: res.allFiles,
+  })
+  useIframeStore.setState({
     readFile: (fileName: string) => readFile(dirHandle, fileName),
   })
 }

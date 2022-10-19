@@ -40,7 +40,7 @@ const PropEditor = ({ panelMatch, value }: { panelMatch: PanelMatch; value?: str
 }
 
 export const PropsEditorWrapper = () => {
-  const panels = useFileStore((v) => v.panels)
+  const panels = useIframeStore((v) => v.panels)
   const adapter = useIframeStore((v) => v.workerAdapter)
   return (
     <PropsEditor

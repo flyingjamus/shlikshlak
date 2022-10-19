@@ -7,7 +7,7 @@ module.exports = {
       jsx: true,
     },
   },
-
+  //
   extends: [
     // 'plugin:sonarjs/recommended',
     'eslint:recommended',
@@ -16,19 +16,19 @@ module.exports = {
     // 'plugin:jest/recommended',
     'prettier',
   ],
-  env: {
-    node: true,
-    es2021: true,
-    browser: true,
-  },
-  settings: {
-    'import/parsers': {
-      '@typescript-eslint/parser': ['.ts', '.tsx'],
-    },
-    react: {
-      version: 'detect',
-    },
-  },
+  // env: {
+  //   node: true,
+  //   es2021: true,
+  //   browser: true,
+  // },
+  // settings: {
+  //   'import/parsers': {
+  //     '@typescript-eslint/parser': ['.ts', '.tsx'],
+  //   },
+  //   react: {
+  //     version: 'detect',
+  //   },
+  // },
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     'no-undef': 'off',
@@ -46,4 +46,6 @@ module.exports = {
     '@typescript-eslint/ban-types': 'off',
     'react/jsx-no-undef': 'off',
   },
+
+  ignorePatterns: ['src/**/*.js'],
 }

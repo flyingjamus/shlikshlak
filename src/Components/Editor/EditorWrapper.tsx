@@ -1,5 +1,4 @@
-import { Box } from '@mui/material'
-import { useFileStore, useIframeStore } from '../store'
+import { useIframeStore } from '../store'
 import MonacoEditor from './MonacoEditor'
 
 export const EditorWrapper = () => {
