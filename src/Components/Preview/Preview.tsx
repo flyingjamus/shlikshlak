@@ -56,8 +56,18 @@ export const parentMethods = {
       },
     },
   } as ProtocolDispatchers),
-  setReactFileLocation(nodeId: number, location: CodeInfo) {
-    useIframeStore.setState({ openFile: location })
+  setReactFileLocation(nodeId: number, { absolutePath, lineNumber, columnNumber }: CodeInfo) {
+    if (absolutePath) {
+      useIframeStore.setState({
+        openFile: {
+          path: absolutePath.slice('/home/danny/dev/shlikshlak'.length),
+          lineNumber: +lineNumber,
+          columnNumber: +columnNumber,
+        },
+      })
+    } else {
+      useIframeStore.setState({ openFile: undefined })
+    }
   },
 }
 

@@ -1,7 +1,8 @@
 import { Box, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useFileStore, useIframeStore } from '../store'
 import { PanelMatch, PanelsResponse, PanelType } from '../../Shared/PanelTypes'
-import { ElementType } from 'react'
+import { ElementType, useMemo } from 'react'
+import { throttle } from 'lodash-es'
 
 const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value, onChange }) => {
   return (
@@ -16,18 +17,19 @@ const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value, onChange 
 }
 
 const StringEditor: BaseEditor = ({ value, onChange }) => {
-  return <TextField onChange={(e) => onChange(e.target.value)} value={value} />
+  return <TextField onChange={(e) => onChange(e.target.value)} defaultValue={value} />
 }
 
 type BaseEditor<T = {}> = ElementType<T & { value?: string; onChange: (value: string) => void }>
 
-const PropEditor = ({ panelMatch, value }: { panelMatch: PanelMatch; value?: string }) => {
-  const props = {
-    onChange: (value: string) => {
-      console.log('Changed!', value)
-    },
-    value: value,
-  }
+const PropEditor = ({
+  panelMatch,
+  ...props
+}: {
+  panelMatch: PanelMatch
+  value?: string
+  onChange: (value: string) => void
+}) => {
   switch (panelMatch.name) {
     case 'string':
       return <StringEditor {...props} />
@@ -42,11 +44,17 @@ const PropEditor = ({ panelMatch, value }: { panelMatch: PanelMatch; value?: str
 export const PropsEditorWrapper = () => {
   const panels = useIframeStore((v) => v.panels)
   const adapter = useIframeStore((v) => v.workerAdapter)
+  const throttled = useMemo(
+    () => adapter && throttle(adapter.setAttribute.bind(adapter), 200, { trailing: true }),
+    [adapter]
+  )
   return (
     <PropsEditor
       panels={panels}
       onAttributeChange={(attr, v) => {
-        tsWorker?.getTypeChecker()
+        if (panels?.location && panels.fileName) {
+          throttled?.(panels.fileName, panels.location, attr, v)
+        }
       }}
     />
   )
@@ -54,6 +62,7 @@ export const PropsEditorWrapper = () => {
 
 export const PropsEditor = ({
   panels,
+  onAttributeChange,
 }: {
   panels?: PanelsResponse
   onAttributeChange: (attr: string, v: string) => void
@@ -62,13 +71,17 @@ export const PropsEditor = ({
     <Box>
       {panels?.existingAttributes
         .map((v) => ({ ...v, panels: panels.attributes.find((a) => a.name === v.name)?.panels }))
-        .map((v) => {
-          const panel = v.panels?.[0]
+        .map((attr) => {
+          const panel = attr.panels?.[0]
           if (!panel) return null
           return (
-            <Box key={v.name}>
-              <Box>{v.name}</Box>
-              <PropEditor panelMatch={panel} value={v.value} />
+            <Box key={attr.name}>
+              <Box>{attr.name}</Box>
+              <PropEditor
+                panelMatch={panel}
+                value={attr.value}
+                onChange={(newValue) => onAttributeChange(attr.name, newValue)}
+              />
             </Box>
           )
         })}

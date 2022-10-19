@@ -369,22 +369,45 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       ) as ts.JsxAttribute | undefined
       if (existing?.initializer) {
         const initializer = existing.initializer
-        const quote = initializer.getText().charAt(0)
-        if (value) {
-          return [
-            {
-              span: { start: initializer.pos, length: initializer.end - initializer.pos },
-              newText: quote + value + quote,
-            },
-          ]
+        const firstChar = initializer.getText().charAt(0)
+        let quote = "'"
+        if (firstChar === '{') {
+          if (initializer.getText().charAt(1) === '"') {
+            quote = '"'
+          }
+        } else if (firstChar === '"') {
+          quote = '"'
+        }
+        if (value !== undefined) {
+          const span = { start: initializer.pos, length: initializer.end - initializer.pos }
+          if (value.includes(quote)) {
+            return [
+              {
+                span: span,
+                newText: `{${quote}${value.replaceAll(quote, '\\' + quote)}${quote}}`,
+              },
+            ]
+          } else {
+            return [
+              {
+                span: span,
+                newText: quote + value + quote,
+              },
+            ]
+          }
         }
       }
     }
   }
 
   getParentTokenAtPosition(fileName: string, position: number): ts.JsxOpeningLikeElement | undefined {
-    const program = this._languageService.getProgram()!
-    const sourceFile = program.getSourceFile(fileName)
+    console.log('getParentTokenAtPosition', fileName, position)
+    const program = this._languageService.getProgram()
+    const sourceFile = program?.getSourceFile(fileName)
+    if (!sourceFile) {
+      console.error('Missing source file', fileName)
+      return
+    }
     const token = typescript.getTokenAtPosition(sourceFile, position)
     const parent = token.parent
     if (typescript.isJsxOpeningLikeElement(parent)) {
@@ -399,9 +422,27 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       const existingAttributes = parent.attributes.properties
         .map((attr) => {
           if (typescript.isJsxAttribute(attr)) {
+            const initializerText = attr.initializer?.getText()
+            let value
+            if (initializerText?.[0] === '{') {
+              if (initializerText?.[1] === '"') {
+                value = initializerText?.slice(2, -2).replaceAll('\\"', '"')
+              } else if (initializerText?.[1] === "'") {
+                value = initializerText?.slice(2, -2).replaceAll("\\'", "'")
+              } else {
+                value = initializerText?.slice(2, -2)
+              }
+            } else {
+              value = initializerText?.slice(1, -1)
+            }
             return {
               name: attr.name.escapedText.toString(),
-              value: attr.initializer?.getText().slice(1, -1),
+              value,
+              hasInitializer: !!attr.initializer,
+              location: {
+                pos: attr.pos,
+                end: attr.end,
+              },
             }
           }
         })
@@ -412,13 +453,19 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
           const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, parent))
           return {
             name: prop.name,
+            location: prop.valueDeclaration
+              ? {
+                  pos: prop.valueDeclaration?.pos,
+                  end: prop.valueDeclaration?.end,
+                }
+              : undefined,
             panels: PANELS.map((v) => {
               return v.matcher(type, checker)
             }).filter(isDefined),
           }
         })
 
-        return { attributes, existingAttributes }
+        return { attributes, existingAttributes, location: parent.pos, fileName }
       }
     }
     return { attributes: [], existingAttributes: [] }
@@ -448,13 +495,8 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
 
     const sourceFile = program.getSourceFile(fileName)
     const checker = program.getTypeChecker()
-    self.c = checker
-    self.ls = this._languageService
-    checker.getTypeOfSymbolAtLocation
 
     return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
-
-    self.ls = this._languageService
   }
 
   async getCompletionEntryDetails(

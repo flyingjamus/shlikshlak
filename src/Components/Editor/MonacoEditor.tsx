@@ -7,9 +7,8 @@ import { useFileStore, useIframeStore } from '../store'
 import { initVimMode } from 'monaco-vim'
 import { getFile } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
-import { IRange } from 'monaco-editor-core'
-import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
+import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 
 // const useTv
 
@@ -51,15 +50,29 @@ export const MonacoEditor = () => {
     monaco.editor.onDidCreateEditor((codeEditor) => {
       // console.log(312312321, codeEditor)
     })
-    const listener = editor.onDidChangeCursorPosition((e) => {
-      useIframeStore.setState({
-        openFile: {
-          ...useIframeStore.getState().openFile,
-          lineNumber: e.position.lineNumber,
-          columnNumber: e.position.column,
-        },
-      })
+
+    editor.onDidChangeModelContent(async (e) => {
+      console.log('Onchange', e)
+      const worker = await getTypescriptWorker()
+      const model = editor.getModel()
+      const pos = editor.getPosition()
+      if (model && pos) {
+        const offset = model.getOffsetAt(pos)
+        const panels = await worker.getPanelsAtPosition(model.uri.toString(), offset)
+        console.log(panels)
+        useIframeStore.setState({ panels: panels })
+      }
     })
+    // const listener = editor.onDidChangeCursorPosition((e) => {
+    //   useIframeStore.setState({
+    //     openFile: {
+    //       ...useIframeStore.getState().openFile,
+    //       lineNumber: e.position.lineNumber,
+    //       columnNumber: e.position.column,
+    //       // path:
+    //     },
+    //   })
+    // })
 
     // bindEditor(editor)
     setMonacoInstance(editor)
@@ -75,12 +88,11 @@ export const MonacoEditor = () => {
   const [delay, setDelay] = useState({})
   useEffect(() => {
     ;(async () => {
-      console.log(openFile)
       if (openFile) {
-        const absolutePath = openFile.absolutePath?.slice('/home/danny/dev/shlikshlak'.length)
-        if (absolutePath) {
-          const uri = monaco.Uri.file(absolutePath)
-          const fileCode = files?.[absolutePath]?.code || getFile(absolutePath)
+        const path = openFile.path
+        if (path) {
+          const uri = monaco.Uri.file(path)
+          const fileCode = files?.[path]?.code || getFile(path)
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
           if (monacoInstance && model) {
             try {

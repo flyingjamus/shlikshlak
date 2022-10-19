@@ -26,11 +26,12 @@ export const Screen = () => {
       initialValue={{
         direction: 'row',
         first: {
-          first: {
-            first: 'files',
-            second: 'editor',
-            direction: 'row',
-          },
+          // first: {
+          //   first: 'files',
+          //   second: 'editor',
+          //   direction: 'row',
+          // },
+          first: 'editor',
           second: {
             first: 'inspector',
             second: 'props',

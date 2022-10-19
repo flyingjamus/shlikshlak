@@ -45,7 +45,13 @@ export const useFileStore = create<FileStoreState>()(
   persist((set) => ({}), { name: 'files', getStorage: () => storage })
 )
 
-export const useIframeStore = create<{
+export type OpenFile = {
+  lineNumber: number
+  columnNumber: number
+  path: string
+}
+
+type IframeStore = {
   iframe?: HTMLIFrameElement | null
   frontendReady: boolean
   childConnection?: AsyncMethodReturns<Methods>
@@ -55,11 +61,21 @@ export const useIframeStore = create<{
   swProxy?: Remote<ServiceWorkerAPI>
   tsInit?: true
   workerAdapter?: WorkerAdapter
-  openFile?: CodeInfo
+  openFile?: OpenFile
   readFile?: (fileName: string) => Promise<string | undefined>
   panels?: PanelsResponse
   tsWorker?: TypeScriptWorker
-}>(() => ({
-  frontendReady: false,
-  expandedIds: [],
-}))
+}
+export const useIframeStore = create<IframeStore>()(
+  persist<IframeStore>(
+    () => ({
+      frontendReady: false,
+      expandedIds: [],
+    }),
+    {
+      name: 'iframestore',
+      getStorage: () => localStorage,
+      partialize: ({ openFile }) => ({ openFile } as IframeStore),
+    }
+  )
+)
