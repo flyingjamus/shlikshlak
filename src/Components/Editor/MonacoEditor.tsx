@@ -7,8 +7,9 @@ import { useFileStore } from '../store'
 import { initVimMode } from 'monaco-vim'
 import { getFile } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
+import { IRange } from 'monaco-editor-core'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
-import type { TypeScriptWorker } from '../../tsworker/tsWorker'
+import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 
 // const useTv
 
@@ -47,17 +48,23 @@ export const MonacoEditor = () => {
 
     const editor = monaco.editor.create(el, MONACO_OPTIONS)
     const vimMode = initVimMode(editor, statusBarRef.current)
+    const listener = editor.onDidChangeCursorPosition((e) => {
+      console.log(1111, e)
+    })
 
     bindEditor(editor)
     setMonacoInstance(editor)
 
     return () => {
+      listener.dispose()
       // setMonacoInstance(undefined)
       // editor.dispose()
     }
   }, [monacoInstance])
 
   useEffect(() => {
+    if (monaco) {
+    }
     if (monaco && files) {
       const editor = monaco.editor
       const models = editor.getModels()
@@ -109,13 +116,13 @@ export const MonacoEditor = () => {
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
           if (monacoInstance && model) {
             try {
-              const workerGetter = await monaco.languages.typescript.getTypeScriptWorker()
-              const message = (await workerGetter()) as TypeScriptWorker
-
-              const panels = await message.getPanelsAtPosition(
-                uri.toString(),
-                model.getOffsetAt({ column: +openFile.columnNumber, lineNumber: +openFile.lineNumber })
-              )
+              const worker = getTypescriptWorker()
+              const uriString = uri.toString()
+              const offset = model.getOffsetAt({
+                column: +openFile.columnNumber,
+                lineNumber: +openFile.lineNumber,
+              })
+              const panels = await worker.getPanelsAtPosition(uriString, offset)
               useFileStore.setState({ panels: panels })
             } catch (e) {
               setTimeout(() => {

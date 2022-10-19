@@ -5,7 +5,7 @@ import {
   Diagnostic,
   DiagnosticRelatedInformation,
   IExtraLibs,
-  TypeScriptWorker as ITypeScriptWorker
+  TypeScriptWorker as ITypeScriptWorker,
 } from './monaco.contribution'
 import type { Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
 import { fillCacheFromStore, getFile } from './fileGetter'
@@ -356,20 +356,52 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     return this._languageService.getProgram()!.getTypeChecker() as TypeChecker
   }
 
-  async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
+  async setAttributeAtPosition(
+    fileName: string,
+    position: number,
+    attr: string,
+    value?: string
+  ): Promise<ts.TextChange[] | void> {
+    const parent = this.getParentTokenAtPosition(fileName, position)
+    if (parent) {
+      const existing = parent.attributes.properties.find(
+        (v) => typescript.isJsxAttribute(v) && v.name.escapedText.toString() === attr
+      ) as ts.JsxAttribute | undefined
+      if (existing?.initializer) {
+        const initializer = existing.initializer
+        const quote = initializer.getText().charAt(0)
+        if (value) {
+          return [
+            {
+              span: { start: initializer.pos, length: initializer.end - initializer.pos },
+              newText: quote + value + quote,
+            },
+          ]
+        }
+      }
+    }
+  }
+
+  getParentTokenAtPosition(fileName: string, position: number): ts.JsxOpeningLikeElement | undefined {
     const program = this._languageService.getProgram()!
     const sourceFile = program.getSourceFile(fileName)
-    const checker = this.getTypeChecker()
     const token = typescript.getTokenAtPosition(sourceFile, position)
-    // checker.getTypeFromTypeNode()
     const parent = token.parent
-    if (typescript.isJsxSelfClosingElement(parent) || typescript.isJsxOpeningElement(parent)) {
+    if (typescript.isJsxOpeningLikeElement(parent)) {
+      return parent
+    }
+  }
+
+  async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
+    const checker = this.getTypeChecker()
+    const parent = this.getParentTokenAtPosition(fileName, position)
+    if (parent) {
       const existingAttributes = parent.attributes.properties
         .map((attr) => {
           if (typescript.isJsxAttribute(attr)) {
             return {
               name: attr.name.escapedText.toString(),
-              value: attr.initializer?.getText(),
+              value: attr.initializer?.getText().slice(1, -1),
             }
           }
         })
@@ -377,8 +409,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       const typeAtLocation = checker.getContextualType(parent.attributes)
       if (typeAtLocation) {
         const attributes = typeAtLocation.getProperties().map((prop) => {
-          const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, token))
-          // const typeNode = checker.typeToTypeNode(type, token, undefined)
+          const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, parent))
           return {
             name: prop.name,
             panels: PANELS.map((v) => {

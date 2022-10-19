@@ -1,38 +1,34 @@
 import { PropsEditor } from '../Components/PropsEditor/PropsEditor'
-import { ComponentMeta } from '@storybook/react'
+import { ComponentMeta, ComponentStory } from '@storybook/react'
 import { useFileStore } from '../Components/store'
 
 export default {
-  title: 'PropsEditor',
+  title: 'Props Editor',
   component: PropsEditor,
-  decorators: [
-    (Story) => {
-      useFileStore.setState(
-        {
-          panels: {
-            attributes: [
-              { name: 'key', panels: [{ name: 'string' }] },
-              { name: 'primary', panels: [{ name: 'boolean' }] },
-              { name: 'backgroundColor', panels: [{ name: 'string' }] },
-              {
-                name: 'size',
-                panels: [{ name: 'enum', parameters: { values: ['small', 'medium', 'large'] } }],
-              },
-              { name: 'label', panels: [{ name: 'string' }] },
-              { name: 'onClick', panels: [] },
-            ],
-            existingAttributes: [
-              { name: 'size', value: '"small"' },
-              { name: 'onClick', value: '{onLogout}' },
-              { name: 'label', value: '"Log out"' },
-            ],
-          },
-        },
-        true
-      )
-      return <Story />
-    },
-  ],
+  decorators: [],
+  args: {},
 } as ComponentMeta<typeof PropsEditor>
 
-export const Story = PropsEditor
+const Template: ComponentStory<typeof PropsEditor> = PropsEditor
+
+export const Story = Template.bind({})
+Story.args = {
+  panels: {
+    attributes: [
+      { name: 'key', panels: [{ name: 'string' }] },
+      { name: 'primary', panels: [{ name: 'boolean' }] },
+      { name: 'backgroundColor', panels: [{ name: 'string' }] },
+      {
+        name: 'size',
+        panels: [{ name: 'enum', parameters: { values: ['small', 'medium', 'large'] } }],
+      },
+      { name: 'label', panels: [{ name: 'string' }] },
+      { name: 'onClick', panels: [] },
+    ],
+    existingAttributes: [
+      { name: 'size', value: 'small' },
+      { name: 'onClick', value: 'onLogout' },
+      { name: 'label', value: 'Log out' },
+    ],
+  },
+}

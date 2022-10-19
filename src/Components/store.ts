@@ -8,6 +8,8 @@ import { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { CodeInfo } from './ReactDevInspectorUtils/inspect'
 import { PanelsResponse } from '../Shared/PanelTypes'
+import { TypeScriptWorker } from '../tsworker/tsWorker'
+import { WorkerAdapter } from '../lib/workerAdapter'
 
 export type AppFile = {
   path: string
@@ -25,6 +27,7 @@ export type FileStoreState = {
   openFile?: CodeInfo
   readFile?: (fileName: string) => Promise<string | undefined>
   panels?: PanelsResponse
+  tsWorker?: TypeScriptWorker
 }
 export const useFileStore = create<FileStoreState>()(
   persist((set) => ({}), { name: 'files', getStorage: () => ({ getItem, setItem, removeItem }) })
@@ -39,6 +42,7 @@ export const useIframeStore = create<{
   expandedIds: string[]
   swProxy?: Remote<ServiceWorkerAPI>
   tsInit?: true
+  workerAdapter?: WorkerAdapter
 }>(() => ({
   frontendReady: false,
   expandedIds: [],
