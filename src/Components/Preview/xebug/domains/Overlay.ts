@@ -163,7 +163,7 @@ export function setShowViewportSizeOnResize(params: any) {
   showViewportSizeOnResize = params.show
 }
 
-let inspectMode: string = 'none'
+let inspectMode = 'none'
 export function setInspectMode(params: SetInspectModeRequest) {
   inspectMode = params.mode
 }

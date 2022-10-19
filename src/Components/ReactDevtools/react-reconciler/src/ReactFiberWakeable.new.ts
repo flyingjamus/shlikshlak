@@ -1,6 +1,6 @@
 import type { Wakeable, Thenable, PendingThenable, FulfilledThenable, RejectedThenable } from "shared/ReactTypes";
 let suspendedThenable: Thenable<unknown> | null = null;
-let adHocSuspendCount: number = 0;
+let adHocSuspendCount = 0;
 let usedThenables: Array<Thenable<any> | void> | null = null;
 let lastUsedThenable: Thenable<any> | null = null;
 const MAX_AD_HOC_SUSPEND_COUNT = 50;

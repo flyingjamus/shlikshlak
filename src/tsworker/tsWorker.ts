@@ -168,7 +168,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   }
 
   private _getModel(fileName: string): worker.IMirrorModel | null {
-    let models = this._ctx.getMirrorModels()
+    const models = this._ctx.getMirrorModels()
     for (let i = 0; i < models.length; i++) {
       const uri = models[i].uri
       if (uri.toString() === fileName || uri.toString(true) === fileName) {
@@ -179,7 +179,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   }
 
   getScriptVersion(fileName: string): string {
-    let model = this._getModel(fileName)
+    const model = this._getModel(fileName)
     if (model) {
       return model.version.toString()
     } else if (this.isDefaultLibFileName(fileName)) {
@@ -197,7 +197,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
 
   _getScriptText(fileName: string): string | undefined {
     let text: string
-    let model = this._getModel(fileName)
+    const model = this._getModel(fileName)
     const libizedFileName = 'lib.' + fileName + '.d.ts'
     if (model) {
       // a true editor model

@@ -2,7 +2,7 @@ import JSON5 from "json5";
 import type { Element } from "./views/Components/types";
 import type { StateContext } from "./views/Components/TreeContext";
 import type Store from "./store";
-export function printElement(element: Element, includeWeight: boolean = false) {
+export function printElement(element: Element, includeWeight = false) {
   let prefix = ' ';
 
   if (element.children.length > 0) {
@@ -30,10 +30,10 @@ export function printElement(element: Element, includeWeight: boolean = false) {
 
   return `${'  '.repeat(element.depth + 1)}${prefix} <${element.displayName || 'null'}${key}>${hocs}${suffix}`;
 }
-export function printOwnersList(elements: Array<Element>, includeWeight: boolean = false) {
+export function printOwnersList(elements: Array<Element>, includeWeight = false) {
   return elements.map(element => printElement(element, includeWeight)).join('\n');
 }
-export function printStore(store: Store, includeWeight: boolean = false, state: StateContext | null = null) {
+export function printStore(store: Store, includeWeight = false, state: StateContext | null = null) {
   const snapshotLines = [];
   let rootWeight = 0;
 

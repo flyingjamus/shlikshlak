@@ -4,7 +4,7 @@ import { getStackByFiberInDevAndProd } from "./ReactFiberComponentStack";
 import getComponentNameFromFiber from "react-reconciler/src/getComponentNameFromFiber";
 const ReactDebugCurrentFrame = ReactSharedInternals.ReactDebugCurrentFrame;
 export let current: Fiber | null = null;
-export let isRendering: boolean = false;
+export let isRendering = false;
 export function getCurrentFiberOwnerNameInDevOrNull(): string | null {
   if (__DEV__) {
     if (current === null) {

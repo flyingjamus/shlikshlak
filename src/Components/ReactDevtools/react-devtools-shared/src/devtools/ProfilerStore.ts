@@ -44,7 +44,7 @@ export default class ProfilerStore extends EventEmitter<{
   _inProgressOperationsByRootID: Map<number, Array<Array<number>>> = new Map();
   // The backend is currently profiling.
   // When profiling is in progress, operations are stored so that we can later reconstruct past commit trees.
-  _isProfiling: boolean = false;
+  _isProfiling = false;
   // Tracks whether a specific renderer logged any profiling data during the most recent session.
   _rendererIDsThatReportedProfilingData: Set<number> = new Set();
   // After profiling, data is requested from each attached renderer using this queue.

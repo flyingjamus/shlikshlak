@@ -118,12 +118,12 @@ export default class Agent extends EventEmitter<{
   traceUpdates: [Set<NativeType>]
 }> {
   _bridge: BackendBridge
-  _isProfiling: boolean = false
-  _recordChangeDescriptions: boolean = false
+  _isProfiling = false
+  _recordChangeDescriptions = false
   _rendererInterfaces: Record<RendererID, RendererInterface> = {}
   _persistedSelection: PersistedSelection | null = null
   _persistedSelectionMatch: PathMatch | null = null
-  _traceUpdatesEnabled: boolean = false
+  _traceUpdatesEnabled = false
 
   constructor(bridge: BackendBridge) {
     super()

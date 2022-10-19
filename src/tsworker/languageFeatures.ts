@@ -82,10 +82,10 @@ export abstract class Adapter {
   // }
 
   protected _textSpanToRange(model: editor.ITextModel, span: ts.TextSpan): IRange {
-    let p1 = model.getPositionAt(span.start)
-    let p2 = model.getPositionAt(span.start + span.length)
-    let { lineNumber: startLineNumber, column: startColumn } = p1
-    let { lineNumber: endLineNumber, column: endColumn } = p2
+    const p1 = model.getPositionAt(span.start)
+    const p2 = model.getPositionAt(span.start + span.length)
+    const { lineNumber: startLineNumber, column: startColumn } = p1
+    const { lineNumber: endLineNumber, column: endColumn } = p2
     return { startLineNumber, startColumn, endLineNumber, endColumn }
   }
 }
@@ -130,7 +130,7 @@ export class LibFiles {
   }
 
   private _containsLibFile(uris: (Uri | null)[]): boolean {
-    for (let uri of uris) {
+    for (const uri of uris) {
       if (this.isLibFile(uri)) {
         return true
       }
@@ -769,7 +769,7 @@ export class DefinitionAdapter extends Adapter {
     }
 
     const result: languages.Location[] = []
-    for (let entry of entries) {
+    for (const entry of entries) {
       const refModel = this._libFiles.getOrCreateModel(entry.fileName)
       if (refModel) {
         result.push({
@@ -817,7 +817,7 @@ export class ReferenceAdapter extends Adapter implements languages.ReferenceProv
     }
 
     const result: languages.Location[] = []
-    for (let entry of entries) {
+    for (const entry of entries) {
       const refModel = this._libFiles.getOrCreateModel(entry.fileName)
       if (refModel) {
         result.push({
@@ -855,7 +855,7 @@ export class OutlineAdapter extends Adapter implements languages.DocumentSymbolP
       item: ts.NavigationBarItem,
       containerLabel?: string
     ): void => {
-      let result: languages.DocumentSymbol = {
+      const result: languages.DocumentSymbol = {
         name: item.text,
         detail: '',
         kind: <languages.SymbolKind>(outlineTypeTable[item.kind] || languages.SymbolKind.Variable),
@@ -867,7 +867,7 @@ export class OutlineAdapter extends Adapter implements languages.DocumentSymbolP
       if (containerLabel) result.containerName = containerLabel
 
       if (item.childItems && item.childItems.length > 0) {
-        for (let child of item.childItems) {
+        for (const child of item.childItems) {
           convert(bucket, child, result.name)
         }
       }
@@ -875,44 +875,44 @@ export class OutlineAdapter extends Adapter implements languages.DocumentSymbolP
       bucket.push(result)
     }
 
-    let result: languages.DocumentSymbol[] = []
+    const result: languages.DocumentSymbol[] = []
     items.forEach((item) => convert(result, item))
     return result
   }
 }
 
 export class Kind {
-  public static unknown: string = ''
-  public static keyword: string = 'keyword'
-  public static script: string = 'script'
-  public static module: string = 'module'
-  public static class: string = 'class'
-  public static interface: string = 'interface'
-  public static type: string = 'type'
-  public static enum: string = 'enum'
-  public static variable: string = 'var'
-  public static localVariable: string = 'local var'
-  public static function: string = 'function'
-  public static localFunction: string = 'local function'
-  public static memberFunction: string = 'method'
-  public static memberGetAccessor: string = 'getter'
-  public static memberSetAccessor: string = 'setter'
-  public static memberVariable: string = 'property'
-  public static constructorImplementation: string = 'constructor'
-  public static callSignature: string = 'call'
-  public static indexSignature: string = 'index'
-  public static constructSignature: string = 'construct'
-  public static parameter: string = 'parameter'
-  public static typeParameter: string = 'type parameter'
-  public static primitiveType: string = 'primitive type'
-  public static label: string = 'label'
-  public static alias: string = 'alias'
-  public static const: string = 'const'
-  public static let: string = 'let'
-  public static warning: string = 'warning'
+  public static unknown = ''
+  public static keyword = 'keyword'
+  public static script = 'script'
+  public static module = 'module'
+  public static class = 'class'
+  public static interface = 'interface'
+  public static type = 'type'
+  public static enum = 'enum'
+  public static variable = 'var'
+  public static localVariable = 'local var'
+  public static function = 'function'
+  public static localFunction = 'local function'
+  public static memberFunction = 'method'
+  public static memberGetAccessor = 'getter'
+  public static memberSetAccessor = 'setter'
+  public static memberVariable = 'property'
+  public static constructorImplementation = 'constructor'
+  public static callSignature = 'call'
+  public static indexSignature = 'index'
+  public static constructSignature = 'construct'
+  public static parameter = 'parameter'
+  public static typeParameter = 'type parameter'
+  public static primitiveType = 'primitive type'
+  public static label = 'label'
+  public static alias = 'alias'
+  public static const = 'const'
+  public static let = 'let'
+  public static warning = 'warning'
 }
 
-let outlineTypeTable: {
+const outlineTypeTable: {
   [kind: string]: languages.SymbolKind
 } = Object.create(null)
 outlineTypeTable[Kind.module] = languages.SymbolKind.Module

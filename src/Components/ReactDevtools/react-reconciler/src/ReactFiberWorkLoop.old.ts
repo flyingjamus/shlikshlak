@@ -89,12 +89,12 @@ let workInProgressRootRenderLanes: Lanes = NoLanes;
 // we've yet to unwind the stack. In some cases, we may yield to the main thread
 // after this happens. If the fiber is pinged before we resume, we can retry
 // immediately instead of unwinding the stack.
-let workInProgressIsSuspended: boolean = false;
+let workInProgressIsSuspended = false;
 let workInProgressThrownValue: unknown = null;
 // Whether a ping listener was attached during this render. This is slightly
 // different that whether something suspended, because we don't add multiple
 // listeners to a promise we've already seen (per root and lane).
-let workInProgressRootDidAttachPingListener: boolean = false;
+let workInProgressRootDidAttachPingListener = false;
 // A contextual version of workInProgressRootRenderLanes. It is a superset of
 // the lanes that we started working on at the root. When we enter a subtree
 // that is currently hidden, we add the lanes that would have committed if
@@ -124,11 +124,11 @@ let workInProgressRootConcurrentErrors: Array<CapturedValue<unknown>> | null = n
 let workInProgressRootRecoverableErrors: Array<CapturedValue<unknown>> | null = null;
 // The most recent time we committed a fallback. This lets us ensure a train
 // model where we don't commit new loading states in too quick succession.
-let globalMostRecentFallbackTime: number = 0;
-const FALLBACK_THROTTLE_MS: number = 500;
+let globalMostRecentFallbackTime = 0;
+const FALLBACK_THROTTLE_MS = 500;
 // The absolute time for when we should start giving up on rendering
 // more and prefer CPU suspense heuristics instead.
-let workInProgressRootRenderTargetTime: number = Infinity;
+let workInProgressRootRenderTargetTime = Infinity;
 // How long a render is supposed to take before we start following CPU
 // suspense heuristics and opt out of rendering more content.
 const RENDER_TIMEOUT_MS = 500;
@@ -277,7 +277,7 @@ let legacyErrorBoundariesThatAlreadyFailed: Set<unknown> | null = null;
 // Only used when enableProfilerNestedUpdateScheduledHook is true;
 // to track which root is currently committing layout effects.
 let rootCommittingMutationOrLayoutEffects: FiberRoot | null = null;
-let rootDoesHavePassiveEffects: boolean = false;
+let rootDoesHavePassiveEffects = false;
 let rootWithPendingPassiveEffects: FiberRoot | null = null;
 let pendingPassiveEffectsLanes: Lanes = NoLanes;
 let pendingPassiveProfilerEffects: Array<Fiber> = [];
@@ -285,12 +285,12 @@ let pendingPassiveEffectsRemainingLanes: Lanes = NoLanes;
 let pendingPassiveTransitions: Array<Transition> | null = null;
 // Use these to prevent an infinite loop of nested updates
 const NESTED_UPDATE_LIMIT = 50;
-let nestedUpdateCount: number = 0;
+let nestedUpdateCount = 0;
 let rootWithNestedUpdates: FiberRoot | null = null;
 let isFlushingPassiveEffects = false;
 let didScheduleUpdateDuringPassiveEffects = false;
 const NESTED_PASSIVE_UPDATE_LIMIT = 50;
-let nestedPassiveUpdateCount: number = 0;
+let nestedPassiveUpdateCount = 0;
 let rootWithPassiveNestedUpdates: FiberRoot | null = null;
 // If two updates are scheduled within the same event, we should treat their
 // event times as simultaneous, even if the actual clock time has advanced

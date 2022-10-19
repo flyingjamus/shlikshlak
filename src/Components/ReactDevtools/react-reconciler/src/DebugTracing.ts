@@ -4,7 +4,7 @@ import { enableDebugTracing } from "shared/ReactFeatureFlags";
 const nativeConsole: Record<string, any> = console;
 let nativeConsoleLog: null | ((...args: Array<any>) => any) = null;
 const pendingGroupArgs: Array<any> = [];
-let printedGroupIndex: number = -1;
+let printedGroupIndex = -1;
 
 function formatLanes(laneOrLanes: Lane | Lanes): string {
   return '0b' + (laneOrLanes as any).toString(2).padStart(31, '0');
@@ -68,7 +68,7 @@ export function logCommitStopped(): void {
 const PossiblyWeakMap = typeof WeakMap === 'function' ? WeakMap : Map;
 // @ts-expect-error: Flow cannot handle polymorphic WeakMaps
 const wakeableIDs: WeakMap<Wakeable, number> = new PossiblyWeakMap();
-let wakeableID: number = 0;
+let wakeableID = 0;
 
 function getWakeableID(wakeable: Wakeable): number {
   if (!wakeableIDs.has(wakeable)) {

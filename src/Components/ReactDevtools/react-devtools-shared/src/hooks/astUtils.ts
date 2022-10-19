@@ -195,7 +195,7 @@ function getHookNameFromNode(originalHook: HooksNode, nodesAssociatedWithReactHo
 }
 
 // Extracts the variable name from hook node path
-function getHookVariableName(hook: NodePath, isCustomHook: boolean = false): string | null {
+function getHookVariableName(hook: NodePath, isCustomHook = false): string | null {
   const nodeType = hook.node.id.type;
 
   switch (nodeType) {

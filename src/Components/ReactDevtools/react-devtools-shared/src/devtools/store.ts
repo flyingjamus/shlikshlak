@@ -81,11 +81,11 @@ export default class Store extends EventEmitter<{
   _backendVersion: string | null = null
   _bridge: FrontendBridge
   // Computed whenever _errorsAndWarnings Map changes.
-  _cachedErrorCount: number = 0
-  _cachedWarningCount: number = 0
+  _cachedErrorCount = 0
+  _cachedWarningCount = 0
   _cachedErrorAndWarningTuples: ErrorAndWarningTuples | null = null
   // Should new nodes be collapsed by default when added to the tree?
-  _collapseNodesByDefault: boolean = true
+  _collapseNodesByDefault = true
   _componentFilters: Array<ComponentFilter>
   // Map of ID to number of recorded error and warning message IDs.
   _errorsAndWarnings: Map<
@@ -96,21 +96,21 @@ export default class Store extends EventEmitter<{
     }
   > = new Map()
   // At least one of the injected renderers contains (DEV only) owner metadata.
-  _hasOwnerMetadata: boolean = false
+  _hasOwnerMetadata = false
   // Map of ID to (mutable) Element.
   // Elements are mutated to avoid excessive cloning during tree updates.
   // The InspectedElement Suspense cache also relies on this mutability for its WeakMap usage.
   _idToElement: Map<number, Element> = new Map()
   // Should the React Native style editor panel be shown?
-  _isNativeStyleEditorSupported: boolean = false
+  _isNativeStyleEditorSupported = false
   // Can the backend use the Storage API (e.g. localStorage)?
   // If not, features like reload-and-profile will not work correctly and must be disabled.
-  _isBackendStorageAPISupported: boolean = false
+  _isBackendStorageAPISupported = false
   // Can DevTools use sync XHR requests?
   // If not, features like reload-and-profile will not work correctly and must be disabled.
   // This current limitation applies only to web extension builds
   // and will need to be reconsidered in the future if we add support for reload to React Native.
-  _isSynchronousXHRSupported: boolean = false
+  _isSynchronousXHRSupported = false
   _nativeStyleEditorValidAttributes: ReadonlyArray<string> | null = null
   // Older backends don't support an explicit bridge protocol,
   // so we should timeout eventually and show a downgrade message.
@@ -119,10 +119,10 @@ export default class Store extends EventEmitter<{
   // This map enables getOwnersListForElement() to avoid traversing the entire tree.
   _ownersMap: Map<number, Set<number>> = new Map()
   _profilerStore: ProfilerStore
-  _recordChangeDescriptions: boolean = false
+  _recordChangeDescriptions = false
   // Incremented each time the store is mutated.
   // This enables a passive effect to detect a mutation between render and commit phase.
-  _revision: number = 0
+  _revision = 0
   // This Array must be treated as immutable!
   // Passive effects will check it for changes between render and mount.
   _roots: ReadonlyArray<number> = []
@@ -130,20 +130,20 @@ export default class Store extends EventEmitter<{
   // Renderer ID is needed to support inspection fiber props, state, and hooks.
   _rootIDToRendererID: Map<number, number> = new Map()
   // These options may be initially set by a confiugraiton option when constructing the Store.
-  _supportsNativeInspection: boolean = true
-  _supportsProfiling: boolean = false
-  _supportsReloadAndProfile: boolean = false
-  _supportsTimeline: boolean = false
-  _supportsTraceUpdates: boolean = false
+  _supportsNativeInspection = true
+  _supportsProfiling = false
+  _supportsReloadAndProfile = false
+  _supportsTimeline = false
+  _supportsTraceUpdates = false
   // These options default to false but may be updated as roots are added and removed.
-  _rootSupportsBasicProfiling: boolean = false
-  _rootSupportsTimelineProfiling: boolean = false
+  _rootSupportsBasicProfiling = false
+  _rootSupportsTimelineProfiling = false
   _bridgeProtocol: BridgeProtocol | null = null
-  _unsupportedBridgeProtocolDetected: boolean = false
-  _unsupportedRendererVersionDetected: boolean = false
+  _unsupportedBridgeProtocolDetected = false
+  _unsupportedRendererVersionDetected = false
   // Total number of visible elements (within all roots).
   // Used for windowing purposes.
-  _weightAcrossRoots: number = 0
+  _weightAcrossRoots = 0
 
   constructor(bridge: FrontendBridge, config?: Config) {
     super()
@@ -849,7 +849,7 @@ export default class Store extends EventEmitter<{
             )
           }
 
-          let ownerID: number = 0
+          let ownerID = 0
           let parentID: number = null as any as number
 
           if (type === ElementTypeRoot) {

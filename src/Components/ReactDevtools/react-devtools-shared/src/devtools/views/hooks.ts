@@ -177,7 +177,7 @@ export function useModalDismissSignal(
     current: HTMLDivElement | null
   },
   dismissCallback: () => void,
-  dismissOnClickOutside: boolean = true
+  dismissOnClickOutside = true
 ): void {
   useEffect(() => {
     if (modalRef.current === null) {

@@ -559,7 +559,7 @@ class LanguageServiceDefaultsImpl implements LanguageServiceDefaults {
 
 		return {
 			dispose: () => {
-				let extraLib = this._extraLibs[filePath];
+				const extraLib = this._extraLibs[filePath];
 				if (!extraLib) {
 					return;
 				}
@@ -692,8 +692,8 @@ export const getJavaScriptWorker = (): Promise<(...uris: Uri[]) => Promise<TypeS
 
 // --- Registration to monaco editor ---
 
-declare var AMD: any;
-declare var require: any;
+declare let AMD: any;
+declare let require: any;
 
 function getMode(): Promise<typeof mode> {
 	if (AMD) {

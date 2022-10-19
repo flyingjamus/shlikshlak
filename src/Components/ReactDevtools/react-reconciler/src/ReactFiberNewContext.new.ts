@@ -24,7 +24,7 @@ if (__DEV__) {
 let currentlyRenderingFiber: Fiber | null = null;
 let lastContextDependency: ContextDependency<unknown> | null = null;
 let lastFullyObservedContext: ReactContext<any> | null = null;
-let isDisallowedContextReadInDEV: boolean = false;
+let isDisallowedContextReadInDEV = false;
 export function resetContextDependencies(): void {
   // This is called right before React yields execution, to ensure `readContext`
   // cannot be called outside the render phase.
@@ -299,7 +299,7 @@ function propagateContextChanges<T>(workInProgress: Fiber, contexts: Array<any>,
         const dependency = dep;
         const consumer = fiber;
 
-        findContext: for (let i = 0; i < contexts.length; i++) {
+        for (let i = 0; i < contexts.length; i++) {
           const context: ReactContext<T> = contexts[i];
 
           // Check if the context matches.

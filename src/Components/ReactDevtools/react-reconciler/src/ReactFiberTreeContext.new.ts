@@ -61,14 +61,14 @@ export type TreeContext = {
 // the way we push/pop these values is a bit unusual. If there's a mistake, I'd
 // rather the ids be wrong than crash the whole reconciler.
 const forkStack: Array<any> = [];
-let forkStackIndex: number = 0;
+let forkStackIndex = 0;
 let treeForkProvider: Fiber | null = null;
-let treeForkCount: number = 0;
+let treeForkCount = 0;
 const idStack: Array<any> = [];
-let idStackIndex: number = 0;
+let idStackIndex = 0;
 let treeContextProvider: Fiber | null = null;
-let treeContextId: number = 1;
-let treeContextOverflow: string = '';
+let treeContextId = 1;
+let treeContextOverflow = '';
 export function isForkedChild(workInProgress: Fiber): boolean {
   warnIfNotHydrating();
   return (workInProgress.flags & Forked) !== NoFlags;

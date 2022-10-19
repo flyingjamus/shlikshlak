@@ -836,7 +836,7 @@ export function attach(
     name: string,
     fiber: Fiber,
     parentFiber: Fiber | null | undefined,
-    extraString: string = ''
+    extraString = ''
   ): void => {
     if (__DEBUG__) {
       const displayName = fiber.tag + ':' + (getDisplayNameForFiber(fiber) || 'null')
@@ -864,7 +864,7 @@ export function attach(
   const hideElementsWithPaths: Set<RegExp> = new Set()
   const hideElementsWithTypes: Set<ElementType> = new Set()
   // Highlight updates
-  let traceUpdatesEnabled: boolean = false
+  let traceUpdatesEnabled = false
   const traceUpdatesForNodes: Set<NativeType> = new Set()
 
   function applyComponentFilters(componentFilters: Array<ComponentFilter>) {
@@ -1110,7 +1110,7 @@ export function attach(
   // This map enables us to filter these times by root when sending them to the frontend.
   const idToRootMap: Map<number, number> = new Map()
   // When a mount or update is in progress, this value tracks the root that is being operated on.
-  let currentRootID: number = -1
+  let currentRootID = -1
 
   // Returns the unique ID for a Fiber or generates and caches a new one if the Fiber hasn't been seen before.
   // Once this method has been called for a Fiber, untrackFiberID() should always be called later to avoid leaking.
@@ -1600,7 +1600,7 @@ export function attach(
   const pendingSimulatedUnmountedIDs: Array<number> = []
   let pendingOperationsQueue: Array<OperationsArray> | null = []
   const pendingStringTable: Map<string, StringTableEntry> = new Map()
-  let pendingStringTableLength: number = 0
+  let pendingStringTableLength = 0
   let pendingUnmountedRootID: number | null = null
 
   function pushOperation(op: number): void {
@@ -3362,7 +3362,7 @@ export function attach(
   }
 
   let mostRecentlyInspectedElement: InspectedElement | null = null
-  let hasElementUpdatedSinceLastInspected: boolean = false
+  let hasElementUpdatedSinceLastInspected = false
   let currentlyInspectedPaths: Record<string, any> = {}
 
   function isMostRecentlyInspectedElement(id: number): boolean {
@@ -3921,9 +3921,9 @@ export function attach(
   let idToContextsMap: Map<number, any> | null = null
   let initialTreeBaseDurationsMap: Map<number, number> | null = null
   let initialIDToRootMap: Map<number, number> | null = null
-  let isProfiling: boolean = false
-  let profilingStartTime: number = 0
-  let recordChangeDescriptions: boolean = false
+  let isProfiling = false
+  let profilingStartTime = 0
+  let recordChangeDescriptions = false
   let rootToCommitProfilingMetadataMap: CommitProfilingMetadataMap | null = null
 
   function getProfilingData(): ProfilingDataBackend {

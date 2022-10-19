@@ -97,20 +97,20 @@ let workInProgressHook: Hook | null = null;
 // does not get reset if we do another render pass; only when we're completely
 // finished evaluating this component. This is an optimization so we know
 // whether we need to clear render phase updates after a throw.
-let didScheduleRenderPhaseUpdate: boolean = false;
+let didScheduleRenderPhaseUpdate = false;
 // Where an update was scheduled only during the current render pass. This
 // gets reset after each attempt.
 // TODO: Maybe there's some way to consolidate this with
 // `didScheduleRenderPhaseUpdate`. Or with `numberOfReRenders`.
-let didScheduleRenderPhaseUpdateDuringThisPass: boolean = false;
+let didScheduleRenderPhaseUpdateDuringThisPass = false;
 // Counts the number of useId hooks in this component.
-let localIdCounter: number = 0;
+let localIdCounter = 0;
 // Counts number of `use`-d thenables
-let thenableIndexCounter: number = 0;
+let thenableIndexCounter = 0;
 // Used for ids that are generated completely client-side (i.e. not during
 // hydration). This counter is global, so client ids are not stable across
 // render attempts.
-let globalClientIdCounter: number = 0;
+let globalClientIdCounter = 0;
 const RE_RENDER_LIMIT = 25;
 // In DEV, this is the name of the currently executing primitive hook
 let currentHookNameInDev: HookType | null | undefined = null;
@@ -118,11 +118,11 @@ let currentHookNameInDev: HookType | null | undefined = null;
 // The list stores the order of hooks used during the initial render (mount).
 // Subsequent renders (updates) reference this list.
 let hookTypesDev: Array<HookType> | null = null;
-let hookTypesUpdateIndexDev: number = -1;
+let hookTypesUpdateIndexDev = -1;
 // In DEV, this tracks whether currently rendering component needs to ignore
 // the dependencies for Hooks that need them (e.g. useEffect or useMemo).
 // When true, such Hooks will always be "remounted". Only used during hot reload.
-let ignorePreviousDependencies: boolean = false;
+let ignorePreviousDependencies = false;
 
 function mountHookTypesDev() {
   if (__DEV__) {
@@ -281,7 +281,7 @@ export function renderWithHooks<Props, SecondArg>(current: Fiber | null, workInP
   if (didScheduleRenderPhaseUpdateDuringThisPass) {
     // Keep rendering in a loop for as long as render phase updates continue to
     // be scheduled. Use a counter to prevent infinite loops.
-    let numberOfReRenders: number = 0;
+    let numberOfReRenders = 0;
 
     do {
       didScheduleRenderPhaseUpdateDuringThisPass = false;

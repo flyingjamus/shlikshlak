@@ -57,7 +57,7 @@ import { getForksAtLevel, isForkedChild, pushTreeId, pushMaterializedTreeId } fr
 import { requestCacheFromPool, pushRootTransition, getSuspendedCache, pushTransition, getOffscreenDeferredCache, getPendingTransitions } from "./ReactFiberTransition.new";
 import { getMarkerInstances, pushMarkerInstance, pushRootMarkerInstance, TransitionTracingMarker } from "./ReactFiberTracingMarkerComponent.new";
 const ReactCurrentOwner = ReactSharedInternals.ReactCurrentOwner;
-let didReceiveUpdate: boolean = false;
+let didReceiveUpdate = false;
 let didWarnAboutBadClass;
 let didWarnAboutModulePatternComponent;
 let didWarnAboutContextTypeOnFunctionComponent;

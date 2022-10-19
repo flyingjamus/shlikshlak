@@ -87,7 +87,7 @@ export function getWrappedDisplayName(
 }
 export function getDisplayName(
   type: (...args: Array<any>) => any,
-  fallbackName: string = 'Anonymous'
+  fallbackName = 'Anonymous'
 ): string {
   const nameFromCache = cachedDisplayNames.get(type)
 
@@ -109,7 +109,7 @@ export function getDisplayName(
   cachedDisplayNames.set(type, displayName)
   return displayName
 }
-let uidCounter: number = 0
+let uidCounter = 0
 export function getUID(): number {
   return ++uidCounter
 }

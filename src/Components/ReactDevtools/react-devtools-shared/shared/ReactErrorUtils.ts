@@ -1,9 +1,9 @@
 import invokeGuardedCallbackImpl from "./invokeGuardedCallbackImpl";
 // Used by Fiber to simulate a try-catch.
-let hasError: boolean = false;
+let hasError = false;
 let caughtError: unknown = null;
 // Used by event system to capture/rethrow the first error.
-let hasRethrowError: boolean = false;
+let hasRethrowError = false;
 let rethrowError: unknown = null;
 const reporter = {
   onError(error: unknown) {

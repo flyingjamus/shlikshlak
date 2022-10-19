@@ -17,10 +17,10 @@ import { getRootHostContainer } from "./ReactFiberHostContext.old";
 // This may have been an insertion or a hydration.
 let hydrationParentFiber: null | Fiber = null;
 let nextHydratableInstance: null | HydratableInstance = null;
-let isHydrating: boolean = false;
+let isHydrating = false;
 // This flag allows for warning supression when we expect there to be mismatches
 // due to earlier mismatches or a suspended fiber.
-let didSuspendOrErrorDEV: boolean = false;
+let didSuspendOrErrorDEV = false;
 // Hydration errors that were thrown inside this boundary
 let hydrationErrors: Array<CapturedValue<unknown>> | null = null;
 

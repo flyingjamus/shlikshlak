@@ -693,7 +693,7 @@ export function inspectHooks<Props>(
   renderFunction: (arg0: Props) => React.ReactNode,
   props: Props,
   currentDispatcher: CurrentDispatcherRef | null | undefined,
-  includeHooksSource: boolean = false
+  includeHooksSource = false
 ): HooksTree {
   // DevTools will pass the current renderer's injected dispatcher.
   // Other apps might compile debug hooks as part of their app though.
@@ -793,7 +793,7 @@ function resolveDefaultProps(Component, baseProps) {
 export function inspectHooksOfFiber(
   fiber: Fiber,
   currentDispatcher: CurrentDispatcherRef | null | undefined,
-  includeHooksSource: boolean = false
+  includeHooksSource = false
 ) {
   // DevTools will pass the current renderer's injected dispatcher.
   // Other apps might compile debug hooks as part of their app though.

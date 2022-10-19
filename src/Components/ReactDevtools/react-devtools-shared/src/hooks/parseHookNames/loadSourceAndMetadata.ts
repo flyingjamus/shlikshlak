@@ -221,7 +221,7 @@ function extractAndLoadSourceMapJSON(locationKeyToHookSourceAndMetadata: Locatio
   return Promise.all(setterPromises);
 }
 
-function fetchFile(url: string, markName: string = 'fetchFile'): Promise<string> {
+function fetchFile(url: string, markName = 'fetchFile'): Promise<string> {
   return withCallbackPerfMeasurements(`${markName}("${url}")`, done => {
     return new Promise((resolve, reject) => {
       fetch(url, FETCH_OPTIONS).then(response => {

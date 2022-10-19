@@ -7,10 +7,10 @@ export class WorkerAdapter {
     const edits = await worker.setAttributeAtPosition(uriString, offset, 'size', 'AAAAA')
     console.log(edits)
     function textSpanToRange(model: editor.ITextModel, span: typescript.TextSpan): IRange {
-      let p1 = model.getPositionAt(span.start)
-      let p2 = model.getPositionAt(span.start + span.length)
-      let { lineNumber: startLineNumber, column: startColumn } = p1
-      let { lineNumber: endLineNumber, column: endColumn } = p2
+      const p1 = model.getPositionAt(span.start)
+      const p2 = model.getPositionAt(span.start + span.length)
+      const { lineNumber: startLineNumber, column: startColumn } = p1
+      const { lineNumber: endLineNumber, column: endColumn } = p2
       return { startLineNumber, startColumn, endLineNumber, endColumn }
     }
 

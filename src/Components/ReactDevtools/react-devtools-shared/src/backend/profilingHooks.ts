@@ -94,8 +94,8 @@ export function createProfilingHooks({
   let currentReactMeasuresStack: Array<ReactMeasure> = []
   let currentTimelineData: TimelineData | null = null
   let currentFiberStacks: Map<SchedulingEvent, Array<Fiber>> = new Map()
-  let isProfiling: boolean = false
-  let nextRenderShouldStartNewBatch: boolean = false
+  let isProfiling = false
+  let nextRenderShouldStartNewBatch = false
 
   function getRelativeTime() {
     const currentTime = getCurrentTime()
@@ -523,7 +523,7 @@ export function createProfilingHooks({
   const PossiblyWeakMap = typeof WeakMap === 'function' ? WeakMap : Map
   // $FlowFixMe: Flow cannot handle polymorphic WeakMaps
   const wakeableIDs: WeakMap<Wakeable, number> = new PossiblyWeakMap()
-  let wakeableID: number = 0
+  let wakeableID = 0
 
   function getWakeableID(wakeable: Wakeable): number {
     if (!wakeableIDs.has(wakeable)) {

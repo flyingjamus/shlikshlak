@@ -15,7 +15,7 @@ import { ImmediatePriority as ImmediateSchedulerPriority, UserBlockingPriority a
 import { setSuppressWarning } from "shared/consoleWithStackDev";
 import { disableLogs, reenableLogs } from "shared/ConsolePatchingDev";
 
-declare var __REACT_DEVTOOLS_GLOBAL_HOOK__: Record<string, any> | void;
+declare let __REACT_DEVTOOLS_GLOBAL_HOOK__: Record<string, any> | void;
 
 let rendererID = null;
 let injectedHook = null;

@@ -17,10 +17,10 @@ export type ProfilerTimer = {
   stopProfilerTimerIfRunningAndRecordDelta(fiber: Fiber): void;
   syncNestedUpdateFlag(): void;
 };
-let commitTime: number = 0;
-let layoutEffectStartTime: number = -1;
-let profilerStartTime: number = -1;
-let passiveEffectStartTime: number = -1;
+let commitTime = 0;
+let layoutEffectStartTime = -1;
+let profilerStartTime = -1;
+let passiveEffectStartTime = -1;
 
 /**
  * Tracks whether the current update was a nested/cascading update (scheduled from a layout effect).
@@ -38,8 +38,8 @@ let passiveEffectStartTime: number = -1;
  * and the other tracks whether the current update was a nested update.
  * The first value gets synced to the second at the start of the render phase.
  */
-let currentUpdateIsNested: boolean = false;
-let nestedUpdateScheduled: boolean = false;
+let currentUpdateIsNested = false;
+let nestedUpdateScheduled = false;
 
 function isCurrentUpdateNested(): boolean {
   return currentUpdateIsNested;

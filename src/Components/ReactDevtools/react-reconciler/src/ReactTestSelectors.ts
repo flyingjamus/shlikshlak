@@ -274,7 +274,7 @@ export function getFindAllNodesFailureDescription(hostRoot: Instance, selectors:
   }
 
   const root = findFiberRootForHostRoot(hostRoot);
-  let maxSelectorIndex: number = 0;
+  let maxSelectorIndex = 0;
   const matchedNames = [];
   // The logic of this loop should be kept in sync with findPaths()
   const stack = [root, 0];

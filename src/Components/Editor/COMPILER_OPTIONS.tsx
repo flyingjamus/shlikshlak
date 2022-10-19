@@ -1,5 +1,7 @@
-import { CompilerOptions, JsxEmit, ModuleKind, ModuleResolutionKind, ScriptTarget } from 'typescript'
+import { JsxEmit, ModuleKind, ModuleResolutionKind, ScriptTarget } from 'typescript'
 import { defaults } from 'lodash-es'
+import { languages } from 'monaco-editor/esm/vs/editor/editor.api'
+type CompilerOptions = languages.typescript.CompilerOptions
 
 export const COMPILER_OPTIONS: CompilerOptions = defaults({
   allowJs: true,

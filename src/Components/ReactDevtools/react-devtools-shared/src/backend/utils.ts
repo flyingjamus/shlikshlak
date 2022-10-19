@@ -39,7 +39,7 @@ export function copyToClipboard(value: any): void {
 export function copyWithDelete(
   obj: Record<string, any> | Array<any>,
   path: Array<string | number>,
-  index: number = 0
+  index = 0
 ): Record<string, any> | Array<any> {
   const key = path[index]
   const updated = isArray(obj) ? obj.slice() : { ...obj }
@@ -63,7 +63,7 @@ export function copyWithRename(
   obj: Record<string, any> | Array<any>,
   oldPath: Array<string | number>,
   newPath: Array<string | number>,
-  index: number = 0
+  index = 0
 ): Record<string, any> | Array<any> {
   const oldKey = oldPath[index]
   const updated = isArray(obj) ? obj.slice() : { ...obj }
@@ -89,7 +89,7 @@ export function copyWithSet(
   obj: Record<string, any> | Array<any>,
   path: Array<string | number>,
   value: any,
-  index: number = 0
+  index = 0
 ): Record<string, any> | Array<any> {
   if (index >= path.length) {
     return value
@@ -203,7 +203,7 @@ export function formatWithStyles(inputArgs: ReadonlyArray<any>, style?: string):
 // NOTE: KEEP IN SYNC with src/hook.js
 export function format(maybeMessage: any, ...inputArgs: ReadonlyArray<any>): string {
   const args = inputArgs.slice()
-  let formatted: string = String(maybeMessage)
+  let formatted = String(maybeMessage)
 
   // If the first argument is a string, check for substitutions.
   if (typeof maybeMessage === 'string') {

@@ -104,7 +104,7 @@ export function dehydrate(
   unserializable: Array<Array<string | number>>,
   path: Array<string | number>,
   isPathAllowed: (path: Array<string | number>) => boolean,
-  level: number = 0
+  level = 0
 ):
   | string
   | Dehydrated

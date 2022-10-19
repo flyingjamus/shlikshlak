@@ -2,8 +2,8 @@ import type { SchedulerCallback } from "./Scheduler";
 import { DiscreteEventPriority, getCurrentUpdatePriority, setCurrentUpdatePriority } from "./ReactEventPriorities.old";
 import { ImmediatePriority, scheduleCallback } from "./Scheduler";
 let syncQueue: Array<SchedulerCallback> | null = null;
-let includesLegacySyncCallbacks: boolean = false;
-let isFlushingSyncQueue: boolean = false;
+let includesLegacySyncCallbacks = false;
+let isFlushingSyncQueue = false;
 export function scheduleSyncCallback(callback: SchedulerCallback) {
   // Push this callback into an internal queue. We'll flush these either in
   // the next tick, or earlier if something calls `flushSyncCallbackQueue`.

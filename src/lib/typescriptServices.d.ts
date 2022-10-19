@@ -55,8 +55,7 @@ declare namespace ts {
     /**
      * ES6 Map interface, only read methods included.
      */
-    interface ReadonlyMap<T> extends ReadonlyESMap<string, T> {
-    }
+    type ReadonlyMap<T> = ReadonlyESMap<string, T>
     /** ES6 Map interface. */
     interface ESMap<K, V> extends ReadonlyESMap<K, V>, Collection<K> {
         set(key: K, value: V): this;
@@ -64,8 +63,7 @@ declare namespace ts {
     /**
      * ES6 Map interface.
      */
-    interface Map<T> extends ESMap<string, T> {
-    }
+    type Map<T> = ESMap<string, T>
     /** ES6 Set interface, only read methods included. */
     interface ReadonlySet<T> extends ReadonlyCollection<T> {
         has(value: T): boolean;
@@ -596,8 +594,7 @@ declare namespace ts {
         readonly kind: TKind;
     }
     export type EndOfFileToken = Token<SyntaxKind.EndOfFileToken> & JSDocContainer;
-    export interface PunctuationToken<TKind extends PunctuationSyntaxKind> extends Token<TKind> {
-    }
+    export type PunctuationToken<TKind extends PunctuationSyntaxKind> = Token<TKind>
     export type DotToken = PunctuationToken<SyntaxKind.DotToken>;
     export type DotDotDotToken = PunctuationToken<SyntaxKind.DotDotDotToken>;
     export type QuestionToken = PunctuationToken<SyntaxKind.QuestionToken>;
@@ -609,8 +606,7 @@ declare namespace ts {
     export type PlusToken = PunctuationToken<SyntaxKind.PlusToken>;
     export type MinusToken = PunctuationToken<SyntaxKind.MinusToken>;
     export type QuestionDotToken = PunctuationToken<SyntaxKind.QuestionDotToken>;
-    export interface KeywordToken<TKind extends KeywordSyntaxKind> extends Token<TKind> {
-    }
+    export type KeywordToken<TKind extends KeywordSyntaxKind> = Token<TKind>
     export type AssertsKeyword = KeywordToken<SyntaxKind.AssertsKeyword>;
     export type AssertKeyword = KeywordToken<SyntaxKind.AssertKeyword>;
     export type AwaitKeyword = KeywordToken<SyntaxKind.AwaitKeyword>;
@@ -618,8 +614,7 @@ declare namespace ts {
     export type AwaitKeywordToken = AwaitKeyword;
     /** @deprecated Use `AssertsKeyword` instead. */
     export type AssertsToken = AssertsKeyword;
-    export interface ModifierToken<TKind extends ModifierSyntaxKind> extends KeywordToken<TKind> {
-    }
+    export type ModifierToken<TKind extends ModifierSyntaxKind> = KeywordToken<TKind>
     export type AbstractKeyword = ModifierToken<SyntaxKind.AbstractKeyword>;
     export type AsyncKeyword = ModifierToken<SyntaxKind.AsyncKeyword>;
     export type ConstKeyword = ModifierToken<SyntaxKind.ConstKeyword>;
@@ -2616,8 +2611,7 @@ declare namespace ts {
         __escapedIdentifier: void;
     }) | InternalSymbolName;
     /** ReadonlyMap where keys are `__String`s. */
-    export interface ReadonlyUnderscoreEscapedMap<T> extends ReadonlyESMap<__String, T> {
-    }
+    export type ReadonlyUnderscoreEscapedMap<T> = ReadonlyESMap<__String, T>
     /** Map where keys are `__String`s. */
     export interface UnderscoreEscapedMap<T> extends ESMap<__String, T>, ReadonlyUnderscoreEscapedMap<T> {
     }
@@ -5474,8 +5468,7 @@ declare namespace ts {
     /**
      * Creates the watch what generates program using the config file
      */
-    interface WatchOfConfigFile<T> extends Watch<T> {
-    }
+    type WatchOfConfigFile<T> = Watch<T>
     /**
      * Creates the watch that generates program using the root files and compiler options
      */
@@ -7876,13 +7869,11 @@ declare namespace ts {
     /**
      * @deprecated Use `ts.ReadonlyESMap<K, V>` instead.
      */
-    interface ReadonlyMap<T> extends ReadonlyESMap<string, T> {
-    }
+    type ReadonlyMap<T> = ReadonlyESMap<string, T>
     /**
      * @deprecated Use `ts.ESMap<K, V>` instead.
      */
-    interface Map<T> extends ESMap<string, T> {
-    }
+    type Map<T> = ESMap<string, T>
 }
 declare namespace ts {
     /**

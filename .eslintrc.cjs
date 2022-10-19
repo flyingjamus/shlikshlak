@@ -12,8 +12,9 @@ module.exports = {
     // 'plugin:sonarjs/recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'eslint:recommended',
-    // 'plugin:jest/recommended',
+    'plugin:react/recommended',
+    'plugin:react/jsx-runtime',
+    "plugin:react-hooks/recommended",
     'prettier',
   ],
   // env: {
@@ -47,5 +48,5 @@ module.exports = {
     'react/jsx-no-undef': 'off',
   },
 
-  ignorePatterns: ['src/**/*.js'],
+  ignorePatterns: ['src/**/*.js', 'src/lib/**/*', 'src/Components/ReactDevtools'],
 }

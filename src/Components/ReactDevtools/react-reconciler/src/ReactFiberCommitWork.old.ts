@@ -40,8 +40,8 @@ if (__DEV__) {
 
 // Used during the commit phase to track the state of the Offscreen component stack.
 // Allows us to avoid traversing the return path to find the nearest Offscreen ancestor.
-let offscreenSubtreeIsHidden: boolean = false;
-let offscreenSubtreeWasHidden: boolean = false;
+let offscreenSubtreeIsHidden = false;
+let offscreenSubtreeWasHidden = false;
 const PossiblyWeakSet = typeof WeakSet === 'function' ? WeakSet : Set;
 let nextEffect: Fiber | null = null;
 // Used for Profiling builds to track updaters.
@@ -142,7 +142,7 @@ function safelyCallDestroy(current: Fiber, nearestMountedAncestor: Fiber | null,
 }
 
 let focusedInstanceHandle: null | Fiber = null;
-let shouldFireAfterActiveInstanceBlur: boolean = false;
+let shouldFireAfterActiveInstanceBlur = false;
 export function commitBeforeMutationEffects(root: FiberRoot, firstChild: Fiber) {
   focusedInstanceHandle = prepareForCommit(root.containerInfo);
   nextEffect = firstChild;
@@ -1490,7 +1490,7 @@ function insertOrAppendPlacementNode(node: Fiber, before: Instance | null | unde
 // TODO: Update these during the whole mutation phase, not just during
 // a deletion.
 let hostParent: Instance | Container | null = null;
-let hostParentIsContainer: boolean = false;
+let hostParentIsContainer = false;
 
 function commitDeletionEffects(root: FiberRoot, returnFiber: Fiber, deletedFiber: Fiber) {
   if (supportsMutation) {

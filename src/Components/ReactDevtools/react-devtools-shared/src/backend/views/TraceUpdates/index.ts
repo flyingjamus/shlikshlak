@@ -21,7 +21,7 @@ export type Data = {
 const nodeToData: Map<NativeType, Data> = new Map();
 let agent: Agent = ((null as any) as Agent);
 let drawAnimationFrameID: AnimationFrameID | null = null;
-let isEnabled: boolean = false;
+let isEnabled = false;
 let redrawTimeoutID: TimeoutID | null = null;
 export function initialize(injectedAgent: Agent): void {
   agent = injectedAgent;

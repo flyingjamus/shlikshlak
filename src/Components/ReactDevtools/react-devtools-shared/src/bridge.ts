@@ -236,7 +236,7 @@ class Bridge<
   OutgoingEvents extends Record<string, any>,
   IncomingEvents extends Record<string, any>
 > extends EventEmitter<IncomingEvents & OutgoingEvents> {
-  _isShutdown: boolean = false
+  _isShutdown = false
   _messageQueue: Array<any> = []
   _timeoutID: number | null = null
   _wall: Wall

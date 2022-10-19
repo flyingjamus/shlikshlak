@@ -13,21 +13,21 @@ import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 
 // const useTv
 
-const bindEditor = (editor: IStandaloneCodeEditor) => {
-  const editorService = editor._codeEditorService
-  const openEditorBase = editorService.openCodeEditor.bind(editorService)
-  editorService.openCodeEditor = async (input, source) => {
-    const result = await openEditorBase(input, source)
-    if (result === null) {
-      alert('intercepted')
-      console.log('Open definition for:', input)
-      console.log('Corresponding model:', monaco.editor.getModel(input.resource))
-      console.log('Source: ', source)
-      source.setModel(monaco.editor.getModel(input.resource))
-    }
-    return result // always return the base result
-  }
-}
+// const bindEditor = (editor: IStandaloneCodeEditor) => {
+//   const editorService = editor._codeEditorService
+//   const openEditorBase = editorService.openCodeEditor.bind(editorService)
+//   editorService.openCodeEditor = async (input, source) => {
+//     const result = await openEditorBase(input, source)
+//     if (result === null) {
+//       alert('intercepted')
+//       console.log('Open definition for:', input)
+//       console.log('Corresponding model:', monaco.editor.getModel(input.resource))
+//       console.log('Source: ', source)
+//       source.setModel(monaco.editor.getModel(input.resource))
+//     }
+//     return result // always return the base result
+//   }
+// }
 
 export const MonacoEditor = () => {
   // const monaco: Monaco | null = useMonaco()
@@ -61,7 +61,7 @@ export const MonacoEditor = () => {
       })
     })
 
-    bindEditor(editor)
+    // bindEditor(editor)
     setMonacoInstance(editor)
 
     return () => {
@@ -71,46 +71,6 @@ export const MonacoEditor = () => {
     }
   }, [monacoInstance])
 
-  useEffect(() => {
-    if (monaco && files) {
-      const editor = monaco.editor
-      const models = editor.getModels()
-
-      // console.log('MODELS', models)
-      const fileNames = Object.keys(files)
-      // models.forEach((model) => {
-      //   if (!fileNames.includes(model.uri.path)) {
-      //     // console.log('Removing', model.uri)
-      //     model.dispose()
-      //   }
-      // })
-      // for (const file of object.values(files)) {
-      //   const uri = monaco.uri.file(file.path.slice(1))
-      //   if (file.path.includes('1.tsx')) {
-      //     // console.log('creating', file, uri)
-      //     const existing = editor.getmodel(uri)
-      //     if (existing) {
-      //       existing.setvalue(file.code)
-      //     } else {
-      //       const newmodel = editor.createmodel(file.code, undefined, uri)
-      //     }
-      //   } else {
-      //     // monaco.languages.typescript.typescriptdefaults.addextralib(file.code, uri.tostring())
-      //   }
-      // }
-      // ;(async () => {
-      //   const worker = await monaco.languages.typescript.getTypeScriptWorker()
-      //   const uri = monaco.Uri.file('1/1.tsx')
-      //   const client = await worker(uri)
-      //   console.log(7777, client)
-      //   console.log(55555, await client.preProcessFile('file:///1/1.tsx'))
-      // })()
-
-      // // monaco.editor.op
-      // // editor.setMod
-      // return () => {}
-    }
-  }, [monacoInstance, files])
   const openFile = useIframeStore((v) => v.openFile)
   const [delay, setDelay] = useState({})
   useEffect(() => {
@@ -150,7 +110,7 @@ export const MonacoEditor = () => {
         }
       }
     })()
-  }, [openFile, delay])
+  }, [openFile, delay, files, monacoInstance])
 
   // useTypingWorker()
 
@@ -194,37 +154,6 @@ export const MonacoEditor = () => {
     </>
   )
 }
-
-// const COMPILER_OPTIONS = {
-//   allowJs: true,
-//   allowSyntheticDefaultImports: true,
-//   alwaysStrict: true,
-//   esModuleInterop: true,
-//   forceConsistentCasingInFileNames: true,
-//   isolatedModules: true,
-//   // jsx: monaco.languages.typescript.JsxEmit.ReactJSX,
-//   jsx: monaco.languages.typescript.JsxEmit.Preserve,
-//   module: monaco.languages.typescript.ModuleKind.ESNext,
-//   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-//   noEmit: true,
-//   resolveJsonModule: true,
-//   strict: true,
-//   target: monaco.languages.typescript.ScriptTarget.ESNext,
-//   // paths: {
-//   //   '*': ['*', '*.native', '*.ios', '*.android'],
-//   // },
-// }
-window.monaco = monaco
-
-// monaco.languages.typescript.typescriptDefaults.setWorkerOptions({ customWorkerPath: '../' })
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
-monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
-monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
-monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
-// monaco.languages.typescript.typescriptDefaults.setEagerModelSync(false);
-// monaco.languages.typescript.javascriptDefaults.setEagerModelSync(false);
-// monaco.languages.typescript.typescriptDefaults.addExtraLib(libEsnext, 'defaultLib:lib.es6.d.ts')
-// monaco.languages.typescript.typescriptDefaults.addExtraLib(lub, 'defaultLib:lib.d.ts')
 
 const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   acceptSuggestionOnCommitCharacter: true,
@@ -281,7 +210,7 @@ const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   wordWrapBreakBeforeCharacters: '{([+',
   // wordWrapBreakObtrusiveCharacters: '.',
   wordWrapColumn: 80,
-  wordWrapMinified: true,
+  // wordWrapMinified: true,
   wrappingIndent: 'none',
   suggest: {
     showSnippets: false,
@@ -290,5 +219,10 @@ const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   },
 }
 // const get
+
+monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
+monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
+monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
+monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
 export default MonacoEditor

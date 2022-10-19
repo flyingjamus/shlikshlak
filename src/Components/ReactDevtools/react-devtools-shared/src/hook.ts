@@ -1,7 +1,7 @@
 import type { BrowserTheme } from './devtools/views/DevTools'
 import type { DevToolsHook } from './backend/types'
 import { patch as patchConsole, registerRenderer as registerRendererWithConsole } from './backend/console'
-declare var window: any
+declare let window: any
 
 const __TEST__ = false
 const __DEV__ = false

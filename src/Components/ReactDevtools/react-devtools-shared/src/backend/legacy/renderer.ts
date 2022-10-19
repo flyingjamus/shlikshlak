@@ -453,7 +453,7 @@ export function attach(
   const pendingOperations: Array<number> = []
   const pendingStringTable: Map<string, number> = new Map()
   let pendingUnmountedIDs: Array<number> = []
-  let pendingStringTableLength: number = 0
+  let pendingStringTableLength = 0
   let pendingUnmountedRootID: number | null = null
 
   function flushPendingEvents(rootID: number) {
