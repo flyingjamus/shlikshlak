@@ -107,6 +107,7 @@ export const PANELS: { matcher: (type: ts.Type, checker: TypeChecker) => PanelMa
           })
           .filter(isDefined)
         if (values.length) {
+          values.sort()
           return {
             name: 'enum',
             parameters: { values },

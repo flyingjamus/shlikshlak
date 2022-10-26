@@ -1,12 +1,17 @@
 import { Box, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useFileStore, useIframeStore } from '../store'
 import { PanelMatch, PanelsResponse, PanelType } from '../../Shared/PanelTypes'
-import { ElementType, useMemo } from 'react'
+import { ElementType, useMemo, useState } from 'react'
 import { throttle } from 'lodash-es'
 
-const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value, onChange }) => {
+const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value: defaultValue, onChange }) => {
+  const [value, setValue] = useState(defaultValue)
   return (
-    <ToggleButtonGroup value={value} exclusive onChange={(e) => onChange(e.target.value)}>
+    <ToggleButtonGroup value={value} exclusive onChange={(e) => {
+      const newValue = e.target.value
+      setValue(newValue)
+      onChange(newValue)
+    }}>
       {values.map((v) => (
         <ToggleButton key={v} value={v}>
           {v}

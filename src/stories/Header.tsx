@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {Button as MuiButton} from '@mui/material'
 import { Button } from './Button';
 import './header.css';
 
@@ -42,12 +43,11 @@ export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps
             <span className="welcome">
               Welcome, <b>{user.name}</b>!
             </span>
-            <Button size="small" onClick={onLogout} label="Log out" />
+            <MuiButton variant="text" size="small" onClick={onCreateAccount}>Hello!</MuiButton>
           </>
         ) : (
           <>
             <Button size="small" onClick={onLogin} label="Log in" />
-            <Button primary size="small" onClick={onCreateAccount} label="Sign up" />
           </>
         )}
       </div>

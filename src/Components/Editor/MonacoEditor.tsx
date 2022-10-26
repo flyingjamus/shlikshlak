@@ -55,11 +55,18 @@ export const MonacoEditor = () => {
       console.log('Onchange', e)
       const worker = await getTypescriptWorker()
       const model = editor.getModel()
+
+      await fetch('http://localhost:3001', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ body: model?.getValue(), path: model?.uri.path }),
+        method: 'POST',
+      })
       const pos = editor.getPosition()
       if (model && pos) {
         const offset = model.getOffsetAt(pos)
         const panels = await worker.getPanelsAtPosition(model.uri.toString(), offset)
-        console.log(panels)
         useIframeStore.setState({ panels: panels })
       }
     })

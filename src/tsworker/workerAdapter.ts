@@ -28,21 +28,6 @@ function textSpanToRange(model: ITextModel, span: TextSpan): IRange {
 export class WorkerAdapter {
   constructor(private worker: TypeScriptWorker) {}
 
-  // async changeText(fileName: string, pos: number, end: number, value: string) {
-  //   const uri = monaco.Uri.parse(fileName)
-  //   const model = monaco.editor.getModel(uri)
-  //   model?.pushEditOperations(
-  //     null,
-  //     [
-  //       {
-  //         text: value,
-  //         range: textSpanToRange(model, { start: pos, length: end - pos }),
-  //       },
-  //     ],
-  //     (inverseEditOperations) => null
-  //   )
-  // }
-
   async setAttribute(fileName: string, location: number, prop: string, value: string) {
     const p = attributesQueue[fileName] || Promise.resolve().then(() => {})
     attributesQueue[fileName] = p.then(async () => {
@@ -55,10 +40,11 @@ export class WorkerAdapter {
         setTimeout(() => {
           if (modelCbs[fileName] === cb) {
             console.error('No CB after timeout')
+            modelCbs[fileName] = undefined
             cb()
           }
           resolve()
-        }, 500)
+        }, 5000)
         modelCbs[fileName] = cb
       })
 
@@ -73,8 +59,10 @@ export class WorkerAdapter {
         model.pushEditOperations([], editOperations, (inverseEditOperations) => {
           return null
         })
+        await cbPromise
+      } else {
+        modelCbs[fileName] = undefined
       }
-      await cbPromise
     })
   }
 }
