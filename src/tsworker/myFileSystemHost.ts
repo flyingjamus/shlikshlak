@@ -1,23 +1,20 @@
 import { FileSystemHost, RuntimeDirEntry } from 'ts-morph'
 import { TypeScriptWorker } from './tsWorker'
 
-class MyFileSystemHost implements FileSystemHost {
-  constructor(private tsWorker: TypeScriptWorker) {
-  }
+export class MyFileSystemHost implements FileSystemHost {
+  constructor(private tsWorker: TypeScriptWorker) {}
 
   copy(srcPath: string, destPath: string): Promise<void> {
     return Promise.resolve(undefined)
   }
 
-  copySync(srcPath: string, destPath: string): void {
-  }
+  copySync(srcPath: string, destPath: string): void {}
 
   delete(path: string): Promise<void> {
     return Promise.resolve(undefined)
   }
 
-  deleteSync(path: string): void {
-  }
+  deleteSync(path: string): void {}
 
   directoryExists(dirPath: string): Promise<boolean> {
     return Promise.resolve(false)
@@ -55,15 +52,13 @@ class MyFileSystemHost implements FileSystemHost {
     return Promise.resolve(undefined)
   }
 
-  mkdirSync(dirPath: string): void {
-  }
+  mkdirSync(dirPath: string): void {}
 
   move(srcPath: string, destPath: string): Promise<void> {
     return Promise.resolve(undefined)
   }
 
-  moveSync(srcPath: string, destPath: string): void {
-  }
+  moveSync(srcPath: string, destPath: string): void {}
 
   readDirSync(dirPath: string): RuntimeDirEntry[] {
     return []
@@ -85,8 +80,7 @@ class MyFileSystemHost implements FileSystemHost {
     return Promise.resolve(undefined)
   }
 
-  writeFileSync(filePath: string, fileText: string): void {
-  }
+  writeFileSync(filePath: string, fileText: string): void {}
 }
 
 const fixPath = (path: string) => {

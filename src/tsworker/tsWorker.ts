@@ -14,6 +14,10 @@ import { expose } from 'comlink'
 import { parse, stringify } from 'flatted'
 import { PanelMatch, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
+import { Project } from 'ts-morph'
+import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
+import { MyFileSystemHost } from './myFileSystemHost'
+import { isFunction } from 'lodash-es'
 
 /**
  * Loading a default lib as a source file will mess up TS completely.
@@ -119,21 +123,41 @@ type TypeChecker = typescript.TypeChecker & {
   getBooleanType: () => typescript.Type
 }
 
+for (const key of Object.getOwnPropertyNames(MyFileSystemHost.prototype)) {
+  if (key === 'constructor') continue
+  const old = MyFileSystemHost.prototype[key]
+  if (!isFunction(old)) continue
+  MyFileSystemHost.prototype[key] = function (...args) {
+    // console.log(key, args)
+    const res = old.call(this, ...args)
+    console.log(key, args, !!res)
+    return res
+  }
+}
 export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
+
+  project = new Project({
+    // skipAddingFilesFromTsConfig: true,
+    compilerOptions: COMPILER_OPTIONS,
+    fileSystem: new MyFileSystemHost(this),
+  })
 
   private _ctx: worker.IWorkerContext
   private _extraLibs: IExtraLibs = Object.create(null)
   private _compilerOptions: typescript.CompilerOptions
   private _inlayHintsOptions?: typescript.UserPreferences
 
-  private _languageService = typescript.createLanguageService(this, documentRegistry)
+  // private _languageService = typescript.createLanguageService(this, documentRegistry)
+  private _languageService = this.project.getLanguageService().compilerObject
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
     this._inlayHintsOptions = createData.inlayHintsOptions
+
+    this.project.addSourceFileAtPath('file:///src/stories/Header.tsx')
   }
 
   // moduleResolutionCache = typescript.createModuleResolutionCache(

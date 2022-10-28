@@ -32,6 +32,16 @@ export function fileExists(path: string) {
   return !!getFileText(path)
 }
 
+function pathToUrl(path: string) {
+  return path.startsWith('file://') ? path.slice('file://'.length) : path
+}
+
+export function directoryExists(path: string) {
+  return fetch(pathToUrl(path))
+}
+
+const BASE = 'http://localhost:3001'
+
 export function getFileText(path: string) {
   if (path in cache) {
     // console.debug('Got item from cache ', path)
@@ -40,7 +50,7 @@ export function getFileText(path: string) {
   // console.debug('Item not in cache ', path)
   const req = new XMLHttpRequest()
   try {
-    const url = 'http://localhost:3001' + (path.startsWith('file://') ? path.slice('file://'.length) : path)
+    const url = BASE + pathToUrl(path)
     req.open('GET', url, false)
     req.send()
     if (req.status !== 200) {
