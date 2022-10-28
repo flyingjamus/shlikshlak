@@ -43,7 +43,7 @@ export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps
             <span className="welcome" >
               Welcome, <b>{user.name}</b>!
             </span>
-            <MuiButton variant="text" size="large" onClick={onCreateAccount}>Hello!</MuiButton>
+            <MuiButton variant="contained" size="medium" onClick={onCreateAccount}>Hello!</MuiButton>
 
           </>
         ) : (
