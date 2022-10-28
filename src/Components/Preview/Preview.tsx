@@ -86,12 +86,13 @@ export const Preview = () => {
       setReady(true)
 
       console.debug('Connecting to child')
-      connection.promise.then(async (child) => {
-        child.DOM.enable()
+      connection.promise.then(async (childConnection) => {
         console.debug('Connected')
-        const elementsTree = await child.DOM.getDocument()
-        useIframeStore.setState({ childConnection: child, rootNode: elementsTree.root })
-        await child.DOM.requestChildNodes({ nodeId: elementsTree.root.nodeId, depth: 1000 })
+        childConnection.DOM.enable()
+        const elementsTree = await childConnection.DOM.getDocument()
+        childConnection?.Overlay.setInspectMode({ mode: 'searchForNode' })
+        useIframeStore.setState({ childConnection: childConnection, rootNode: elementsTree.root })
+        await childConnection.DOM.requestChildNodes({ nodeId: elementsTree.root.nodeId, depth: 1000 })
       })
       return () => {
         // useIframeStore.setState({ childConnection: undefined, rootNode: undefined })

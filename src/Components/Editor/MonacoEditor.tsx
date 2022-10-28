@@ -5,9 +5,10 @@ import { editor } from 'monaco-editor'
 import { useFileStore, useIframeStore } from '../store'
 // @ts-ignore
 import { initVimMode } from 'monaco-vim'
-import { getFile } from '../../tsworker/fileGetter'
+import { getFileText } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
+import { throttle } from 'lodash-es'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 
 // const useTv
@@ -32,7 +33,6 @@ export const MonacoEditor = () => {
   // const monaco: Monaco | null = useMonaco()
   const [monacoInstance, setMonacoInstance] = useState<IStandaloneCodeEditor>()
   const files = useFileStore((v) => v.files)
-  const allFiles = useFileStore((v) => v.allFiles)
 
   const ref = useRef<HTMLDivElement>()
   const statusBarRef = useRef<HTMLDivElement>()
@@ -70,16 +70,24 @@ export const MonacoEditor = () => {
         useIframeStore.setState({ panels: panels })
       }
     })
-    // const listener = editor.onDidChangeCursorPosition((e) => {
-    //   useIframeStore.setState({
-    //     openFile: {
-    //       ...useIframeStore.getState().openFile,
-    //       lineNumber: e.position.lineNumber,
-    //       columnNumber: e.position.column,
-    //       // path:
-    //     },
-    //   })
-    // })
+    const listener = editor.onDidChangeCursorPosition(
+      throttle(
+        (e) => {
+          const openFile = useIframeStore.getState().openFile
+          if (openFile) {
+            useIframeStore.setState({
+              openFile: {
+                ...openFile,
+                lineNumber: e.position.lineNumber,
+                columnNumber: e.position.column,
+              },
+            })
+          }
+        },
+        50,
+        { trailing: true, leading: false }
+      )
+    )
 
     // bindEditor(editor)
     setMonacoInstance(editor)
@@ -99,7 +107,7 @@ export const MonacoEditor = () => {
         const path = openFile.path
         if (path) {
           const uri = monaco.Uri.file(path)
-          const fileCode = files?.[path]?.code || getFile(path)
+          const fileCode = files?.[path]?.code || getFileText(path)
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
           if (monacoInstance && model) {
             try {

@@ -1,4 +1,5 @@
-import * as ts from '../lib/typescriptServices'
+// import * as ts from '../lib/typescriptServices'
+import * as ts from 'typescript/lib/typescriptServices'
 import * as edworker from 'monaco-editor-core/esm/vs/editor/editor.worker'
 import { libFileMap } from '../lib/lib'
 import {
@@ -8,25 +9,14 @@ import {
   TypeScriptWorker as ITypeScriptWorker,
 } from './monaco.contribution'
 import type { Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
-import { fillCacheFromStore, getFile } from './fileGetter'
+import { fileExists, fillCacheFromStore, getFileText, getFileVersion } from './fileGetter'
 import { expose } from 'comlink'
-import type * as tstype from 'typescript'
-import type { DocumentRegistry } from 'typescript'
-import { FileSystemHost, RuntimeDirEntry } from 'ts-morph'
+import * as typescript from 'typescript'
+import type { CompilerOptions, DocumentRegistry, ResolvedProjectReference, SourceFile } from 'typescript'
 import { parse, stringify } from 'flatted'
 import { PanelMatch, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
-
-// export {
-//   Uri,
-//   type worker,
-//   libFileMap,
-//   ts,
-//   type Diagnostic,
-//   type DiagnosticRelatedInformation,
-//   type IExtraLibs,
-//   type TypeScriptWorker as ITypeScriptWorker,
-// }
+import { identity } from 'lodash-es'
 
 /**
  * Loading a default lib as a source file will mess up TS completely.
@@ -46,8 +36,8 @@ export function fileNameIsLib(resource: Uri | string): boolean {
   return false
 }
 
-const typescript = (ts as any).typescript as typeof tstype
-const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistry()
+const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
+
 // const documentRegistry: DocumentRegistry = (ts as any).typescript.createDocumentRegistryInternal(true, '', {
 //   setDocument: (key: string, path: ts.Path, sourceFile: ts.SourceFile) => {
 //     const KEY =
@@ -148,7 +138,32 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     this._inlayHintsOptions = createData.inlayHintsOptions
   }
 
-  // --- language service host ---------------
+  // moduleResolutionCache = typescript.createModuleResolutionCache(
+  //   this.getCurrentDirectory(),
+  //   identity,
+  //   this.getCompilationSettings()
+  // )
+  //
+  // // --- language service host ---------------
+  // resolveModuleNames?(
+  //   moduleNames: string[],
+  //   containingFile: string,
+  //   reusedNames: string[] | undefined,
+  //   redirectedReference: ResolvedProjectReference | undefined,
+  //   options: CompilerOptions,
+  //   containingSourceFile?: SourceFile
+  // ) {
+  //   const map = moduleNames.map((moduleName) => {
+  //     return typescript.resolveModuleName(
+  //       moduleName,
+  //       containingFile,
+  //       options,
+  //       this,
+  //       this.moduleResolutionCache
+  //     ).resolvedModule
+  //   })
+  //   return map
+  // }
 
   getCompilationSettings(): ts.CompilerOptions {
     return this._compilerOptions
@@ -189,7 +204,8 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
     } else if (fileName in this._extraLibs) {
       return String(this._extraLibs[fileName].version)
     }
-    return ''
+    const version = getFileVersion(fileName)?.toString() || ''
+    return version || ''
   }
 
   async getScriptText(fileName: string): Promise<string | undefined> {
@@ -211,7 +227,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       // extra lib
       text = this._extraLibs[fileName].content
     } else {
-      return getFile(fileName)
+      return getFileText(fileName)
     }
 
     return text
@@ -223,11 +239,7 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       return
     }
 
-    return <ts.IScriptSnapshot>{
-      getText: (start, end) => text.substring(start, end),
-      getLength: () => text.length,
-      getChangeRange: () => undefined,
-    }
+    return typescript.ScriptSnapshot.fromString(text)
   }
 
   getScriptKind?(fileName: string): ts.ScriptKind {
@@ -288,7 +300,8 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   }
 
   fileExists(path: string): boolean {
-    return this._getScriptText(path) !== undefined
+    return fileExists(path)
+    // return this._getScriptText(path) !== undefined
   }
 
   async getLibFiles(): Promise<Record<string, string>> {
@@ -402,7 +415,6 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
   }
 
   getParentTokenAtPosition(fileName: string, position: number): ts.JsxOpeningLikeElement | undefined {
-    console.log('getParentTokenAtPosition', fileName, position)
     const program = this._languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
@@ -687,92 +699,6 @@ export class TypeScriptWorker implements ts.LanguageServiceHost, ITypeScriptWork
       return []
     }
   }
-}
-
-class MyFileSystemHost implements FileSystemHost {
-  constructor(private tsWorker: TypeScriptWorker) {}
-
-  copy(srcPath: string, destPath: string): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-
-  copySync(srcPath: string, destPath: string): void {}
-
-  delete(path: string): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-
-  deleteSync(path: string): void {}
-
-  directoryExists(dirPath: string): Promise<boolean> {
-    return Promise.resolve(false)
-  }
-
-  directoryExistsSync(dirPath: string): boolean {
-    return false
-  }
-
-  async fileExists(filePath: string): Promise<boolean> {
-    return this.tsWorker.fileExists(fixPath(filePath))
-  }
-
-  fileExistsSync(filePath: string): boolean {
-    return this.tsWorker.fileExists(fixPath(filePath))
-  }
-
-  getCurrentDirectory(): string {
-    return ''
-  }
-
-  glob(patterns: ReadonlyArray<string>): Promise<string[]> {
-    return Promise.resolve([])
-  }
-
-  globSync(patterns: ReadonlyArray<string>): string[] {
-    return []
-  }
-
-  isCaseSensitive(): boolean {
-    return false
-  }
-
-  mkdir(dirPath: string): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-
-  mkdirSync(dirPath: string): void {}
-
-  move(srcPath: string, destPath: string): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-
-  moveSync(srcPath: string, destPath: string): void {}
-
-  readDirSync(dirPath: string): RuntimeDirEntry[] {
-    return []
-  }
-
-  async readFile(filePath: string, encoding?: string): Promise<string> {
-    return this.tsWorker.readFile(fixPath(filePath)) || '' //TODO?
-  }
-
-  readFileSync(filePath: string, encoding?: string): string {
-    return this.tsWorker.readFile(fixPath(filePath)) || '' //TODO?
-  }
-
-  realpathSync(path: string): string {
-    return ''
-  }
-
-  writeFile(filePath: string, fileText: string): Promise<void> {
-    return Promise.resolve(undefined)
-  }
-
-  writeFileSync(filePath: string, fileText: string): void {}
-}
-
-const fixPath = (path: string) => {
-  return 'file:///' + path.slice('file:/'.length)
 }
 
 export interface ICreateData {

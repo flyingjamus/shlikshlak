@@ -17,7 +17,6 @@ app.use(express.json())
 app.get('*', async (req, res) => {
   // TOOD!!!!!!!!!! validate
   const filePath = path.join(__dirname, '..', '..', req.path)
-  console.log(filePath)
   try {
     const contents = await readFile(filePath, 'utf-8')
     res.send(contents)
@@ -29,7 +28,7 @@ app.get('*', async (req, res) => {
 app.post('*', async (req, res) => {
   // TOOD!!!!!!!!!! validate
   const filePath = path.join(__dirname, '..', '..', req.body.path)
-  console.log('Writing', filePath, req.body.body)
+  console.log('Writing', filePath)
   try {
     await writeFile(filePath, req.body.body)
     res.send('')
