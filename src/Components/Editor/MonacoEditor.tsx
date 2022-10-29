@@ -100,6 +100,7 @@ export const MonacoEditor = () => {
   }, [monacoInstance])
 
   const openFile = useIframeStore((v) => v.openFile)
+  const workerAdapter = useIframeStore((v) => v.workerAdapter)
   const [delay, setDelay] = useState({})
   useEffect(() => {
     ;(async () => {
@@ -107,8 +108,9 @@ export const MonacoEditor = () => {
         const path = openFile.path
         if (path) {
           const uri = monaco.Uri.file(path)
-          const fileCode = files?.[path]?.code || getFileText(path)
+          const fileCode = files?.[path]?.code || (await getFileText(path))
           const model = editor.getModel(uri) || (fileCode && editor.createModel(fileCode, undefined, uri))
+
           if (monacoInstance && model) {
             try {
               const worker = await getTypescriptWorker()
@@ -125,19 +127,22 @@ export const MonacoEditor = () => {
                 setDelay({})
               }, 500)
             }
-            if (monacoInstance?.getModel() !== model) {
-              monacoInstance.setModel(model)
-              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
-            } else {
-              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
-            }
-            monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
-            monacoInstance.focus()
+            console.log(22222, monacoInstance?.getModel())
+            // if (monacoInstance?.getModel() !== model) {
+            //   monacoInstance.setModel(model)
+            //   monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            // } else {
+            //   monacoInstance.setModel(model)
+            //   monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            // }
+            // monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
+            // monacoInstance.focus()
           }
         }
+      } else {
       }
     })()
-  }, [openFile, delay, files, monacoInstance])
+  }, [openFile, delay, files, monacoInstance, workerAdapter])
 
   // useTypingWorker()
 

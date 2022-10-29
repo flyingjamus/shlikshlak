@@ -71,6 +71,7 @@ export const useIframeStore = create<IframeStore>()(
     () => ({
       frontendReady: false,
       expandedIds: [],
+      openFile: { path: '/src/stories/Header.tsx', columnNumber: 0, lineNumber: 0 },
     }),
     {
       name: 'iframestore',

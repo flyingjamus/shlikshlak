@@ -6,17 +6,18 @@ import {
   Diagnostic,
   DiagnosticRelatedInformation,
   IExtraLibs,
-  TypeScriptWorker as ITypeScriptWorker,
+  TypeScriptWorker as ITypeScriptWorker
 } from './monaco.contribution'
 import type { Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
-import { fileExists, fillCacheFromStore, getFileText, getFileVersion } from './fileGetter'
+import { AppFile, fileExists, fillCacheFromStore, getFile, getFileVersion } from './fileGetter'
 import { expose } from 'comlink'
 import { parse, stringify } from 'flatted'
-import { PanelMatch, PanelsResponse } from '../Shared/PanelTypes'
+import { PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { Project } from 'ts-morph'
 import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { MyFileSystemHost } from './myFileSystemHost'
+import { PANELS, TypeChecker } from './Panels'
 import { isFunction } from 'lodash-es'
 
 /**
@@ -79,61 +80,24 @@ const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
 // console.log(documentRegistry)
 // documentRegistry.updateDocument =
 
-export const PANELS: { matcher: (type: typescript.Type, checker: TypeChecker) => PanelMatch | undefined }[] =
-  [
-    {
-      matcher: (type: typescript.Type, checker: TypeChecker) => {
-        if (checker.isTypeAssignableTo(checker.getBooleanType(), type)) {
-          return { name: 'boolean' }
-        }
-      },
-    },
-    {
-      matcher: (type, checker) => {
-        if (type.isUnionOrIntersection()) {
-          const values = type.types
-            .map((v) => {
-              if (v.isStringLiteral()) {
-                return v.value
-              }
-            })
-            .filter(isDefined)
-          if (values.length) {
-            values.sort()
-            return {
-              name: 'enum',
-              parameters: { values },
-            }
-          }
-        }
-      },
-    },
-    {
-      matcher: (type: typescript.Type, checker: TypeChecker) => {
-        if (checker.isTypeAssignableTo(checker.getStringType(), type)) {
-          return { name: 'string' }
-        }
-      },
-    },
-  ]
+const a = new Set()
+// for (const key of Object.getOwnPropertyNames(MyFileSystemHost.prototype)) {
+//   if (key === 'constructor') continue
+//   const old = MyFileSystemHost.prototype[key]
+//   if (!isFunction(old)) continue
+//   MyFileSystemHost.prototype[key] = function (...args) {
+//     // console.log(key, args)
+//     const res = old.call(this, ...args)
+//     a.add(key)
+//     console.log(key, args, !!res)
+//     return res
+//   }
+// }
+// console.log(44444, a.values())
+// self.setInterval(() => {
+//   console.log(33333, a.values())
+// }, 5000)
 
-type TypeChecker = typescript.TypeChecker & {
-  isTypeAssignableTo: (source: typescript.Type, target: typescript.Type) => boolean
-  getStringType: () => typescript.Type
-  getBooleanType: () => typescript.Type
-}
-
-for (const key of Object.getOwnPropertyNames(MyFileSystemHost.prototype)) {
-  if (key === 'constructor') continue
-  const old = MyFileSystemHost.prototype[key]
-  if (!isFunction(old)) continue
-  MyFileSystemHost.prototype[key] = function (...args) {
-    // console.log(key, args)
-    const res = old.call(this, ...args)
-    console.log(key, args, !!res)
-    return res
-  }
-}
 export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
 
@@ -142,6 +106,14 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
     compilerOptions: COMPILER_OPTIONS,
     fileSystem: new MyFileSystemHost(this),
   })
+
+  init() {
+    console.log(111111)
+    this.project.addSourceFileAtPath('file:///src/stories/Header.tsx')
+    console.log(222222)
+    this.project.resolveSourceFileDependencies()
+    console.log(3333)
+  }
 
   private _ctx: worker.IWorkerContext
   private _extraLibs: IExtraLibs = Object.create(null)
@@ -156,36 +128,7 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
     this._inlayHintsOptions = createData.inlayHintsOptions
-
-    this.project.addSourceFileAtPath('file:///src/stories/Header.tsx')
   }
-
-  // moduleResolutionCache = typescript.createModuleResolutionCache(
-  //   this.getCurrentDirectory(),
-  //   identity,
-  //   this.getCompilationSettings()
-  // )
-  //
-  // // --- language service host ---------------
-  // resolveModuleNames?(
-  //   moduleNames: string[],
-  //   containingFile: string,
-  //   reusedNames: string[] | undefined,
-  //   redirectedReference: ResolvedProjectReference | undefined,
-  //   options: CompilerOptions,
-  //   containingSourceFile?: SourceFile
-  // ) {
-  //   const map = moduleNames.map((moduleName) => {
-  //     return typescript.resolveModuleName(
-  //       moduleName,
-  //       containingFile,
-  //       options,
-  //       this,
-  //       this.moduleResolutionCache
-  //     ).resolvedModule
-  //   })
-  //   return map
-  // }
 
   getCompilationSettings(): typescript.CompilerOptions {
     return this._compilerOptions
@@ -231,32 +174,38 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   }
 
   async getScriptText(fileName: string): Promise<string | undefined> {
-    return this._getScriptText(fileName)
+    return this.getFileText(fileName)
   }
 
-  _getScriptText(fileName: string): string | undefined {
-    let text: string
+  getSystemFileText(fileName: string): string | undefined {
     const model = this._getModel(fileName)
     const libizedFileName = 'lib.' + fileName + '.d.ts'
     if (model) {
       // a true editor model
-      text = model.getValue()
+      return model.getValue()
     } else if (fileName in libFileMap) {
-      text = libFileMap[fileName]
+      return libFileMap[fileName]
     } else if (libizedFileName in libFileMap) {
-      text = libFileMap[libizedFileName]
+      return libFileMap[libizedFileName]
     } else if (fileName in this._extraLibs) {
-      // extra lib
-      text = this._extraLibs[fileName].content
-    } else {
-      return getFileText(fileName)
+      return this._extraLibs[fileName].content
     }
+  }
 
-    return text
+  getFile(fileName: string): AppFile {
+    const systemFileText = this.getSystemFileText(fileName)
+    if (systemFileText) {
+      return { version: 0, exists: true, type: 'FILE', contents: systemFileText }
+    }
+    return getFile(fileName)
+  }
+  getFileText(fileName: string) {
+    const file = this.getFile(fileName)
+    return (file.exists && file.contents) || undefined
   }
 
   getScriptSnapshot(fileName: string): typescript.IScriptSnapshot | undefined {
-    const text = this._getScriptText(fileName)
+    const text = this.getFileText(fileName)
     if (text === undefined) {
       return
     }
@@ -281,7 +230,7 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   }
 
   getCurrentDirectory(): string {
-    return ''
+    return '/'
   }
 
   getDefaultLibFileName(options: typescript.CompilerOptions): string {
@@ -319,12 +268,15 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   }
 
   readFile(path: string): string | undefined {
-    return this._getScriptText(path)
+    return this.getFileText(path)
   }
 
   fileExists(path: string): boolean {
     return fileExists(path)
-    // return this._getScriptText(path) !== undefined
+  }
+
+  directoryExists(directoryName: string): boolean {
+    return this.getFile(directoryName).exists
   }
 
   async getLibFiles(): Promise<Record<string, string>> {
@@ -438,6 +390,7 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   }
 
   getParentTokenAtPosition(fileName: string, position: number): typescript.JsxOpeningLikeElement | undefined {
+    return // TODO!!!!!!!!
     const program = this._languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
@@ -756,27 +709,9 @@ export interface CustomTSWebWorkerFactory {
 // }
 
 export function create(ctx: worker.IWorkerContext, createData: ICreateData): TypeScriptWorker {
-  let TSWorkerClass = TypeScriptWorker
-  if (createData.customWorkerPath) {
-    if (typeof importScripts === 'undefined') {
-      console.warn(
-        'Monaco is not using webworkers for background tasks, and that is needed to support the customWorkerPath flag'
-      )
-    } else {
-      importScripts(createData.customWorkerPath)
-
-      const workerFactoryFunc: CustomTSWebWorkerFactory | undefined = (self as any).customTSWorkerFactory
-      if (!workerFactoryFunc) {
-        throw new Error(
-          `The script at ${createData.customWorkerPath} does not add customTSWorkerFactory to self`
-        )
-      }
-
-      TSWorkerClass = workerFactoryFunc(TypeScriptWorker, typescript, libFileMap)
-    }
-  }
-
-  return new TSWorkerClass(ctx, createData)
+  const typeScriptWorker = new TypeScriptWorker(ctx, createData)
+  typeScriptWorker.init()
+  return typeScriptWorker
 }
 
 expose({

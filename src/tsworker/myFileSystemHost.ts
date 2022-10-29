@@ -16,24 +16,24 @@ export class MyFileSystemHost implements FileSystemHost {
 
   deleteSync(path: string): void {}
 
-  directoryExists(dirPath: string): Promise<boolean> {
-    return Promise.resolve(false)
+  async directoryExists(dirPath: string): Promise<boolean> {
+    return this.tsWorker.directoryExists(dirPath)
   }
 
   directoryExistsSync(dirPath: string): boolean {
-    return false
+    return this.tsWorker.directoryExists(dirPath)
   }
 
   async fileExists(filePath: string): Promise<boolean> {
-    return this.tsWorker.fileExists(fixPath(filePath))
+    return this.tsWorker.fileExists(filePath)
   }
 
   fileExistsSync(filePath: string): boolean {
-    return this.tsWorker.fileExists(fixPath(filePath))
+    return this.tsWorker.fileExists(filePath)
   }
 
   getCurrentDirectory(): string {
-    return ''
+    return '/'
   }
 
   glob(patterns: ReadonlyArray<string>): Promise<string[]> {
@@ -65,15 +65,15 @@ export class MyFileSystemHost implements FileSystemHost {
   }
 
   async readFile(filePath: string, encoding?: string): Promise<string> {
-    return this.tsWorker.readFile(fixPath(filePath)) || ''
+    return this.tsWorker.readFile(filePath) || ''
   }
 
   readFileSync(filePath: string, encoding?: string): string {
-    return this.tsWorker.readFile(fixPath(filePath)) || ''
+    return this.tsWorker.readFile(filePath) || ''
   }
 
   realpathSync(path: string): string {
-    return ''
+    return path
   }
 
   writeFile(filePath: string, fileText: string): Promise<void> {

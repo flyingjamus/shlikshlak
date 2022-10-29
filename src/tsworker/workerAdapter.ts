@@ -26,7 +26,9 @@ function textSpanToRange(model: ITextModel, span: TextSpan): IRange {
 }
 
 export class WorkerAdapter {
-  constructor(private worker: TypeScriptWorker) {}
+  constructor(private worker: TypeScriptWorker) {
+    worker.init()
+  }
 
   async setAttribute(fileName: string, location: number, prop: string, value: string) {
     const p = attributesQueue[fileName] || Promise.resolve().then(() => {})
