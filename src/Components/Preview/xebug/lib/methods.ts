@@ -1,4 +1,5 @@
 import * as DOM from '../domains/DOM'
+import { initialize, activate } from '../../../ReactDevtools/react-devtools-inline/backend'
 import * as CSS from '../domains/CSS'
 import * as Page from '../domains/Page'
 import * as Network from '../domains/Network'
@@ -130,7 +131,12 @@ const methods = {
   'Storage.trackCacheStorageForOrigin': noop,
   'Storage.trackIndexedDBForOrigin': noop,
   'Storage.clearDataForOrigin': Storage.clearDataForOrigin,
+
   getNodeReactLocation: getNodeReactLocation,
+  init() {
+    console.log('Douing init')
+    activate(window)
+  },
 } as const
 
 export type Methods = typeof methods

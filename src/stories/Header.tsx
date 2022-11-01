@@ -1,6 +1,6 @@
 import React from 'react';
 
-import  MuiButton  from '@mui/material/Button'
+import MuiButton from '@mui/material/Button'
 import { Button } from './Button';
 import './header.css';
 

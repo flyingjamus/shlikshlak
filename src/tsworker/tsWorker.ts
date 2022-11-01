@@ -124,7 +124,6 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   // private _languageService = this.project.getLanguageService().compilerObject
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
-    console.log(2233123,createData.compilerOptions)
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs

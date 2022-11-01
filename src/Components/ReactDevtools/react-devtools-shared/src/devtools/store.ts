@@ -806,6 +806,7 @@ export default class Store extends EventEmitter<{
     this.emit('supportsNativeStyleEditor')
   }
   onBridgeOperations = (operations: Array<number>) => {
+    console.log(1111, operations)
     if (__DEBUG__) {
       console.groupCollapsed('onBridgeOperations')
       debug('onBridgeOperations', operations.join(','))

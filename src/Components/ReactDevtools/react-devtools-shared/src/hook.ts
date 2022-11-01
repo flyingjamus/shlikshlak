@@ -8,7 +8,10 @@ const __DEV__ = false
 const __EXTENSION__ = false
 
 export function installHook(target: any): DevToolsHook | null {
-  if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
+  if (
+    target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__') &&
+    target['__REACT_DEVTOOLS_GLOBAL_HOOK__'].sub
+  ) {
     return null
   }
 

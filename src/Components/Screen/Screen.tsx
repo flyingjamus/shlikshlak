@@ -5,7 +5,7 @@ import { Preview } from '../Preview/Preview'
 import { Files } from '../Files/Files'
 import { InspectorTree } from '../Inspector/InspectorTree'
 import { EditorWrapper } from '../Editor/EditorWrapper'
-import { PropsEditor, PropsEditorWrapper } from '../PropsEditor/PropsEditor'
+// import { PropsEditor, PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { useFileStore } from '../store'
 import { Inspector } from '../Inspector/Inspector'
 
@@ -15,7 +15,7 @@ const ELEMENT_MAP = {
   editor: <EditorWrapper />,
   inspector: <Inspector />,
   // inspector: <InspectorTree />,
-  props: <PropsEditorWrapper />,
+  // props: <PropsEditorWrapper />,
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
@@ -35,7 +35,7 @@ export const Screen = () => {
           first: 'editor',
           second: {
             first: 'inspector',
-            second: 'props',
+            second: 'files',
             direction: 'row',
           },
           direction: 'column',

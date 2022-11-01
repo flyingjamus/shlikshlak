@@ -90,7 +90,8 @@ export const Preview = () => {
         console.debug('Connected')
         childConnection.DOM.enable()
         const elementsTree = await childConnection.DOM.getDocument()
-        childConnection?.Overlay.setInspectMode({ mode: 'searchForNode' })
+        await childConnection.init()
+        // childConnection?.Overlay.setInspectMode({ mode: 'searchForNode' })
         useIframeStore.setState({
           childConnection: childConnection,
           rootNode: elementsTree.root,
