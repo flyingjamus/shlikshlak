@@ -6,7 +6,7 @@ import {
   Diagnostic,
   DiagnosticRelatedInformation,
   IExtraLibs,
-  TypeScriptWorker as ITypeScriptWorker
+  TypeScriptWorker as ITypeScriptWorker,
 } from './monaco.contribution'
 import type { Uri, worker } from 'monaco-editor-core/esm/vs/editor/editor.api'
 import { AppFile, fileExists, fillCacheFromStore, getFile, getFileVersion } from './fileGetter'
@@ -80,7 +80,7 @@ const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
 // console.log(documentRegistry)
 // documentRegistry.updateDocument =
 
-const a = new Set()
+// const a = new Set()
 // for (const key of Object.getOwnPropertyNames(MyFileSystemHost.prototype)) {
 //   if (key === 'constructor') continue
 //   const old = MyFileSystemHost.prototype[key]
@@ -101,18 +101,18 @@ const a = new Set()
 export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
 
-  project = new Project({
-    // skipAddingFilesFromTsConfig: true,
-    compilerOptions: COMPILER_OPTIONS,
-    fileSystem: new MyFileSystemHost(this),
-  })
+  // project = new Project({
+  //   // skipAddingFilesFromTsConfig: true,
+  //   compilerOptions: COMPILER_OPTIONS,
+  //   fileSystem: new MyFileSystemHost(this),
+  // })
 
   init() {
-    console.log(111111)
-    this.project.addSourceFileAtPath('file:///src/stories/Header.tsx')
-    console.log(222222)
-    this.project.resolveSourceFileDependencies()
-    console.log(3333)
+    // console.log(111111)
+    // this.project.addSourceFileAtPath('/src/stories/Header.tsx')
+    // console.log(222222)
+    // this.project.resolveSourceFileDependencies()
+    // console.log(3333)
   }
 
   private _ctx: worker.IWorkerContext
@@ -120,10 +120,11 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   private _compilerOptions: typescript.CompilerOptions
   private _inlayHintsOptions?: typescript.UserPreferences
 
-  // private _languageService = typescript.createLanguageService(this, documentRegistry)
-  private _languageService = this.project.getLanguageService().compilerObject
+  private _languageService = typescript.createLanguageService(this, documentRegistry)
+  // private _languageService = this.project.getLanguageService().compilerObject
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
+    console.log(2233123,createData.compilerOptions)
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
@@ -390,7 +391,6 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
   }
 
   getParentTokenAtPosition(fileName: string, position: number): typescript.JsxOpeningLikeElement | undefined {
-    return // TODO!!!!!!!!
     const program = this._languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
@@ -458,20 +458,6 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
       }
     }
     return { attributes: [], existingAttributes: [] }
-
-    // const wrappedNode = createWrappedNode(token, {
-    //   compilerOptions: program.getCompilerOptions(),
-    //   sourceFile: sourceFile,
-    //   typeChecker: program.getTypeChecker(),
-    // })
-    // const wrappedSourceFile = createWrappedNode(sourceFile, {
-    //   compilerOptions: program.getCompilerOptions(),
-    //   sourceFile: sourceFile,
-    //   typeChecker: program.getTypeChecker(),
-    // })
-    // wrappedSourceFile.applyTextChanges(changes)
-    // // console.log(wrappedSourceFile.print())
-    // // wrappedNode._project = this._languageService
   }
 
   async getCompletionsAtPosition(
@@ -482,11 +468,6 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-
-    const program = this._languageService.getProgram()!
-
-    const sourceFile = program.getSourceFile(fileName)
-    const checker = program.getTypeChecker()
 
     return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
   }
@@ -709,8 +690,9 @@ export interface CustomTSWebWorkerFactory {
 // }
 
 export function create(ctx: worker.IWorkerContext, createData: ICreateData): TypeScriptWorker {
+  console.log('Creating TS worker')
   const typeScriptWorker = new TypeScriptWorker(ctx, createData)
-  typeScriptWorker.init()
+  // typeScriptWorker.init()
   return typeScriptWorker
 }
 

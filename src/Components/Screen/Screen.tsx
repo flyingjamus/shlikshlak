@@ -7,13 +7,14 @@ import { InspectorTree } from '../Inspector/InspectorTree'
 import { EditorWrapper } from '../Editor/EditorWrapper'
 import { PropsEditor, PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { useFileStore } from '../store'
+import { Inspector } from '../Inspector/Inspector'
 
 const ELEMENT_MAP = {
   files: <Files />,
   preview: <Preview />,
   editor: <EditorWrapper />,
-  // inspector: <Inspector />,
-  inspector: <InspectorTree />,
+  inspector: <Inspector />,
+  // inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
 } as const
 

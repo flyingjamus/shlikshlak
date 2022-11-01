@@ -10,6 +10,7 @@ import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 import { throttle } from 'lodash-es'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
+import { apiClient } from '../../client/apiClient'
 
 // const useTv
 
@@ -55,14 +56,10 @@ export const MonacoEditor = () => {
       console.log('Onchange', e)
       const worker = await getTypescriptWorker()
       const model = editor.getModel()
+      if (!model) return
 
-      await fetch('http://localhost:3001', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ body: model?.getValue(), path: model?.uri.path }),
-        method: 'POST',
-      })
+      await apiClient.writeFile({ contents: model?.getValue(), path: model?.uri.path })
+
       const pos = editor.getPosition()
       if (model && pos) {
         const offset = model.getOffsetAt(pos)
@@ -127,16 +124,15 @@ export const MonacoEditor = () => {
                 setDelay({})
               }, 500)
             }
-            console.log(22222, monacoInstance?.getModel())
-            // if (monacoInstance?.getModel() !== model) {
-            //   monacoInstance.setModel(model)
-            //   monacoInstance?.revealLineInCenter(+openFile.lineNumber)
-            // } else {
-            //   monacoInstance.setModel(model)
-            //   monacoInstance?.revealLineInCenter(+openFile.lineNumber)
-            // }
+            if (monacoInstance?.getModel() !== model) {
+              monacoInstance.setModel(model)
+              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            } else {
+              monacoInstance.setModel(model)
+              monacoInstance?.revealLineInCenter(+openFile.lineNumber)
+            }
             // monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
-            // monacoInstance.focus()
+            monacoInstance.focus()
           }
         }
       } else {

@@ -40,10 +40,10 @@ function pathToUrl(path: string) {
 }
 
 type Api = typeof filesApi
-type A = ZodiosAliases<Api>
 
 type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (...a: Parameters<T>) => TNewReturn
 
+type A = ZodiosAliases<Api>
 declare type ApiClientType = {
   [Alias in Aliases<Api>]: ReplaceReturnType<A[Alias], Awaited<ReturnType<A[Alias]>>>
 }
@@ -64,7 +64,7 @@ export function getFile(unfixedPath: string): AppFile {
   console.debug('Getting file', path, unfixedPath)
   const cacheFile = cache.get(path)
   if (cacheFile) {
-    console.debug('Got item from cache ', path)
+    console.debug('Got item from cache ', path, cacheFile.exists)
     return cacheFile
   }
   const res = syncClient.getFile({ path: path })

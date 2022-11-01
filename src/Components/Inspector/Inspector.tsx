@@ -4,6 +4,7 @@ import { initialize } from '../ReactDevtools/react-devtools-inline/frontend'
 
 export const Inspector = () => {
   const iframe = useIframeStore((v) => v.iframe)
+  console.log(iframe)
   const [DevTools, setDevTools] = useState<FunctionComponent<{}> | null>(null)
   useEffect(() => {
     console.log(iframe)

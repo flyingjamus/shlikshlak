@@ -1,9 +1,13 @@
 import React, { ReactNode } from 'react'
-import { Button, Accordion, ButtonProps } from '@mui/material'
+// import { Button, Accordion, ButtonProps } from '@mui/material'
 
-function B({ count }: { count: number }) {
-  return <Button />
+function A({ count }: { count: number }) {
+  return <button>sdas</button>
 }
+
+// function B({ count }: { count: number }) {
+//   return <Button />
+// }
 
 // const Comp = ({ children }: { children: ReactNode }) => {
 //   return (

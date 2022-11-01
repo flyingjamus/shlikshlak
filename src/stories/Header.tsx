@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button as MuiButton, } from '@mui/material'
+import  MuiButton  from '@mui/material/Button'
 import { Button } from './Button';
 import './header.css';
 
@@ -40,10 +40,11 @@ export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps
       <div>
         {user ? (
           <>
-            <span className="welcome" >
+            <span className="323321" >
               Welcome, <b>{user.name}</b>!
             </span>
-            <MuiButton variant="contained" size="medium" onClick={onCreateAccount}>Hello!</MuiButton>
+            <MuiButton variant="outlined" size="small" onClick={onCreateAccount}>Hello!</MuiButton>
+            <Button onClick={onCreateAccount} label="32131"></Button>
 
           </>
         ) : (

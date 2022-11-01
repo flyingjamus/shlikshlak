@@ -51,6 +51,7 @@ export class WorkerAdapter {
       })
 
       const edits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
+
       const uri = monaco.Uri.parse(fileName)
       const model = monaco.editor.getModel(uri)
       if (edits && model) {
