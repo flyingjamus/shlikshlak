@@ -1,4 +1,4 @@
-import type { DocumentRegistry } from 'typescript'
+import type { DocumentRegistry, LanguageService } from 'typescript'
 import * as typescript from 'typescript'
 import * as edworker from 'monaco-editor-core/esm/vs/editor/editor.worker'
 import { libFileMap } from '../lib/lib'
@@ -16,7 +16,7 @@ import { PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { Project } from 'ts-morph'
 import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
-import { MyFileSystemHost } from './myFileSystemHost'
+import { MyFileSystemHost } from './MyFileSystemHost'
 import { PANELS, TypeChecker } from './Panels'
 import { isFunction } from 'lodash-es'
 
@@ -66,60 +66,39 @@ const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
 //   getDocument: () => {},
 // })
 
-// const proxy = <T extends any>(o: T, v: keyof T) => {
-//   const old = o[v]
-//   o[v] = function (...args: unknown[]) {
-//     console.log(`Called ${v} with `, args.length > 1 ? args : args[0])
-//     const res = old.apply(this, args)
-//     console.log(`Got ${v} with `, res)
-//     return res
-//   }
-// }
-// proxy(documentRegistry, 'acquireDocument')
-// proxy(documentRegistry, 'acquireDocumentWithKey')
-// console.log(documentRegistry)
-// documentRegistry.updateDocument =
+const proxy = <T extends any>(obj: T, key: keyof T, name = 'obj') => {
+  const old = obj[key]
+  if (!isFunction(old)) return
+  obj[key] = function (...args: unknown[]) {
+    console.log(`Called ${name}.${String(key)} with `, args.length > 1 ? args : args[0])
+    const res = old.apply(this as any, args)
+    console.log(`Got ${name}.${String(key)} with `, res)
+    return res
+  } as T[typeof key]
+}
 
-// const a = new Set()
-// for (const key of Object.getOwnPropertyNames(MyFileSystemHost.prototype)) {
-//   if (key === 'constructor') continue
-//   const old = MyFileSystemHost.prototype[key]
-//   if (!isFunction(old)) continue
-//   MyFileSystemHost.prototype[key] = function (...args) {
-//     // console.log(key, args)
-//     const res = old.call(this, ...args)
-//     a.add(key)
-//     console.log(key, args, !!res)
-//     return res
-//   }
-// }
-// console.log(44444, a.values())
-// self.setInterval(() => {
-//   console.log(33333, a.values())
-// }, 5000)
+const proxyAll = (obj: any, name?: string) => {
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    if (key === 'constructor') continue
+    proxy(obj, key, name)
+  }
+  return obj
+}
 
 export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
 
-  // project = new Project({
-  //   // skipAddingFilesFromTsConfig: true,
-  //   compilerOptions: COMPILER_OPTIONS,
-  //   fileSystem: new MyFileSystemHost(this),
-  // })
-
-  init() {
-    // console.log(111111)
-    // this.project.addSourceFileAtPath('/src/stories/Header.tsx')
-    // console.log(222222)
-    // this.project.resolveSourceFileDependencies()
-    // console.log(3333)
-  }
+  project = new Project({
+    // skipAddingFilesFromTsConfig: true,
+    compilerOptions: COMPILER_OPTIONS,
+    fileSystem: new MyFileSystemHost(this),
+    // useInMemoryFileSystem: true
+  })
 
   private _ctx: worker.IWorkerContext
   private _extraLibs: IExtraLibs = Object.create(null)
   private _compilerOptions: typescript.CompilerOptions
   private _inlayHintsOptions?: typescript.UserPreferences
-
   private _languageService = typescript.createLanguageService(this, documentRegistry)
   // private _languageService = this.project.getLanguageService().compilerObject
 
@@ -128,6 +107,14 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
     this._inlayHintsOptions = createData.inlayHintsOptions
+    // proxyAll('LANG', this._languageService)
+    // const old = this._languageService.getProgram
+    // this._languageService.getProgram = () => {
+    //   const program = old.call(this)
+    //   // proxyAll('PROGRAM', program)
+    //   return program
+    // }
+    // console.log(this.project.addSourceFileAtPath('src/Components/Editor/MonacoEditor.tsx'))
   }
 
   getCompilationSettings(): typescript.CompilerOptions {
@@ -136,6 +123,14 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
 
   getLanguageService(): typescript.LanguageService {
     return this._languageService
+  }
+
+  init() {
+    // console.log(111111)
+    // this.project.addSourceFileAtPath('/src/stories/Header.tsx')
+    // console.log(222222)
+    // this.project.resolveSourceFileDependencies()
+    // console.log(3333)
   }
 
   getExtraLibs(): IExtraLibs {

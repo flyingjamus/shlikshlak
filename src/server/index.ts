@@ -3,8 +3,9 @@ import { promises } from 'fs'
 import path from 'path'
 import { zodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
+import { RuntimeDirEntry } from 'ts-morph'
 
-const { readFile, writeFile, stat } = promises
+const { readFile, writeFile, stat, readdir } = promises
 const app = zodiosApp(filesApi)
 app.use(cors())
 
@@ -21,7 +22,20 @@ app.post('/get_file', async (req, res) => {
       const contents = await readFile(filePath, 'utf-8')
       res.json({ exists: true, type: 'FILE', contents })
     } else if (stats.isDirectory()) {
-      res.json({ exists: true, type: 'DIR' })
+      const files = await readdir(filePath, { withFileTypes: true })
+      res.json({
+        exists: true,
+        type: 'DIR',
+        files: files.map(
+          (v) =>
+            ({
+              isFile: v.isFile(),
+              isDirectory: v.isDirectory(),
+              name: v.name,
+              isSymlink: v.isSymbolicLink(),
+            } as RuntimeDirEntry)
+        ),
+      })
     }
   } catch (e) {
     res.json({ exists: false })

@@ -1,5 +1,6 @@
 import * as DOM from '../domains/DOM'
-import { initialize, activate } from '../../../ReactDevtools/react-devtools-inline/backend'
+import { getNodeReactLocation } from '../domains/DOM'
+import { activate } from '../../../ReactDevtools/react-devtools-inline/backend'
 import * as CSS from '../domains/CSS'
 import * as Page from '../domains/Page'
 import * as Network from '../domains/Network'
@@ -11,7 +12,6 @@ import * as DOMStorage from '../domains/DOMStorage'
 import * as DOMDebugger from '../domains/DOMDebugger'
 
 import { noop } from './util'
-import { getNodeReactLocation } from '../domains/DOM'
 
 const methods = {
   Debugger: {
@@ -134,7 +134,7 @@ const methods = {
 
   getNodeReactLocation: getNodeReactLocation,
   init() {
-    console.log('Douing init')
+    console.log('Activating devtools')
     activate(window)
   },
 } as const

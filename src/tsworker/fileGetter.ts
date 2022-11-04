@@ -1,10 +1,7 @@
-import { createStore, entries, set, clear } from 'idb-keyval'
-import { apiClient } from '../client/apiClient'
+import { createStore, entries, set } from 'idb-keyval'
 import { ApiFile, filesApi } from '../common/api'
 import { Aliases, ZodiosAliases } from '@zodios/core/lib/zodios.types'
 import { syncXHR } from './xhr'
-import { libFileMap } from '../lib/lib'
-import { noop } from 'lodash-es'
 
 const store = createStore('db2', 'file-cache-1')
 export type AppFile = {
@@ -61,10 +58,10 @@ const syncClient: ApiClientType = {
 
 export function getFile(unfixedPath: string): AppFile {
   const path = pathToUrl(unfixedPath)
-  console.debug('Getting file', path, unfixedPath)
+  console.debug('FILEGETTER: Getting file', path, unfixedPath)
   const cacheFile = cache.get(path)
   if (cacheFile) {
-    console.debug('Got item from cache ', path, cacheFile.exists)
+    console.debug('FILEGETTER: Got item from cache ', path, cacheFile.exists)
     return cacheFile
   }
   const res = syncClient.getFile({ path: path })

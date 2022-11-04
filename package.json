@@ -100,5 +100,8 @@
     "semi": false,
     "singleQuote": true,
     "printWidth": 110
+  },
+  "volta": {
+    "node": "16.17.0"
   }
 }

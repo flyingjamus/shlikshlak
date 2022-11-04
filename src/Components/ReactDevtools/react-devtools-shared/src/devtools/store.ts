@@ -29,6 +29,7 @@ import { BRIDGE_PROTOCOL, BridgeProtocol, currentBridgeProtocol, FrontendBridge 
 import { TimeoutID } from 'react-window/src/timer'
 import UnsupportedBridgeOperationError from '../UnsupportedBridgeOperationError'
 
+window.__DEV__ = false
 const debug = (methodName, ...args) => {
   if (__DEBUG__) {
     console.log(`%cStore %c${methodName}`, 'color: green; font-weight: bold;', 'font-weight: bold;', ...args)
@@ -806,7 +807,6 @@ export default class Store extends EventEmitter<{
     this.emit('supportsNativeStyleEditor')
   }
   onBridgeOperations = (operations: Array<number>) => {
-    console.log(1111, operations)
     if (__DEBUG__) {
       console.groupCollapsed('onBridgeOperations')
       debug('onBridgeOperations', operations.join(','))

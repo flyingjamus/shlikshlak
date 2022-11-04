@@ -26,20 +26,20 @@ export const Screen = () => {
       renderTile={(id, path) => ELEMENT_MAP[id]}
       initialValue={{
         direction: 'row',
-        first: {
+        // first: {
           // first: {
           //   first: 'files',
           //   second: 'editor',
           //   direction: 'row',
           // },
           first: 'editor',
-          second: {
-            first: 'inspector',
-            second: 'files',
-            direction: 'row',
-          },
-          direction: 'column',
-        },
+          // second: {
+          //   first: 'inspector',
+          //   second: 'files',
+          //   direction: 'row',
+          // },
+          // direction: 'column',
+        // },
         second: 'preview',
         splitPercentage: 50,
       }}

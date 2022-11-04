@@ -61,6 +61,10 @@ export class MyFileSystemHost implements FileSystemHost {
   moveSync(srcPath: string, destPath: string): void {}
 
   readDirSync(dirPath: string): RuntimeDirEntry[] {
+    const file = this.tsWorker.getFile(dirPath)
+    if (file.exists && file.type === 'DIR' && file.files) {
+      return file.files
+    }
     return []
   }
 
@@ -81,8 +85,4 @@ export class MyFileSystemHost implements FileSystemHost {
   }
 
   writeFileSync(filePath: string, fileText: string): void {}
-}
-
-const fixPath = (path: string) => {
-  return 'file:///' + path.slice('file:/'.length)
 }

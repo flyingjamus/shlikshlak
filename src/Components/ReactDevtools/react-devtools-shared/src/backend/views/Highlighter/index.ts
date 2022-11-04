@@ -169,6 +169,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     memoize((node: HTMLElement) => {
       const id = agent.getIDForNode(node)
 
+      console.log(3123121, id)
       if (id !== null) {
         bridge.send('selectFiber', id)
       }

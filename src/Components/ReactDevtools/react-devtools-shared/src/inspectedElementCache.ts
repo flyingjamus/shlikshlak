@@ -37,8 +37,10 @@ function createMap(): InspectedElementMap {
   return new WeakMap();
 }
 
+const map = new Map() // TODO!!!!!!!!!!1
 function getRecordMap(): WeakMap<Element, Record<InspectedElementFrontend>> {
-  return getCacheForType(createMap);
+  // return getCacheForType(createMap); // TODO!!!!!!!!
+  return map
 }
 
 function createCacheSeed(element: Element, inspectedElement: InspectedElementFrontend): [CacheSeedKey, InspectedElementMap] {

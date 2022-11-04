@@ -1,7 +1,7 @@
 import React from 'react';
 
-import MuiButton from '@mui/material/Button'
 import { Button } from './Button';
+import { Box } from '@mui/material'
 import './header.css';
 
 type User = {
@@ -17,7 +17,8 @@ interface HeaderProps {
 
 export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps) => (
   <header>
-    <div className="wrapper!">
+    <Box></Box>
+    <div className="wrapper">
       <div>
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <g fill="none" fillRule="evenodd">
@@ -40,16 +41,15 @@ export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps
       <div>
         {user ? (
           <>
-            <span className="323321" >
+            <span className="welcome">
               Welcome, <b>{user.name}</b>!
             </span>
-            <MuiButton variant="outlined" size="small" onClick={onCreateAccount}>Hello!</MuiButton>
-            <Button onClick={onCreateAccount} label="32131"></Button>
-
+            <Button size="small" onClick={onLogout} label="Log out" />
           </>
         ) : (
           <>
-            <Button size="small" onClick={onLogin} label="Log in" />
+            <Button size="medium" onClick={onLogin} label="Log in" />
+            <Button primary size="small" onClick={onCreateAccount} label="Sign up" />
           </>
         )}
       </div>

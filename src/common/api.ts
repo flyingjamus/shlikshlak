@@ -7,6 +7,16 @@ const ApiFile = z.discriminatedUnion('exists', [
   z.object({
     exists: z.literal(true),
     contents: z.string().optional(),
+    files: z
+      .array(
+        z.object({
+          isFile: z.boolean(),
+          isDirectory: z.boolean(),
+          isSymlink: z.boolean(),
+          name: z.string(),
+        })
+      )
+      .optional(),
     type: z.enum(['FILE', 'DIR']),
   }),
   z.object({
