@@ -8,6 +8,7 @@ import { EditorWrapper } from '../Editor/EditorWrapper'
 // import { PropsEditor, PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { useFileStore } from '../store'
 import { Inspector } from '../Inspector/Inspector'
+import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 
 const ELEMENT_MAP = {
   files: <Files />,
@@ -15,7 +16,7 @@ const ELEMENT_MAP = {
   editor: <EditorWrapper />,
   inspector: <Inspector />,
   // inspector: <InspectorTree />,
-  // props: <PropsEditorWrapper />,
+  props: <PropsEditorWrapper />,
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
@@ -26,20 +27,20 @@ export const Screen = () => {
       renderTile={(id, path) => ELEMENT_MAP[id]}
       initialValue={{
         direction: 'row',
-        // first: {
+        first: {
           // first: {
           //   first: 'files',
           //   second: 'editor',
           //   direction: 'row',
           // },
           first: 'editor',
-          // second: {
-          //   first: 'inspector',
-          //   second: 'files',
-          //   direction: 'row',
-          // },
-          // direction: 'column',
-        // },
+          second: {
+            first: 'inspector',
+            second: 'props',
+            direction: 'row',
+          },
+          direction: 'column',
+        },
         second: 'preview',
         splitPercentage: 50,
       }}

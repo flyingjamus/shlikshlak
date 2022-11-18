@@ -1,12 +1,17 @@
 import React, { ReactNode } from 'react'
-import { Button, Accordion, ButtonProps } from '@mui/material'
+import { Button, Accordion, ButtonProps, Stack, Box } from '@mui/material'
+import { Screen } from '../src/Components/Screen/Screen'
 
 function A({ count }: { count: number }) {
-  return <button>sdas</button>
+  return <Screen />
 }
 
 function B({ count }: { count: number }) {
-  return <Button  />
+  return (
+    <Box>
+      <Button variant={'contained'} />
+    </Box>
+  )
 }
 
 // const Comp = ({ children }: { children: ReactNode }) => {

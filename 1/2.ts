@@ -1,80 +1,112 @@
-import S from 'subsecond'
-import globby from 'globby'
-import { promises } from 'fs'
-const { readFile, writeFile } = promises
-const paths = await globby(['node_modules/@mui/**/*.d.ts'])
+import ts from 'typescript'
+// import ts from 'typescript/built/local/typescript.js'
+// import { JsxEmit, ModuleKind, ModuleResolutionKind, ScriptTarget, CompilerOptions } from 'typescript'
 
-import { Node, Project, ScriptTarget } from 'ts-morph'
+export const COMPILER_OPTIONS: ts.CompilerOptions = {
+  allowJs: false,
+  allowSyntheticDefaultImports: true,
+  allowNonTsExtensions: true,
+  alwaysStrict: true,
+  esModuleInterop: false,
+  forceConsistentCasingInFileNames: false,
+  isolatedModules: true,
+  jsx: ts.JsxEmit.Preserve,
+  module: ts.ModuleKind.ESNext,
+  moduleResolution: ts.ModuleResolutionKind.NodeJs,
+  // noEmit: false,
+  noEmit: true,
+  resolveJsonModule: false,
+  strict: true,
+  skipLibCheck: false,
+  // noLib: true,
+  target: ts.ScriptTarget.ESNext,
+  lib: ['dom', 'dom.iterable', 'esnext'],
+  // skipDefaultLibCheck: false,
+} as ts.CompilerOptions
+// const filename = 'src/Components/Inspector/InspectorTree.tsx'
+const filename = '1/1.tsx'
 
-const project = new Project({
-  skipAddingFilesFromTsConfig: true,
-})
-// project.addSourceFilesAtPaths('node_modules/@mui/**/*.d.ts')
-// project
-//   .getSourceFiles()
-//   .map((file) =>
-//     file
-//       .getExportedDeclarations()
-//       .get('Box')
-//       ?.map((v) => {
-//         console.log(
-//           12123123,
-//           v.getSourceFile().getBaseName(),
-//           file.getImportDeclarations().map((v) => v.getText())
-//         )
-//         return Node.isReferenceFindable(v) && v.findReferences()
-//       })
-//   )
-//   .filter(Boolean)
+class LanguageServiceHost implements ts.LanguageServiceHost {
+  private _compileOptions: ts.CompilerOptions
+  private _versions: Map<string, number> = new Map()
+  private _snapshots: Map<string, ts.IScriptSnapshot> = new Map()
+  private _fileNames: Set<string> = new Set()
+  private _cwd: string
 
-// const paths = await globby(['1/*.d.ts'])
+  constructor(options: ts.CompilerOptions, cwd: string) {
+    this._compileOptions = options
+    this._cwd = cwd
+    this._fileNames.add(filename)
+  }
 
+  getCompilationSettings() {
+    return this._compileOptions
+  }
 
+  getScriptFileNames() {
+    return [...this._fileNames.values()]
+  }
 
-import analyzeTsConfig from 'ts-unused-exports';
-analyzeTsConfig()
+  getScriptVersion(fileName: string) {
+    return (this._versions.get(fileName) || 0).toString()
+  }
 
-// noinspection TypeScriptUnresolvedFunction
-// const map = new Map<string, string>()
-// for (const path of paths) {
-//   map.set(path, await readFile(path, 'utf8'))
-// }
-//
-// const files = Object.fromEntries(map.entries())
-//
-// S.load(files)
-//
-// noinspection TypeScriptUnresolvedFunction
-// const changedFilenames = new Set<string>()
-// S('TSTypeAliasDeclaration TSMappedType').each((v) => {
-//   // console.log(v.fileName())
-//   // console.log(111111, v.children().eq(1).text())
-//   // console.log(
-//   //   113231,
-//   //   v.find('TSTypeParameter').text(),
-//   //   111111,
-//   //   v.find('TSTypeParameter').children().eq(1).text(),
-//   //   111111,
-//   //   v.find('TSQualifiedName').text()
-//   // )
-//   const constraint = v.children().eq(1)
-//   const alias = v.find('TSTypeParameter').children().eq(0).text()
-//   const references = v.find('TSTypeReference').filter((v) => v.text() === alias)
-//   if (references.length) return
-//   changedFilenames.add(v.fileName())
-//
-//   console.log(v.fileName(), '\n')
-//
-//   console.log(v.parent().text())
-//   v.text(`Record<${v.find('TSTypeParameter').children().eq(1).text()}, ${constraint.text()}>`)
-//   console.log(v.parent().text())
-//   console.log('\n---------\n\n')
-// })
-//
-// const newFiles = S.print()
-//
-// for (const filename of changedFilenames) {
-//   console.log(filename)
-//   // await writeFile(filename, newFiles[filename])
-// }
-// console.log(changedFilenames.values())
+  setScriptSnapshot(fileName: string, code: string) {
+    this._fileNames.add(fileName)
+    const version = (this._versions.get(fileName) || 0) + 1
+    this._versions.set(fileName, version)
+    const snapshot = ts.ScriptSnapshot.fromString(code)
+    this._snapshots.set(fileName, snapshot)
+  }
+
+  getScriptSnapshot(fileName: string) {
+    if (this._snapshots.has(fileName)) {
+      return this._snapshots.get(fileName)
+    }
+    const code = ts.sys.readFile(fileName)
+    if (code) {
+      this.setScriptSnapshot(fileName, code)
+      return this._snapshots.get(fileName)
+    }
+  }
+
+  getCurrentDirectory() {
+    return this._cwd
+  }
+
+  getDefaultLibFileName(opts: ts.CompilerOptions) {
+    return ts.getDefaultLibFilePath(opts)
+  }
+
+  fileExists(path: string) {
+    return ts.sys.fileExists(path)
+  }
+
+  readFile(path: string, encoding?: string) {
+    return ts.sys.readFile(path, encoding)
+  }
+
+  readDirectory(path: string, extensions?: string[], exclude?: string[], include?: string[], depth?: number) {
+    return ts.sys.readDirectory(path, extensions, exclude, include, depth)
+  }
+
+  directoryExists(dirName: string) {
+    return ts.sys.directoryExists(dirName)
+  }
+
+  getDirectories(dirName: string) {
+    return ts.sys.getDirectories(dirName)
+  }
+}
+
+const ls = ts.createLanguageService(new LanguageServiceHost(COMPILER_OPTIONS, ''))
+const sourceFile = ls.getProgram()?.getSourceFile(filename)
+if (sourceFile) {
+  const pos = sourceFile.getPositionOfLineAndCharacter(11, 24)
+  debugger
+  console.log(11111111)
+  console.time('get')
+  const completions = ls.getCompletionsAtPosition(filename, pos, {})
+  console.timeEnd('get')
+  console.log(completions?.entries.map((v) => v.name))
+}

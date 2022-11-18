@@ -1,83 +1,137 @@
-import S from "subsecond";
-import globby from "globby";
-import { promises } from "fs";
-var readFile = promises.readFile, writeFile = promises.writeFile;
-var paths = await globby([
-    "node_modules/@mui/**/*.d.ts"
-]);
-import { Node, Project } from "ts-morph";
-var project = new Project({
-    skipAddingFilesFromTsConfig: true
-});
-project.addSourceFilesAtPaths("node_modules/@mui/**/*.d.ts");
-project.getSourceFiles().map(function(file) {
-    var ref;
-    return (ref = file.getExportedDeclarations().get("Box")) === null || ref === void 0 ? void 0 : ref.map(function(v) {
-        console.log(12123123, v.getSourceFile().getBaseName(), file.getImportDeclarations().map(function(v) {
-            return v.getText();
-        }));
-        return Node.isReferenceFindable(v) && v.findReferences();
-    });
-}).filter(Boolean);
-// const paths = await globby(['1/*.d.ts'])
-// noinspection TypeScriptUnresolvedFunction
-var map = new Map();
-var _iteratorNormalCompletion = true, _didIteratorError = false, _iteratorError = undefined;
-try {
-    for(var _iterator = paths[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true){
-        var path = _step.value;
-        map.set(path, await readFile(path, "utf8"));
-    }
-} catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-} finally{
-    try {
-        if (!_iteratorNormalCompletion && _iterator.return != null) {
-            _iterator.return();
-        }
-    } finally{
-        if (_didIteratorError) {
-            throw _iteratorError;
-        }
+function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+    for(var i = 0, arr2 = new Array(len); i < len; i++)arr2[i] = arr[i];
+    return arr2;
+}
+function _arrayWithoutHoles(arr) {
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
+}
+function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
     }
 }
-var files = Object.fromEntries(map.entries());
-S.load(files) // noinspection TypeScriptUnresolvedFunction
- // const changedFilenames = new Set<string>()
- // S('TSTypeAliasDeclaration TSMappedType').each((v) => {
- //   // console.log(v.fileName())
- //   // console.log(111111, v.children().eq(1).text())
- //   // console.log(
- //   //   113231,
- //   //   v.find('TSTypeParameter').text(),
- //   //   111111,
- //   //   v.find('TSTypeParameter').children().eq(1).text(),
- //   //   111111,
- //   //   v.find('TSQualifiedName').text()
- //   // )
- //   const constraint = v.children().eq(1)
- //   const alias = v.find('TSTypeParameter').children().eq(0).text()
- //   const references = v.find('TSTypeReference').filter((v) => v.text() === alias)
- //   if (references.length) return
- //   changedFilenames.add(v.fileName())
- //
- //   console.log(v.fileName(), '\n')
- //
- //   console.log(v.parent().text())
- //   v.text(`Record<${v.find('TSTypeParameter').children().eq(1).text()}, ${constraint.text()}>`)
- //   console.log(v.parent().text())
- //   console.log('\n---------\n\n')
- // })
- //
- // const newFiles = S.print()
- //
- // for (const filename of changedFilenames) {
- //   console.log(filename)
- //   // await writeFile(filename, newFiles[filename])
- // }
- // console.log(changedFilenames.values())
-;
+function _iterableToArray(iter) {
+    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
+}
+function _nonIterableSpread() {
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+function _toConsumableArray(arr) {
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+}
+function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+}
+var ref;
+import ts from "typescript";
+// import ts from 'typescript/built/local/typescript.js'
+// import { JsxEmit, ModuleKind, ModuleResolutionKind, ScriptTarget, CompilerOptions } from 'typescript'
+export var COMPILER_OPTIONS = {
+    allowJs: false,
+    allowSyntheticDefaultImports: true,
+    allowNonTsExtensions: true,
+    alwaysStrict: true,
+    esModuleInterop: false,
+    forceConsistentCasingInFileNames: false,
+    isolatedModules: true,
+    jsx: ts.JsxEmit.Preserve,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+    // noEmit: false,
+    noEmit: true,
+    resolveJsonModule: false,
+    strict: true,
+    skipLibCheck: false,
+    // noLib: true,
+    target: ts.ScriptTarget.ESNext,
+    lib: [
+        "dom",
+        "dom.iterable",
+        "esnext"
+    ]
+};
+// const filename = 'src/Components/Inspector/InspectorTree.tsx'
+var filename = "1/1.tsx";
+var LanguageServiceHost = /*#__PURE__*/ function() {
+    "use strict";
+    function LanguageServiceHost(options, cwd) {
+        _classCallCheck(this, LanguageServiceHost);
+        this._versions = new Map();
+        this._snapshots = new Map();
+        this._fileNames = new Set();
+        this._compileOptions = options;
+        this._cwd = cwd;
+        this._fileNames.add(filename);
+    }
+    var _proto = LanguageServiceHost.prototype;
+    _proto.getCompilationSettings = function getCompilationSettings() {
+        return this._compileOptions;
+    };
+    _proto.getScriptFileNames = function getScriptFileNames() {
+        return _toConsumableArray(this._fileNames.values());
+    };
+    _proto.getScriptVersion = function getScriptVersion(fileName) {
+        return (this._versions.get(fileName) || 0).toString();
+    };
+    _proto.setScriptSnapshot = function setScriptSnapshot(fileName, code) {
+        this._fileNames.add(fileName);
+        var version = (this._versions.get(fileName) || 0) + 1;
+        this._versions.set(fileName, version);
+        var snapshot = ts.ScriptSnapshot.fromString(code);
+        this._snapshots.set(fileName, snapshot);
+    };
+    _proto.getScriptSnapshot = function getScriptSnapshot(fileName) {
+        if (this._snapshots.has(fileName)) {
+            return this._snapshots.get(fileName);
+        }
+        var code = ts.sys.readFile(fileName);
+        if (code) {
+            this.setScriptSnapshot(fileName, code);
+            return this._snapshots.get(fileName);
+        }
+    };
+    _proto.getCurrentDirectory = function getCurrentDirectory() {
+        return this._cwd;
+    };
+    _proto.getDefaultLibFileName = function getDefaultLibFileName(opts) {
+        return ts.getDefaultLibFilePath(opts);
+    };
+    _proto.fileExists = function fileExists(path) {
+        return ts.sys.fileExists(path);
+    };
+    _proto.readFile = function readFile(path, encoding) {
+        return ts.sys.readFile(path, encoding);
+    };
+    _proto.readDirectory = function readDirectory(path, extensions, exclude, include, depth) {
+        return ts.sys.readDirectory(path, extensions, exclude, include, depth);
+    };
+    _proto.directoryExists = function directoryExists(dirName) {
+        return ts.sys.directoryExists(dirName);
+    };
+    _proto.getDirectories = function getDirectories(dirName) {
+        return ts.sys.getDirectories(dirName);
+    };
+    return LanguageServiceHost;
+}();
+var ls = ts.createLanguageService(new LanguageServiceHost(COMPILER_OPTIONS, ""));
+var sourceFile = (ref = ls.getProgram()) === null || ref === void 0 ? void 0 : ref.getSourceFile(filename);
+if (sourceFile) {
+    var pos = sourceFile.getPositionOfLineAndCharacter(11, 24);
+    debugger;
+    console.log(11111111);
+    console.time("get");
+    var completions = ls.getCompletionsAtPosition(filename, pos, {});
+    console.timeEnd("get");
+    console.log(completions === null || completions === void 0 ? void 0 : completions.entries.map(function(v) {
+        return v.name;
+    }));
+}
 
 
 //# sourceMappingURL=2.js.map

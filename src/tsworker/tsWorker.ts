@@ -1,6 +1,8 @@
 import type { DocumentRegistry, LanguageService } from 'typescript'
-import * as typescript from 'typescript'
-console.log(typescript )
+// import * as typescript from 'typescript'
+// import * as typescript from 'typescript/built/local/typescript'
+import  typescript from 'typescript'
+console.log(typescript)
 import * as edworker from 'monaco-editor-core/esm/vs/editor/editor.worker'
 import { libFileMap } from '../lib/lib'
 import {
