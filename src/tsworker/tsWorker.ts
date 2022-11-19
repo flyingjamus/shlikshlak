@@ -1,7 +1,7 @@
-import type { DocumentRegistry, LanguageService } from 'typescript'
+import type { DocumentRegistry, LanguageService, JSDoc, textChanges } from 'typescript'
 // import * as typescript from 'typescript'
 // import * as typescript from 'typescript/built/local/typescript'
-import  typescript from 'typescript'
+import typescript from 'typescript'
 console.log(typescript)
 import * as edworker from 'monaco-editor-core/esm/vs/editor/editor.worker'
 import { libFileMap } from '../lib/lib'
@@ -69,24 +69,24 @@ const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
 //   getDocument: () => {},
 // })
 
-const proxy = <T extends any>(obj: T, key: keyof T, name = 'obj') => {
-  const old = obj[key]
-  if (!isFunction(old)) return
-  obj[key] = function (...args: unknown[]) {
-    console.log(`Called ${name}.${String(key)} with `, args.length > 1 ? args : args[0])
-    const res = old.apply(this as any, args)
-    console.log(`Got ${name}.${String(key)} with `, res)
-    return res
-  } as T[typeof key]
-}
-
-const proxyAll = (obj: any, name?: string) => {
-  for (const key of Object.getOwnPropertyNames(obj)) {
-    if (key === 'constructor') continue
-    proxy(obj, key, name)
-  }
-  return obj
-}
+// const proxy = <T extends any>(obj: T, key: keyof T, name = 'obj') => {
+//   const old = obj[key]
+//   if (!isFunction(old)) return
+//   obj[key] = function (...args: unknown[]) {
+//     console.log(`Called ${name}.${String(key)} with `, args.length > 1 ? args : args[0])
+//     const res = old.apply(this as any, args)
+//     console.log(`Got ${name}.${String(key)} with `, res)
+//     return res
+//   } as T[typeof key]
+// }
+//
+// const proxyAll = (obj: any, name?: string) => {
+//   for (const key of Object.getOwnPropertyNames(obj)) {
+//     if (key === 'constructor') continue
+//     proxy(obj, key, name)
+//   }
+//   return obj
+// }
 
 export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
   // --- model sync -----------------------
@@ -348,53 +348,87 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost, ITypeSc
     position: number,
     attr: string,
     value?: string
-  ): Promise<typescript.TextChange[] | void> {
-    const parent = this.getParentTokenAtPosition(fileName, position)
-    if (parent) {
-      const existing = parent.attributes.properties.find(
-        (v) => typescript.isJsxAttribute(v) && v.name.escapedText.toString() === attr
-      ) as typescript.JsxAttribute | undefined
-      if (existing?.initializer) {
-        const initializer = existing.initializer
-        const firstChar = initializer.getText().charAt(0)
-        let quote = "'"
-        if (firstChar === '{') {
-          if (initializer.getText().charAt(1) === '"') {
-            quote = '"'
-          }
-        } else if (firstChar === '"') {
-          quote = '"'
-        }
-        if (value !== undefined) {
-          const span = { start: initializer.pos, length: initializer.end - initializer.pos }
-          if (value.includes(quote)) {
-            return [
-              {
-                span: span,
-                newText: `{${quote}${value.replaceAll(quote, '\\' + quote)}${quote}}`,
-              },
-            ]
-          } else {
-            return [
-              {
-                span: span,
-                newText: quote + value + quote,
-              },
-            ]
-          }
-        }
+  ): Promise<typescript.FileTextChanges[] | void> {
+    const sourceFile = this.getSourceFile(fileName)!
+    const token = this.getTokenAtPosition(fileName, position)
+    // typescript.getQuotePreference()
+    const factory = typescript.factory
+    const name = factory.createIdentifier(attr)
+
+    const changes = typescript.textChanges.ChangeTracker.with(
+      { host: this, preferences: {}, formatContext: typescript.formatting.getFormatContext({}, this) },
+      (t) => {
+        const updates = factory.updateJsxAttribute(
+          token,
+          name,
+          value !== undefined
+            ? factory.createStringLiteral(
+                value,
+                // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
+                false
+              )
+            : undefined
+        )
+        const options = { prefix: token.pos === token.end ? ' ' : undefined }
+
+        t.replaceNode(sourceFile, token.parent, updates, options)
       }
-    }
+    )
+    console.log(changes)
+    return changes
+    //   if (parent) {
+    //     const existing = parent.attributes.properties.find(
+    //       (v) => typescript.isJsxAttribute(v) && v.name.escapedText.toString() === attr
+    //     ) as typescript.JsxAttribute | undefined
+    //     if (existing?.initializer) {
+    //       const initializer = existing.initializer
+    //       const firstChar = initializer.getText().charAt(0)
+    //       let quote = "'"
+    //       if (firstChar === '{') {
+    //         if (initializer.getText().charAt(1) === '"') {
+    //           quote = '"'
+    //         }
+    //       } else if (firstChar === '"') {
+    //         quote = '"'
+    //       }
+    //       if (value !== undefined) {
+    //         const span = { start: initializer.pos, length: initializer.end - initializer.pos }
+    //         if (value.includes(quote)) {
+    //           return [
+    //             {
+    //               span: span,
+    //               newText: `{${quote}${value.replaceAll(quote, '\\' + quote)}${quote}}`,
+    //             },
+    //           ]
+    //         } else {
+    //           return [
+    //             {
+    //               span: span,
+    //               newText: quote + value + quote,
+    //             },
+    //           ]
+    //         }
+    //       }
+    //     }
+    //   }
   }
 
-  getParentTokenAtPosition(fileName: string, position: number): typescript.JsxOpeningLikeElement | undefined {
+  getSourceFile(fileName: string) {
+    const program = this._languageService.getProgram()
+    return program?.getSourceFile(fileName)
+  }
+  getTokenAtPosition(fileName: string, position: number) {
     const program = this._languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
       console.error('Missing source file', fileName)
       return
     }
-    const token = typescript.getTokenAtPosition(sourceFile, position)
+    return typescript.getTokenAtPosition(sourceFile, position)
+  }
+
+  getParentTokenAtPosition(fileName: string, position: number): typescript.JsxOpeningLikeElement | undefined {
+    const token = this.getTokenAtPosition(fileName, position)
     const parent = token.parent
     if (typescript.isJsxOpeningLikeElement(parent)) {
       return parent

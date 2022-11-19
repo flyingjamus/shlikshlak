@@ -17,9 +17,6 @@ interface HeaderProps {
 
 export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps) => (
   <header>
-    <Typography variant='button'>
-    
-    </Typography>
     <div className="wrapper">
       <div>
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -46,12 +43,12 @@ export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps
             <span className="welcome">
               Welcome, <b>{user.name}</b>!
             </span>
-            <Button size="small" onClick={onLogout} label="Log out" />
+            <Button size="large" onClick={onLogout} label="Log out" />
           </>
         ) : (
           <>
-            <Button size="medium" onClick={onLogin} label="Log in" />
-            <Button primary size="small" onClick={onCreateAccount} label="Sign up" />
+            <Button size="small" onClick={onLogin} label="Log in" />
+            <Button primary size="large" onClick={onCreateAccount} label="Sign up" />
           </>
         )}
       </div>

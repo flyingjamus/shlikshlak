@@ -53,7 +53,7 @@ export const MonacoEditor = () => {
     })
 
     editor.onDidChangeModelContent(async (e) => {
-      console.log('Onchange', e)
+      // console.log('Onchange', e)
       const worker = await getTypescriptWorker()
       const model = editor.getModel()
       if (!model) return

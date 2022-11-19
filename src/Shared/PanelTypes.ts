@@ -7,6 +7,7 @@ export type PanelMatch =
   | { name: 'boolean' }
   | { name: 'enum'; parameters: { values: string[] } }
 
+export type ExistingAttribute = { name: string; value?: string; location: TextRange }
 export type PanelsResponse = {
   attributes: {
     name: string
@@ -14,7 +15,7 @@ export type PanelsResponse = {
     required?: boolean
     panels: PanelMatch[]
   }[]
-  existingAttributes: { name: string; value?: string; location: TextRange }[]
+  existingAttributes: ExistingAttribute[]
   location?: number
   fileName?: string
 }

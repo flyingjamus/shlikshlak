@@ -50,17 +50,20 @@ export class WorkerAdapter {
         modelCbs[fileName] = cb
       })
 
-      const edits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
+      const fileEdits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
 
-      const uri = monaco.Uri.parse(fileName)
-      const model = monaco.editor.getModel(uri)
-      if (edits && model) {
-        const editOperations = edits.map((v) => ({
-          range: textSpanToRange(model, v.span),
-          text: v.newText,
-        }))
-        model.pushEditOperations([], editOperations, (inverseEditOperations) => {
-          return null
+      if (fileEdits) {
+        fileEdits.forEach((file) => {
+          const uri = monaco.Uri.parse(file.fileName)
+          const model = monaco.editor.getModel(uri)
+          if (!model) return
+          const editOperations = file.textChanges.map((v) => ({
+            range: textSpanToRange(model, v.span),
+            text: v.newText,
+          }))
+          model.pushEditOperations([], editOperations, (inverseEditOperations) => {
+            return null
+          })
         })
         await cbPromise
       } else {
