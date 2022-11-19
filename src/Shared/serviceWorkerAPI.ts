@@ -1,4 +1,5 @@
-import { FilesMap } from '../Components/store'
-import { workerAPI } from '../my-sw'
+import { FileStoreState } from '../Components/store'
 
-export type ServiceWorkerAPI = typeof workerAPI
+export type ServiceWorkerAPI = {
+  init: (v: FileStoreState) => void
+}

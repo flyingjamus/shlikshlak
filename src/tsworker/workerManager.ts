@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { LanguageServiceDefaults } from './monaco.contribution';
-import type { TypeScriptWorker } from './tsWorker';
 import { editor, Uri, IDisposable } from 'monaco-editor-core';
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 export class WorkerManager {
 	private _configChangeListener: IDisposable;

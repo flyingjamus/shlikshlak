@@ -91,7 +91,7 @@ var LanguageServiceHost = /*#__PURE__*/ function() {
             return this._snapshots.get(fileName);
         }
         var code = ts.sys.readFile(fileName);
-        if (code) {
+        if (code !== undefined) {
             this.setScriptSnapshot(fileName, code);
             return this._snapshots.get(fileName);
         }
@@ -123,11 +123,17 @@ var ls = ts.createLanguageService(new LanguageServiceHost(COMPILER_OPTIONS, ""))
 var sourceFile = (ref = ls.getProgram()) === null || ref === void 0 ? void 0 : ref.getSourceFile(filename);
 if (sourceFile) {
     var pos = sourceFile.getPositionOfLineAndCharacter(11, 24);
-    debugger;
     console.log(11111111);
     console.time("get");
+    // console.profile('get')
     var completions = ls.getCompletionsAtPosition(filename, pos, {});
+    // console.profileEnd('get')
+    // console.profile('get2')
+    ls.getCompletionsAtPosition(filename, pos, {});
+    ls.getCompletionsAtPosition(filename, pos, {});
+    ls.getCompletionsAtPosition(filename, pos, {});
     console.timeEnd("get");
+    // console.profileEnd('get2')
     console.log(completions === null || completions === void 0 ? void 0 : completions.entries.map(function(v) {
         return v.name;
     }));

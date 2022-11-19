@@ -1,5 +1,5 @@
 import { FileSystemHost, RuntimeDirEntry } from 'ts-morph'
-import { TypeScriptWorker } from './tsWorker'
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 export class MyFileSystemHost implements FileSystemHost {
   constructor(private tsWorker: TypeScriptWorker) {}

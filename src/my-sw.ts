@@ -4,8 +4,11 @@ import { FileStoreState } from './Components/store'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst, Strategy, StrategyHandler } from 'workbox-strategies'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
+import { ServiceWorkerAPI } from './Shared/serviceWorkerAPI'
 
 self.__WB_DISABLE_DEV_LOGS = true
+
+// precacheAndRoute(self.__WB_MANIFEST); // does compile
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -15,7 +18,7 @@ clientsClaim()
 type ReadFile = FileStoreState['readFile']
 
 let readFile: ReadFile | undefined
-export const workerAPI = {
+const workerAPI: ServiceWorkerAPI = {
   init: (v: FileStoreState) => {
     readFile = v.readFile
   },

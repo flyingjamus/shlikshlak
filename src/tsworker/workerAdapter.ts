@@ -1,8 +1,8 @@
-import { TypeScriptWorker } from './tsWorker'
 import { editor, IRange } from 'monaco-editor'
 import { TextSpan } from 'typescript'
 import { monaco } from 'react-monaco-editor'
 import ITextModel = editor.ITextModel
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 const attributesQueue: Record<string, Promise<void> | undefined> = {}
 const modelCbs: Record<string, (() => void) | undefined> = {}
@@ -30,7 +30,12 @@ export class WorkerAdapter {
     worker.init()
   }
 
-  async setAttribute(fileName: string, location: number, prop: string, value: string) {
+  async setAttribute(
+    fileName: string,
+    location: number,
+    prop: string,
+    value: string,
+  ) {
     const p = attributesQueue[fileName] || Promise.resolve().then(() => {})
     attributesQueue[fileName] = p.then(async () => {
       if (modelCbs[fileName]) {
@@ -52,7 +57,7 @@ export class WorkerAdapter {
 
       const fileEdits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
 
-      if (fileEdits) {
+      if (fileEdits?.length) {
         fileEdits.forEach((file) => {
           const uri = monaco.Uri.parse(file.fileName)
           const model = monaco.editor.getModel(uri)

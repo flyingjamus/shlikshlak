@@ -8,13 +8,15 @@ export type PanelMatch =
   | { name: 'enum'; parameters: { values: string[] } }
 
 export type ExistingAttribute = { name: string; value?: string; location: TextRange }
+
+export type PanelAttribute = {
+  name: string
+  location?: TextRange
+  required?: boolean
+  panels: PanelMatch[]
+}
 export type PanelsResponse = {
-  attributes: {
-    name: string
-    location?: TextRange
-    required?: boolean
-    panels: PanelMatch[]
-  }[]
+  attributes: PanelAttribute[]
   existingAttributes: ExistingAttribute[]
   location?: number
   fileName?: string

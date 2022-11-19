@@ -3,8 +3,13 @@ import { promises } from 'fs'
 import path from 'path'
 import { zodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
-import { RuntimeDirEntry } from 'ts-morph'
 
+export interface RuntimeDirEntry {
+  name: string;
+  isFile: boolean;
+  isDirectory: boolean;
+  isSymlink: boolean;
+}
 const { readFile, writeFile, stat, readdir } = promises
 const app = zodiosApp(filesApi)
 app.use(cors())

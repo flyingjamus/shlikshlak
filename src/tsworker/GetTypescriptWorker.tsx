@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor'
-import { TypeScriptWorker } from './tsWorker'
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 export async function getTypescriptWorker() {
   let typeScriptWorker: TypeScriptWorker | undefined = undefined

@@ -24,7 +24,7 @@ self.MonacoEnvironment = {
     }
     if (label === 'typescript' || label === 'javascript') {
       return new Promise((resolve) => {
-        const obj = wrap(tsWorkerInstance)
+        const obj = wrap<{ init: (cb: () => void) => Promise<unknown> }>(tsWorkerInstance)
         obj.init(
           proxy(async () => {
             console.log('Git init callback')

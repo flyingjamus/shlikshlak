@@ -10,7 +10,6 @@ import {
   typescriptDefaults,
 } from './monaco.contribution'
 import type * as ts from '../lib/typescriptServices'
-import type { TypeScriptWorker } from './tsWorker'
 import { libFileSet } from '../lib/lib.index'
 import {
   editor,
@@ -24,6 +23,7 @@ import {
   MarkerTag,
   MarkerSeverity,
 } from 'monaco-editor-core'
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 //#region utils copied from typescript to prevent loading the entire typescriptServices ---
 

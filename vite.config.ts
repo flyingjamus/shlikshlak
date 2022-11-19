@@ -28,15 +28,15 @@ export default defineConfig({
     // },
 
     VitePWA({
-      strategies: 'injectManifest',
+      // strategies: 'generateSW',
       srcDir: resolve(__dirname, 'src'),
       filename: 'my-sw.ts',
-      registerType: 'prompt',
-      injectRegister: 'auto',
-      devOptions: {
-        enabled: true,
-        type: 'module',
-      },
+      // registerType: 'prompt',
+      // injectRegister: 'inline',
+      // devOptions: {
+      //   enabled: true,
+      //   type: 'module',
+      // },
     }),
     react({
       babel: {

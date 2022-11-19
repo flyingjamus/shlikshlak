@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { WorkerManager } from './workerManager'
-import type { TypeScriptWorker } from './tsWorker'
 import { LanguageServiceDefaults } from './monaco.contribution'
 import * as languageFeatures from '../tsworker/languageFeatures'
 import { languages, Uri } from 'monaco-editor-core'
+import { TypeScriptWorker } from './TypeScriptWorker'
 
 let javaScriptWorker: (...uris: Uri[]) => Promise<TypeScriptWorker>
 let typeScriptWorker: (...uris: Uri[]) => Promise<TypeScriptWorker>

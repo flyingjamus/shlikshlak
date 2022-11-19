@@ -8,9 +8,9 @@ import { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { CodeInfo } from './ReactDevInspectorUtils/inspect'
 import { PanelsResponse } from '../Shared/PanelTypes'
-import { TypeScriptWorker } from '../tsworker/tsWorker'
 import { StateStorage } from 'zustand/middleware/persist'
 import { WorkerAdapter } from '../tsworker/workerAdapter'
+import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
 
 export type AppFile = {
   path: string
