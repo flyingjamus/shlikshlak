@@ -30,12 +30,7 @@ export class WorkerAdapter {
     worker.init()
   }
 
-  async setAttribute(
-    fileName: string,
-    location: number,
-    prop: string,
-    value: string,
-  ) {
+  async setAttribute(fileName: string, location: number, prop: string, value: string | boolean | undefined) {
     const p = attributesQueue[fileName] || Promise.resolve().then(() => {})
     attributesQueue[fileName] = p.then(async () => {
       if (modelCbs[fileName]) {

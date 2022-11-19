@@ -1,5 +1,5 @@
 import EventEmitter from '../events'
-import { throttle } from 'lodash'
+import { throttle } from 'lodash-es'
 import {
   SESSION_STORAGE_LAST_SELECTION_KEY,
   SESSION_STORAGE_RELOAD_AND_PROFILE_KEY,

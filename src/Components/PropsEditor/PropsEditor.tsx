@@ -9,6 +9,7 @@ import {
 } from '../../Shared/PanelTypes'
 import { ElementType, useMemo, useState } from 'react'
 import { throttle } from 'lodash-es'
+import { partition } from 'lodash-es'
 
 const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value: defaultValue, onChange }) => {
   const [value, setValue] = useState(defaultValue)
@@ -39,7 +40,7 @@ const BooleanEditor: BaseEditor = ({ value, onChange }) => {
   return <Checkbox onChange={(e, v) => onChange(value)} defaultValue={value} />
 }
 
-type OnChangeValue = string | boolean
+export type OnChangeValue = string | boolean
 type BaseEditor<T = {}> = ElementType<T & { value?: string; onChange: (value: OnChangeValue) => void }>
 
 const PropEditor = ({
@@ -66,7 +67,7 @@ export const PropsEditorWrapper = () => {
   const openFile = useIframeStore((v) => v.openFile)
   const adapter = useIframeStore((v) => v.workerAdapter)
   const throttled = useMemo(
-    () => adapter && throttle(adapter.setAttribute.bind(adapter), 200, { trailing: true }),
+    () => adapter && throttle(adapter.setAttribute.bind(adapter), 500, { trailing: true }),
     [adapter]
   )
   return (
@@ -88,24 +89,27 @@ export const PropsEditor = ({
   panels?: PanelsResponse
   onAttributeChange: (attr: PanelAttribute, v: OnChangeValue) => void
 }) => {
-  return (
+  // const sortedPanels = partition(panels?.attributes, (v) => v.location)
+  return !panels ? null : (
     <Box>
-      {panels?.attributes.map((attr) => {
-        const existing = panels.existingAttributes.find((v) => v.name === attr.name)
-        const panel = attr.panels?.[0]
-        if (!panel) return null
-        const key = [panels.fileName, panels.location, attr.name].join(':')
-        return (
-          <Box key={key}>
-            <Box>{attr.name}</Box>
-            <PropEditor
-              panelMatch={panel}
-              value={existing?.value}
-              onChange={(newValue) => onAttributeChange(attr, newValue)}
-            />
-          </Box>
-        )
-      })}
+      {panels?.attributes
+        .flatMap((v) => v)
+        .map((attr) => {
+          const existing = panels.existingAttributes.find((v) => v.name === attr.name)
+          const panel = attr.panels?.[0]
+          if (!panel) return null
+          const key = [panels.fileName, panels.location, attr.name].join(':')
+          return (
+            <Box key={key}>
+              <Box>{attr.name}</Box>
+              <PropEditor
+                panelMatch={panel}
+                value={existing?.value}
+                onChange={(newValue) => onAttributeChange(attr, newValue)}
+              />
+            </Box>
+          )
+        })}
     </Box>
   )
 }

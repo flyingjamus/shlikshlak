@@ -1,12 +1,4 @@
-import {
-  codefix,
-  factory,
-  FileTextChanges,
-  formatting,
-  isJsxOpeningLikeElement,
-  textChanges,
-} from 'typescript'
-import ts from 'typescript'
+import ts, { factory, FileTextChanges, formatting, isJsxOpeningLikeElement, textChanges } from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
 import { isDefined } from 'ts-is-defined'
 import { PANELS } from './Panels'
@@ -24,7 +16,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
     // typescript.getQuotePreference()
     const name = factory.createIdentifier(attrName)
 
-    const changes = textChanges.ChangeTracker.with(
+    return textChanges.ChangeTracker.with(
       {
         host: this,
         preferences: {},
@@ -74,10 +66,10 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
         }
       }
     )
-    return changes
   }
 
   async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
+    console.log('Getpanels')
     const checker = this.getTypeChecker()
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {

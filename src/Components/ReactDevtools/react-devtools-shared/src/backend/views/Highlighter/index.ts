@@ -1,5 +1,5 @@
 import memoize from 'memoize-one'
-import { throttle } from 'lodash'
+import { throttle } from 'lodash-es'
 import Agent from '../../../../../react-devtools-shared/src/backend/agent'
 import { hideOverlay, showOverlay } from './Highlighter'
 import type { BackendBridge } from '../../../bridge'

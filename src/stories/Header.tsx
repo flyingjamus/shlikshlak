@@ -14,6 +14,6 @@ interface HeaderProps {
   onCreateAccount: () => void
 }
 
-export const Header = ({ user, onLogin, onLogout, onCreateAccount }: HeaderProps) => (
-  <Button size={"small"} onClick={onLogin} color={"primary"} classes  />
+export const Header = ({ user, onLogin, ...props }: HeaderProps) => (
+  <Button size={"large"} onClick={onLogin} color={"inherit"}  />
 )

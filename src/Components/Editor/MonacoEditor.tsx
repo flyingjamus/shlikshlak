@@ -12,8 +12,6 @@ import { throttle } from 'lodash-es'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 import { apiClient } from '../../client/apiClient'
 
-// const useTv
-
 // const bindEditor = (editor: IStandaloneCodeEditor) => {
 //   const editorService = editor._codeEditorService
 //   const openEditorBase = editorService.openCodeEditor.bind(editorService)
@@ -122,7 +120,7 @@ export const MonacoEditor = () => {
               console.log(e)
               setTimeout(() => {
                 setDelay({})
-              }, 500)
+              }, 200)
             }
             if (monacoInstance?.getModel() !== model) {
               monacoInstance.setModel(model)
@@ -140,44 +138,9 @@ export const MonacoEditor = () => {
     })()
   }, [openFile, delay, files, monacoInstance, workerAdapter])
 
-  // useTypingWorker()
-
-  // const [editor, setEditor] = useState<IStandaloneCodeEditor>()
-  // useEffect(() => {
-  //   if (editor) {
-  //     window.require.config({
-  //       paths: {
-  //         'monaco-vim': 'https://unpkg.com/monaco-vim/dist/monaco-vim',
-  //       },
-  //     })
-  //
-  //     let result: any
-  //     // TODO you know
-  //     window.require(['monaco-vim'], function (MonacoVim) {
-  //       const statusNode = document.querySelector('.status-node')
-  //       result = MonacoVim.initVimMode(editor, statusNode)
-  //     })
-  //     // const vimMode = initVimMode(editor, statusBarRef.current)
-  //     return () => {
-  //       result?.dispose()
-  //     }
-  //   }
-  // }, [editor])
   return (
     <>
       <Box ref={ref} sx={{ height: '100%' }} />
-      {/*<MonacoEditor*/}
-      {/*  defaultLanguage="typescript"*/}
-      {/*  beforeMount={async (monaco) => {*/}
-      {/*    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)*/}
-      {/*    monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)*/}
-      {/*  }}*/}
-      {/*  defaultValue={''}*/}
-      {/*  options={MONACO_OPTIONS}*/}
-      {/*  defaultPath={'/1.tsx'}*/}
-      {/*  onValidate={(markers) => {}}*/}
-      {/*  {...props}*/}
-      {/*/>*/}
       <Box ref={statusBarRef} />
     </>
   )

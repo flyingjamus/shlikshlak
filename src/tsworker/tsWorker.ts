@@ -21,7 +21,6 @@ expose({
 })
 
 self.onmessage = () => {
-  console.log('Got message')
   edworker.initialize((ctx: worker.IWorkerContext, createData: ICreateData) => {
     return create(ctx, createData)
   })
