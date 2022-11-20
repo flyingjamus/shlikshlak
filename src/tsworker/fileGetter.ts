@@ -58,10 +58,10 @@ const syncClient: ApiClientType = {
 
 export function getFile(unfixedPath: string): AppFile {
   const path = pathToUrl(unfixedPath)
-  console.debug('FILEGETTER: Getting file', path, unfixedPath)
+  // console.debug('FILEGETTER: Getting file', path, unfixedPath)
   const cacheFile = cache.get(path)
   if (cacheFile) {
-    console.debug('FILEGETTER: Got item from cache ', path, cacheFile.exists)
+    // console.debug('FILEGETTER: Got item from cache ', path, cacheFile.exists)
     return cacheFile
   }
   const res = syncClient.getFile({ path: path })

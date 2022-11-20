@@ -5,17 +5,19 @@ import { zodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
 
 export interface RuntimeDirEntry {
-  name: string;
-  isFile: boolean;
-  isDirectory: boolean;
-  isSymlink: boolean;
+  name: string
+  isFile: boolean
+  isDirectory: boolean
+  isSymlink: boolean
 }
 const { readFile, writeFile, stat, readdir } = promises
 const app = zodiosApp(filesApi)
 app.use(cors())
 
 function getFilePath(filePath: string | number) {
-  return path.join(__dirname, '..', '..', filePath?.toString()) // TODO guard
+  // TODO!!!!!!!!!!! GUARD!!!!
+  return path.join(__dirname, '..', '..', '../nimbleway', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
+  // TODO!!!!!!!!!!! GUARD!!!!
 }
 
 app.post('/get_file', async (req, res) => {

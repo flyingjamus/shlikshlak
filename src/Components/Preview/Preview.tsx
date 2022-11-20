@@ -56,7 +56,7 @@ export const parentMethods = {
       },
     },
   } as ProtocolDispatchers),
-  setReactFileLocation(nodeId: number, { absolutePath, lineNumber, columnNumber }: CodeInfo) {
+  setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
     if (absolutePath) {
       useIframeStore.setState({
         openFile: {
@@ -78,6 +78,7 @@ export const Preview = () => {
   const childConnection = useIframeStore((v) => v.childConnection)
   useEffect(() => {
     if (iframeRef.current && !childConnection) {
+      console.debug('Connecting to child')
       const connection = connectToChild<Methods>({
         iframe: iframeRef.current,
         methods: parentMethods,
@@ -85,19 +86,18 @@ export const Preview = () => {
       })
       setReady(true)
 
-      console.debug('Connecting to child')
       connection.promise.then(async (childConnection) => {
         console.debug('Connected')
-        childConnection.DOM.enable()
-        const elementsTree = await childConnection.DOM.getDocument()
+        // await childConnection.DOM.enable()
+        // const elementsTree = await childConnection.DOM.getDocument()
         await childConnection.init()
         // childConnection?.Overlay.setInspectMode({ mode: 'searchForNode' })
         useIframeStore.setState({
           childConnection: childConnection,
-          rootNode: elementsTree.root,
-          iframe: iframeRef.current,
+          // rootNode: elementsTree.root,
+          // iframe: iframeRef.current,
         })
-        await childConnection.DOM.requestChildNodes({ nodeId: elementsTree.root.nodeId, depth: 1000 })
+        // await childConnection.Overlay.setInspectMode({ mode: 'searchForNode' })
       })
       return () => {
         // useIframeStore.setState({ childConnection: undefined, rootNode: undefined })
@@ -112,7 +112,8 @@ export const Preview = () => {
       <StyledIframe
         src={
           // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-page--logged-out' : undefined
-          ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-header--logged-in' : undefined
+          // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-header--logged-in' : undefined
+          ready ? 'http://localhost:3002' : undefined
         }
         onLoad={() => {
           // console.log(useIframeStore.getState().childConnection)

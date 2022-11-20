@@ -13,7 +13,9 @@ import { partition } from 'lodash-es'
 
 const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value: defaultValue, onChange }) => {
   const [value, setValue] = useState(defaultValue)
-  return (
+  return values.length > 5 ? (
+   <>'placeholder'</>
+  ) : (
     <ToggleButtonGroup
       value={value}
       exclusive
@@ -92,8 +94,7 @@ export const PropsEditor = ({
   // const sortedPanels = partition(panels?.attributes, (v) => v.location)
   return !panels ? null : (
     <Box>
-      {panels?.attributes
-        .flatMap((v) => v)
+      {panels?.attributes.slice(0, 5)
         .map((attr) => {
           const existing = panels.existingAttributes.find((v) => v.name === attr.name)
           const panel = attr.panels?.[0]

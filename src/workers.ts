@@ -27,7 +27,6 @@ self.MonacoEnvironment = {
         const obj = wrap<{ init: (cb: () => void) => Promise<unknown> }>(tsWorkerInstance)
         obj.init(
           proxy(async () => {
-            console.log('Git init callback')
             useIframeStore.setState({ tsInit: true })
             resolve(tsWorkerInstance)
           })

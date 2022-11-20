@@ -108,6 +108,6 @@ export function createBridge(contentWindow: window, wall?: Wall): BackendBridge 
 
   return new Bridge(wall) as BackendBridge
 }
-export function initialize(contentWindow: window): void {
+export function initialize(contentWindow: typeof window): void {
   installHook(contentWindow)
 }

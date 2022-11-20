@@ -12,7 +12,8 @@
     "postinstall": "yarn patch-package",
     "dev:vite": "vite --port 3000",
     "dev:ladle": "ladle serve",
-    "dev:server": "nodemon"
+    "dev:server": "nodemon",
+    "build:devtools": "yarn vite build -c vite-loader.config.ts"
   },
   "dependencies": {
     "@blueprintjs/core": "^4.10.0",

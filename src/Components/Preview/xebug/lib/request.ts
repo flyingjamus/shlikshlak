@@ -207,9 +207,9 @@ function getSize(xhr: XMLHttpRequest, headersOnly: boolean, url: string) {
   return size;
 }
 
-const link = document.createElement('a');
 
 export function fullUrl(href: string) {
+  const link = document.createElement('a');
   link.href = href;
 
   return (

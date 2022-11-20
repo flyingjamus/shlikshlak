@@ -4,7 +4,7 @@ import connector from '../lib/connector'
 import * as stringifyObj from '../lib/stringifyObj'
 import { getNode, getNodeId } from '../lib/stringifyNode'
 import { Protocol } from 'devtools-protocol/types/protocol'
-import { parentConnection } from '../../../../StorybookFrame/Xebug'
+import { parentConnection } from '../../../../StorybookFrame/Devtools'
 
 type HighlightConfig = Protocol.Overlay.HighlightConfig
 type HighlightNodeRequest = Protocol.Overlay.HighlightNodeRequest
@@ -178,6 +178,7 @@ function getElementFromPoint(e: any) {
 }
 
 function moveListener(e: any) {
+  console.log(inspectMode)
   if (inspectMode === 'none') return
 
   const node = getElementFromPoint(e)
@@ -209,11 +210,9 @@ function clickListener(e: any) {
 
   const node = getElementFromPoint(e)
 
-
-
   const nodeId = getNodeId(node)
   getNodeReactLocation(nodeId)
-  parentConnection.Overlay.inspectNodeRequested({
+  parentConnection().Overlay.inspectNodeRequested({
     backendNodeId: nodeId,
   })
 
@@ -272,7 +271,10 @@ const container = h('div', {
   },
 })
 const $container = $(container)
-document.documentElement.appendChild(container)
+
+export const init = () => {
+  document.documentElement.appendChild(container)
+}
 
 const margin = createEl()
 const $margin = $(margin)

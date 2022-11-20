@@ -14,13 +14,13 @@ import {
   xpath,
 } from '../lib/util'
 import connector from '../lib/connector'
-import { setGlobal } from '../lib/evaluate'
+// import { setGlobal } from '../lib/evaluate'
 import mutationObserver from '../lib/mutationObserver'
 import * as stringifyObj from '../lib/stringifyObj'
 import * as stringifyNode from '../lib/stringifyNode'
 import { getNode, getNodeId } from '../lib/stringifyNode'
 import Protocol from 'devtools-protocol'
-import { parentConnection } from '../../../../StorybookFrame/Xebug'
+import { parentConnection } from '../../../../StorybookFrame/Devtools'
 import { getElementCodeInfo, getElementInspect } from '../../../ReactDevInspectorUtils/inspect'
 
 type GetDocumentResponse = Protocol.DOM.GetDocumentResponse
@@ -199,14 +199,14 @@ export async function getNodeReactLocation(nodeId: number) {
   const node = getNode(nodeId)
   const codeInfo = getElementCodeInfo(node)
   if (codeInfo) {
-    await parentConnection.setReactFileLocation(nodeId, codeInfo)
+    await parentConnection().setReactFileLocation(nodeId, codeInfo)
   }
 }
 
 export async function requestChildNodes({ depth = 1, nodeId }: RequestChildNodesRequest) {
   const node = getNode(nodeId)
 
-  await parentConnection.DOM.setChildNodes({
+  await parentConnection().DOM.setChildNodes({
     parentId: nodeId,
     nodes: stringifyNode.getChildNodes(node, depth),
   })
@@ -251,7 +251,7 @@ export function setInspectedNode(params: any) {
   history.unshift(node)
   if (history.length > 5) history.pop()
   for (let i = 0; i < 5; i++) {
-    setGlobal(`$${i}`, history[i])
+    // setGlobal(`$${i}`, history[i])
   }
 }
 
@@ -330,7 +330,7 @@ mutationObserver.on('childList', (target: Node, addedNodes: NodeList, removedNod
         previousNodeId,
       }
 
-      parentConnection.DOM.childNodeInserted(params)
+      parentConnection().DOM.childNodeInserted(params)
       // connector.trigger('DOM.childNodeInserted', params)
     }
   }
