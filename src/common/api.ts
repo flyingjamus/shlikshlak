@@ -48,4 +48,21 @@ export const filesApi = apiBuilder({
       { type: 'Body', name: 'body', schema: z.object({ path: z.string(), contents: z.string() }) },
     ],
   })
+  .addEndpoint({
+    method: 'post',
+    path: '/launch_editor',
+    alias: 'launchEditor',
+    response: z.object({}),
+    parameters: [
+      {
+        type: 'Body',
+        name: 'body',
+        schema: z.object({
+          fileName: z.string(),
+          lineNumber: z.number(),
+          colNumber: z.number().optional(),
+        }),
+      },
+    ],
+  })
   .build()

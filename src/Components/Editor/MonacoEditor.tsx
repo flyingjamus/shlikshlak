@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, IconButton } from '@mui/material'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
 import { useFileStore, useIframeStore } from '../store'
@@ -9,8 +9,10 @@ import { getFileText } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 import { throttle } from 'lodash-es'
-import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 import { apiClient } from '../../client/apiClient'
+import { MONACO_OPTIONS } from './MONACO_OPTIONS'
+import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 
 // const bindEditor = (editor: IStandaloneCodeEditor) => {
 //   const editorService = editor._codeEditorService
@@ -139,76 +141,28 @@ export const MonacoEditor = () => {
   }, [openFile, delay, files, monacoInstance, workerAdapter])
 
   return (
-    <>
+    <Box sx={{ position: 'relative' }}>
       <Box ref={ref} sx={{ height: '100%' }} />
       <Box ref={statusBarRef} />
-    </>
+      {!openFile ? null : (
+        <Box sx={{ position: 'absolute', top: '10px', right: '10px' }}>
+          <IconButton
+            onClick={async () => {
+              await apiClient.launchEditor({
+                fileName: openFile.path,
+                lineNumber: openFile.lineNumber,
+                colNumber: openFile.columnNumber,
+              })
+            }}
+          >
+            <OpenInNewIcon />
+          </IconButton>
+        </Box>
+      )}
+    </Box>
   )
 }
 
-const MONACO_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
-  acceptSuggestionOnCommitCharacter: true,
-  acceptSuggestionOnEnter: 'on',
-  accessibilitySupport: 'auto',
-  autoIndent: 'full',
-  automaticLayout: true,
-  codeLens: true,
-  colorDecorators: true,
-  contextmenu: true,
-  cursorBlinking: 'blink',
-  cursorSmoothCaretAnimation: false,
-  cursorStyle: 'line',
-  disableLayerHinting: false,
-  disableMonospaceOptimizations: false,
-  dragAndDrop: false,
-  fixedOverflowWidgets: false,
-  folding: true,
-  foldingStrategy: 'auto',
-  fontLigatures: false,
-  formatOnPaste: false,
-  formatOnType: false,
-  hideCursorInOverviewRuler: false,
-  links: true,
-  mouseWheelZoom: false,
-  multiCursorMergeOverlapping: true,
-  multiCursorModifier: 'alt',
-  overviewRulerBorder: true,
-  overviewRulerLanes: 2,
-  quickSuggestions: true,
-  quickSuggestionsDelay: 100,
-  readOnly: false,
-  renderControlCharacters: false,
-  renderFinalNewline: true,
-  // renderIndentGuides: true,
-  renderLineHighlight: 'all',
-  renderWhitespace: 'none',
-  revealHorizontalRightPadding: 30,
-  roundedSelection: true,
-  rulers: [],
-  scrollBeyondLastColumn: 5,
-  scrollBeyondLastLine: true,
-  selectOnLineNumbers: true,
-  selectionClipboard: true,
-  selectionHighlight: true,
-  showFoldingControls: 'mouseover',
-  smoothScrolling: false,
-  suggestOnTriggerCharacters: true,
-  wordBasedSuggestions: true,
-  // eslint-disable-next-line
-  wordSeparators: `~!@#$%^&*()-=+[{]}\|;:'",.<>/?`,
-  wordWrap: 'off',
-  wordWrapBreakAfterCharacters: '\t})]?|&,;',
-  wordWrapBreakBeforeCharacters: '{([+',
-  // wordWrapBreakObtrusiveCharacters: '.',
-  wordWrapColumn: 80,
-  // wordWrapMinified: true,
-  wrappingIndent: 'none',
-  suggest: {
-    showSnippets: false,
-    showWords: false,
-    showKeywords: false,
-  },
-}
 // const get
 
 monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)

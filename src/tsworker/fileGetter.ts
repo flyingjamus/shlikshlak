@@ -51,9 +51,9 @@ const syncClient: ApiClientType = {
     const res: ReturnType<ApiClientType['getFile']> = syncXHR({ url, json: body })
     return res
   },
-  writeFile: (body, configOptions) => {
-    return {}
-  },
+  // writeFile: (body, configOptions) => {
+  //   return {}
+  // },
 }
 
 export function getFile(unfixedPath: string): AppFile {
