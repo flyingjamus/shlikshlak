@@ -13,7 +13,8 @@
     "dev:vite": "vite --port 3000",
     "dev:ladle": "ladle serve",
     "dev:server": "nodemon",
-    "build:devtools": "yarn vite build -c vite-loader.config.ts"
+    "dev:devtools": "vite build --watch -c src/StorybookFrame/vite.config.ts",
+    "build:devtools": "yarn vite build -c src/StorybookFrame/vite.config.ts"
   },
   "dependencies": {
     "@blueprintjs/core": "^4.10.0",

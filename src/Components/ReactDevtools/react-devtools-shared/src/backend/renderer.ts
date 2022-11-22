@@ -85,7 +85,7 @@ import hasOwnProperty from '../../shared/hasOwnProperty'
 import { getStyleXData } from './StyleX/utils'
 import { createProfilingHooks } from './profilingHooks'
 import type { GetTimelineData, ToggleProfilingStatus } from './profilingHooks'
-import type { Fiber } from 'react-reconciler/src/ReactInternalTypes'
+import type { Fiber } from '../../../react-reconciler/src/ReactInternalTypes'
 import type {
   ChangeDescription,
   CommitDataBackend,
@@ -103,7 +103,7 @@ import type {
   SerializedElement,
   WorkTagMap,
 } from './types'
-import type { ComponentFilter, ElementType, Plugins } from 'react-devtools-shared/src/types'
+import type { ComponentFilter, ElementType, Plugins } from '../../../react-devtools-shared/src/types'
 type getDisplayNameForFiberType = (fiber: Fiber) => string | null
 type getTypeSymbolType = (type: any) => Symbol | number
 type ReactPriorityLevelsType = {
@@ -467,6 +467,7 @@ export function getInternalReactConstants(version: string): {
 
     let resolvedContext: any = null
 
+    console.log(fiber)
     switch (tag) {
       case CacheComponent:
         return 'Cache'

@@ -1,11 +1,13 @@
 import { Box, styled } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { connectToChild } from 'penpal'
 import { Methods } from './xebug/lib/methods'
 import { useFileStore, useIframeStore } from '../store'
 import { ProtocolDispatchers } from '../../types/protocol-proxy-api'
 import { Protocol } from 'devtools-protocol/types/protocol'
 import { CodeInfo } from '../ReactDevInspectorUtils/inspect'
+import { throttle } from 'lodash-es'
+import { DevtoolsMethods } from '../../StorybookFrame/Devtools'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -22,40 +24,38 @@ const flattenTree = (nodes: Protocol.DOM.Node[]): Protocol.DOM.Node[] => {
 }
 
 export const parentMethods = {
-  ...({
-    DOM: {
-      setChildNodes(params: Protocol.DOM.SetChildNodesEvent) {
-        const rootNode = useIframeStore.getState().rootNode
-        if (params.parentId === rootNode?.nodeId) {
-          useIframeStore.setState({
-            rootNode: { ...rootNode, children: params.nodes },
-            nodesMap: new Map(flattenTree([rootNode, ...params.nodes]).map((v) => [v.nodeId, v])),
-          })
-        } else {
-          console.error('Got child nodes for expected node ' + params.parentId)
-        }
-      },
-      childNodeInserted({ node, parentNodeId, previousNodeId }: Protocol.DOM.ChildNodeInsertedEvent) {
-        const nodesMap = new Map(useIframeStore.getState().nodesMap)
-        const parent = nodesMap?.get(parentNodeId)
-        const prev = nodesMap?.get(previousNodeId)
-        if (!parent) throw new Error('No parent')
+  DOM: {
+    setChildNodes(params: Protocol.DOM.SetChildNodesEvent) {
+      const rootNode = useIframeStore.getState().rootNode
+      if (params.parentId === rootNode?.nodeId) {
+        useIframeStore.setState({
+          rootNode: { ...rootNode, children: params.nodes },
+          nodesMap: new Map(flattenTree([rootNode, ...params.nodes]).map((v) => [v.nodeId, v])),
+        })
+      } else {
+        console.error('Got child nodes for expected node ' + params.parentId)
+      }
+    },
+    childNodeInserted({ node, parentNodeId, previousNodeId }: Protocol.DOM.ChildNodeInsertedEvent) {
+      const nodesMap = new Map(useIframeStore.getState().nodesMap)
+      const parent = nodesMap?.get(parentNodeId)
+      const prev = nodesMap?.get(previousNodeId)
+      if (!parent) throw new Error('No parent')
 
-        const children = parent.children || []
-        children.splice(prev ? children.indexOf(prev) + 1 : 0, 0, node)
-        nodesMap.set(node.nodeId, node)
-        nodesMap.set(parent.nodeId, { ...parent, childNodeCount: children.length, children })
-        useIframeStore.setState({ nodesMap })
-        // nodesMap.get(parentNodeId)
-      },
+      const children = parent.children || []
+      children.splice(prev ? children.indexOf(prev) + 1 : 0, 0, node)
+      nodesMap.set(node.nodeId, node)
+      nodesMap.set(parent.nodeId, { ...parent, childNodeCount: children.length, children })
+      useIframeStore.setState({ nodesMap })
+      // nodesMap.get(parentNodeId)
     },
-    Overlay: {
-      inspectNodeRequested({ backendNodeId }: Protocol.Overlay.InspectNodeRequestedEvent) {
-        const nodesMap = useIframeStore.getState().nodesMap
-        nodesMap?.get(backendNodeId)
-      },
+  },
+  Overlay: {
+    inspectNodeRequested({ backendNodeId }: Protocol.Overlay.InspectNodeRequestedEvent) {
+      const nodesMap = useIframeStore.getState().nodesMap
+      nodesMap?.get(backendNodeId)
     },
-  } as ProtocolDispatchers),
+  },
   setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
     if (absolutePath) {
       useIframeStore.setState({
@@ -71,6 +71,17 @@ export const parentMethods = {
   },
 }
 
+export type ParentMethods = typeof parentMethods
+
+function getRelativeLocation(e: MouseEvent) {
+  const { x, y } = e.target.getBoundingClientRect()
+  const { x: parentX, y: parentY } = e.target.parentElement.getBoundingClientRect()
+
+  const clientX = x - parentX
+  const clientY = y - parentY
+  return { clientX, clientY }
+}
+
 export const Preview = () => {
   // const ready = useIframeStore((v) => v.frontendReady)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -79,7 +90,7 @@ export const Preview = () => {
   useEffect(() => {
     if (iframeRef.current && !childConnection) {
       console.debug('Connecting to child')
-      const connection = connectToChild<Methods>({
+      const connection = connectToChild<DevtoolsMethods>({
         iframe: iframeRef.current,
         methods: parentMethods,
         childOrigin: '*',
@@ -88,27 +99,52 @@ export const Preview = () => {
 
       connection.promise.then(async (childConnection) => {
         console.debug('Connected')
-        // await childConnection.DOM.enable()
-        // const elementsTree = await childConnection.DOM.getDocument()
         await childConnection.init()
-        // childConnection?.Overlay.setInspectMode({ mode: 'searchForNode' })
         useIframeStore.setState({
           childConnection: childConnection,
-          // rootNode: elementsTree.root,
-          // iframe: iframeRef.current,
         })
-        // await childConnection.Overlay.setInspectMode({ mode: 'searchForNode' })
       })
-      return () => {
-        // useIframeStore.setState({ childConnection: undefined, rootNode: undefined })
-        // setReady(false)
-        // return connection.destroy()
-      }
+      return () => {}
     }
-  }, [])
+  }, [childConnection])
 
+  const onMouseMove = useMemo(
+    () =>
+      throttle(async (e) => {
+        const { clientX, clientY } = getRelativeLocation(e)
+
+        console.log(
+          await childConnection?.highlightPoint({
+            clientX: clientX,
+            clientY: clientY,
+          })
+        )
+      }),
+    []
+  )
+
+  const onClick = useMemo(
+    () => async (e: MouseEvent) => {
+      const { clientY, clientX } = getRelativeLocation(e)
+      try {
+      await childConnection?.getCodeInfoFromPoint({
+        clientX,
+        clientY,
+      })
+
+      } catch (e) {
+        console.error(e, 13213)
+      }
+    },
+    [childConnection]
+  )
   return (
-    <Box sx={{ background: 'white' }}>
+    <Box sx={{ background: 'white', position: 'relative' }}>
+      {/*<Box*/}
+      {/*  // onMouseMove={onMouseMove}*/}
+      {/*  onClick={onClick}*/}
+      {/*  sx={{ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0 }}*/}
+      {/*/>*/}
       <StyledIframe
         src={
           // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-page--logged-out' : undefined

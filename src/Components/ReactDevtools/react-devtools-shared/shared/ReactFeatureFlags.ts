@@ -57,6 +57,7 @@ export const enableLegacyFBSupport = false;
 // These are features that we're either actively exploring or are reasonably
 // likely to include in an upcoming release.
 // -----------------------------------------------------------------------------
+const __EXPERIMENTAL__ = false
 export const enableCache = __EXPERIMENTAL__;
 export const enableCacheElement = __EXPERIMENTAL__;
 export const enableTransitionTracing = false;
@@ -160,6 +161,8 @@ export const warnAboutStringRefs = false;
 // -----------------------------------------------------------------------------
 // Adds user timing marks for e.g. state updates, suspense, and work loop stuff,
 // for an experimental timeline tool.
+const __PROFILE__ = false
+const __DEV__ = false
 export const enableSchedulingProfiler = __PROFILE__;
 // Helps identify side effects in render-phase lifecycle hooks and setState
 // reducers by double invoking them in StrictLegacyMode.

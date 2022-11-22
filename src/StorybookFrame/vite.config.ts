@@ -12,7 +12,7 @@ export default defineConfig({
     },
     lib: {
       // Could also be a dictionary or array of multiple entry points
-      entry: resolve(__dirname, 'src/StorybookFrame/Devtools.ts'),
+      entry: resolve(__dirname, 'Devtools.ts'),
       name: 'Devtools',
       // the proper extensions will be added
       fileName: 'devtools',

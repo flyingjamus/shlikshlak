@@ -9,21 +9,22 @@ import {
   getFiberName,
   getElementFiberUpward,
 } from './fiber'
-
+import getComponentNameFromFiber from '../ReactDevtools/react-reconciler/src/getComponentNameFromFiber'
+import { getInternalReactConstants } from '../ReactDevtools/react-devtools-shared/src/backend/renderer'
 
 export interface CodeInfo {
-  lineNumber: string,
-  columnNumber: string,
+  lineNumber: string
+  columnNumber: string
   /**
    * code source file relative path to dev-server cwd(current working directory)
    * need use with `react-dev-inspector/plugins/babel`
    */
-  relativePath?: string,
+  relativePath?: string
   /**
    * code source file absolute path
    * just need use with `@babel/plugin-transform-react-jsx-source` which auto set by most framework
    */
-  absolutePath?: string,
+  absolutePath?: string
 }
 
 /**
@@ -33,9 +34,9 @@ export interface CodeInfo {
  * this props will be record in fiber
  */
 export interface CodeDataAttribute {
-  'data-inspector-line': string,
-  'data-inspector-column': string,
-  'data-inspector-relative-path': string,
+  'data-inspector-line': string
+  'data-inspector-column': string
+  'data-inspector-relative-path': string
 }
 
 /**
@@ -53,11 +54,7 @@ export interface CodeDataAttribute {
 export const getCodeInfoFromDebugSource = (fiber?: Fiber): CodeInfo | undefined => {
   if (!fiber?._debugSource) return undefined
 
-  const {
-    fileName,
-    lineNumber,
-    columnNumber,
-  } = fiber._debugSource as Source & { columnNumber?: number }
+  const { fileName, lineNumber, columnNumber } = fiber._debugSource as Source & { columnNumber?: number }
 
   if (fileName && lineNumber) {
     return {
@@ -97,10 +94,8 @@ export const getCodeInfoFromProps = (fiber?: Fiber): CodeInfo | undefined => {
   return undefined
 }
 
-export const getCodeInfoFromFiber = (fiber?: Fiber): CodeInfo | undefined => (
-  getCodeInfoFromProps(fiber)
-  ?? getCodeInfoFromDebugSource(fiber)
-)
+export const getCodeInfoFromFiber = (fiber?: Fiber): CodeInfo | undefined =>
+  getCodeInfoFromProps(fiber) ?? getCodeInfoFromDebugSource(fiber)
 
 /**
  * give a `base` dom fiber,
@@ -156,9 +151,7 @@ export const getReferenceFiber = (baseFiber?: Fiber): Fiber | undefined => {
   const isParentNative = isNativeTagFiber(directParent)
   const isOnlyOneChild = !directParent.child!.sibling
 
-  let referenceFiber = (!isParentNative && isOnlyOneChild)
-    ? directParent
-    : baseFiber
+  let referenceFiber = !isParentNative && isOnlyOneChild ? directParent : baseFiber
 
   // fallback for cannot find code-info fiber when traverse to root
   const originReferenceFiber = referenceFiber
@@ -172,6 +165,7 @@ export const getReferenceFiber = (baseFiber?: Fiber): Fiber | undefined => {
   return originReferenceFiber
 }
 
+const { getDisplayNameForFiber } = getInternalReactConstants('18.2.0')
 export const getElementCodeInfo = (element: HTMLElement): CodeInfo | undefined => {
   const fiber: Fiber | undefined = getElementFiberUpward(element)
 
@@ -182,12 +176,7 @@ export const getElementCodeInfo = (element: HTMLElement): CodeInfo | undefined =
 export const gotoEditor = (source?: CodeInfo) => {
   if (!source) return
 
-  const {
-    lineNumber,
-    columnNumber,
-    relativePath,
-    absolutePath,
-  } = source
+  const { lineNumber, columnNumber, relativePath, absolutePath } = source
 
   const isRelative = Boolean(relativePath)
 
@@ -240,10 +229,12 @@ export const getNamedFiber = (baseFiber?: Fiber): Fiber | undefined => {
   return originNamedFiber
 }
 
-export const getElementInspect = (element: HTMLElement): {
-  fiber?: Fiber,
-  name?: string,
-  title: string,
+export const getElementInspect = (
+  element: HTMLElement
+): {
+  fiber?: Fiber
+  name?: string
+  title: string
 } => {
   const fiber = getElementFiberUpward(element)
   const referenceFiber = getReferenceFiber(fiber)
@@ -253,9 +244,7 @@ export const getElementInspect = (element: HTMLElement): {
   const fiberName = getFiberName(namedFiber)
   const nodeName = element.nodeName.toLowerCase()
 
-  const title = fiberName
-    ? `${nodeName} in <${fiberName}>`
-    : nodeName
+  const title = fiberName ? `${nodeName} in <${fiberName}>` : nodeName
 
   return {
     fiber: referenceFiber,

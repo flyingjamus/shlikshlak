@@ -11,6 +11,7 @@ import { PanelsResponse } from '../Shared/PanelTypes'
 import { StateStorage } from 'zustand/middleware/persist'
 import { WorkerAdapter } from '../tsworker/workerAdapter'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
+import { DevtoolsMethods } from '../StorybookFrame/Devtools'
 
 export type AppFile = {
   path: string
@@ -54,7 +55,7 @@ export type OpenFile = {
 type IframeStore = {
   iframe?: HTMLIFrameElement | null
   frontendReady: boolean
-  childConnection?: AsyncMethodReturns<Methods>
+  childConnection?: AsyncMethodReturns<DevtoolsMethods>
   rootNode?: Protocol.DOM.Node
   nodesMap?: Map<number, Protocol.DOM.Node>
   expandedIds: string[]

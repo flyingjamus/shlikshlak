@@ -1,4 +1,4 @@
-import { $NonMaybeType } from "utility-types";
+import type { $NonMaybeType } from "utility-types";
 export type ReactNode = React.ReactElement<React.ComponentProps<any>, any> | ReactPortal | ReactText | ReactFragment | ReactProvider<any> | ReactConsumer<any>;
 export type ReactEmpty = null | void | boolean;
 export type ReactFragment = ReactEmpty | Iterable<React.ReactNode>;
