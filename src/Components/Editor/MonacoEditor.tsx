@@ -3,16 +3,21 @@ import { Box, IconButton } from '@mui/material'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
 import { useFileStore, useIframeStore } from '../store'
-// @ts-ignore
-import { initVimMode } from 'monaco-vim'
 import { getFileText } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
-import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 import { throttle } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { MONACO_OPTIONS } from './MONACO_OPTIONS'
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+// @ts-ignore
+import { initVimMode } from 'monaco-vim'
+import { WorkerAdapter } from '../../tsworker/workerAdapter'
+import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
+
+monaco.languages.onLanguage('typescript', async () => {
+  useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
+})
 
 // const bindEditor = (editor: IStandaloneCodeEditor) => {
 //   const editorService = editor._codeEditorService

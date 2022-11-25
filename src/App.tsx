@@ -1,19 +1,23 @@
 import './App.css'
-import { Screen } from './Components/Screen/Screen'
-import './workers'
-import './initServiceWorkerComlink'
-import { useIframeStore } from './Components/store'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import React from 'react'
 
+window.__DEV__ = false
+
+const Screen = React.lazy(() => import('./Components/Screen/Screen'))
+const StoriesIndex = React.lazy(() => import('./Components/Stories/StoriesIndex'))
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Screen />,
+  },
+  {
+    path: '/stories/:path',
+    element: <StoriesIndex />,
+  },
+])
 function App() {
-  // const readFile = useFileStore((v) => v.readFile)
-  const swProxy = useIframeStore((v) => v.swProxy)
-  // useEffect(() => {
-  //   if (swProxy && readFile) {
-  //     console.log(1233123, 'initing')
-  //     swProxy.init(wrap(useFileStore.getState()))
-  //   }
-  // }, [swProxy, readFile])
-  return <Screen />
+  return <RouterProvider router={router} />
 }
 
 export default App

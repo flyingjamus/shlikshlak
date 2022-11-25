@@ -69,7 +69,6 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
   }
 
   async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
-    console.log('Getpanels')
     const checker = this.getTypeChecker()
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {

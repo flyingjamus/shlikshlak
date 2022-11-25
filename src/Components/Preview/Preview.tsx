@@ -57,6 +57,8 @@ export const parentMethods = {
     },
   },
   setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
+
+    console.log(absolutePath, lineNumber)
     if (absolutePath) {
       useIframeStore.setState({
         openFile: {
@@ -149,7 +151,8 @@ export const Preview = () => {
         src={
           // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-page--logged-out' : undefined
           // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-header--logged-in' : undefined
-          ready ? 'http://localhost:3002' : undefined
+          // ready ? 'http://localhost:3002' : undefined
+          ready ? '/stories/aaaaa' : undefined
         }
         onLoad={() => {
           // console.log(useIframeStore.getState().childConnection)

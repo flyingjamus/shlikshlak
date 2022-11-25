@@ -5,9 +5,6 @@ import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from '../src/tsworker/tsWorker?worker'
 import { proxy, wrap } from 'comlink'
 import { useIframeStore } from './Components/store'
-import * as monaco from 'monaco-editor'
-import { WorkerAdapter } from './tsworker/workerAdapter'
-import { getTypescriptWorker } from './tsworker/GetTypescriptWorker'
 
 const tsWorkerInstance = new tsWorker()
 
@@ -36,7 +33,3 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
-
-monaco.languages.onLanguage('typescript', async () => {
-  useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
-})

@@ -3,10 +3,8 @@ import '@blueprintjs/core/lib/css/blueprint.css'
 import { Mosaic } from 'react-mosaic-component'
 import { Preview } from '../Preview/Preview'
 import { Files } from '../Files/Files'
-import { InspectorTree } from '../Inspector/InspectorTree'
 import { EditorWrapper } from '../Editor/EditorWrapper'
-// import { PropsEditor, PropsEditorWrapper } from '../PropsEditor/PropsEditor'
-import { useFileStore } from '../store'
+import '../../workers'
 import { Inspector } from '../Inspector/Inspector'
 import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 
@@ -40,3 +38,5 @@ export const Screen = () => {
     />
   )
 }
+
+export default Screen

@@ -20,7 +20,8 @@ app.use(cors())
 
 function getFilePath(filePath: string | number) {
   // TODO!!!!!!!!!!! GUARD!!!!
-  return path.join(__dirname, '..', '..', '../nimbleway', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
+  // return path.join(__dirname, '..', '..', '../nimbleway', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
+  return path.join(__dirname, '..', '..', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
   // TODO!!!!!!!!!!! GUARD!!!!
 }
 

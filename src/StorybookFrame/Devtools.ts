@@ -1,6 +1,6 @@
 import { type AsyncMethodReturns, connectToParent } from 'penpal'
 import type { ParentMethods, parentMethods } from '../Components/Preview/Preview'
-import { getElementCodeInfo } from '../Components/ReactDevInspectorUtils/inspect'
+import { getCodeInfoFromFiber, getElementCodeInfo } from '../Components/ReactDevInspectorUtils/inspect'
 import { isEqual } from 'lodash-es'
 import { getElementFiberUpward } from '../Components/ReactDevInspectorUtils/fiber'
 import { Fiber } from '../Components/ReactDevtools/react-reconciler/src/ReactInternalTypes'
@@ -66,7 +66,7 @@ if (typeof window !== 'undefined') {
     console.log('Connected to parent')
     connectionMethods = parentMethods
 
-    window.addEventListener('click', (e) => {
+    window.addEventListener('click', async (e) => {
       e.preventDefault()
       e.stopImmediatePropagation()
 
@@ -74,29 +74,32 @@ if (typeof window !== 'undefined') {
       console.log('Click', node)
       if (!node) return
       let remainingDepth = 1
-      let codeInfo = getElementCodeInfo(node)
+
       let currentNode: HTMLElement | null = node
       let fiber: Fiber | undefined = getElementFiberUpward(node)
+
+      const codeInfo = getCodeInfoFromFiber(fiber)
+      if (codeInfo) {
+        await parentMethods.setReactFileLocation(codeInfo)
+      }
       while (fiber) {
         const name = getComponentNameFromFiber(fiber)
-        if (name?.startsWith('Styled')) {
-          console.log(fiber, 1323112321)
-        }
+        // console.log(fiber._debugSource, fiber, name, 1323112321)
         fiber = fiber.return
       }
-      try {
-        while (currentNode && codeInfo && remainingDepth) {
-          const newCodeInfo = getElementCodeInfo(currentNode!)
-          if (!isEqual(newCodeInfo, codeInfo)) {
-            remainingDepth--
-            codeInfo = newCodeInfo
-          } else {
-            currentNode = currentNode.parentElement
-          }
-        }
-      } catch (e) {
-        console.log(33333, e)
-      }
+      // try {
+      //   while (currentNode && codeInfo && remainingDepth) {
+      //     const newCodeInfo = getElementCodeInfo(currentNode!)
+      //     if (!isEqual(newCodeInfo, codeInfo)) {
+      //       remainingDepth--
+      //       codeInfo = newCodeInfo
+      //     } else {
+      //       currentNode = currentNode.parentElement
+      //     }
+      //   }
+      // } catch (e) {
+      //   console.log(33333, e)
+      // }
     })
   })
 }
