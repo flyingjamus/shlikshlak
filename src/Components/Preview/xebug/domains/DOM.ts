@@ -20,7 +20,7 @@ import * as stringifyObj from '../lib/stringifyObj'
 import * as stringifyNode from '../lib/stringifyNode'
 import { getNode, getNodeId } from '../lib/stringifyNode'
 import Protocol from 'devtools-protocol'
-import { parentConnection } from '../../../../StorybookFrame/Devtools'
+import { parentConnection } from '../../../../Devtools/Devtools'
 import { getElementCodeInfo, getElementInspect } from '../../../ReactDevInspectorUtils/inspect'
 
 type GetDocumentResponse = Protocol.DOM.GetDocumentResponse

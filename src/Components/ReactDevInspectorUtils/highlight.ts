@@ -2,7 +2,6 @@
  * mirror from https://github.com/facebook/react/blob/v16.13.1/packages/react-devtools-shared/src/backend/views/Highlighter/index.js
  */
 
-
 // This plug-in provides in-page highlighting of the selected element.
 // It is used by the browser extension nad the standalone DevTools shell
 // (when connected to a browser).
@@ -13,13 +12,10 @@ let iframesListeningTo: Set<HTMLIFrameElement> = new Set()
 
 export type StopFunction = () => void
 
-export function setupHighlighter(
-  handlers: {
-    onPointerOver?: (element: HTMLElement) => void,
-    onClick?: (element: HTMLElement) => void,
-  },
-): StopFunction {
-
+export function setupHighlighter(handlers: {
+  onPointerOver?: (element: HTMLElement) => void
+  onClick?: (element: HTMLElement) => void
+}): StopFunction {
   function startInspectingNative() {
     registerListenersOnWindow(window)
   }
@@ -39,7 +35,7 @@ export function setupHighlighter(
 
   function stopInspectingNative() {
     removeListenersOnWindow(window)
-    iframesListeningTo.forEach(function(frame) {
+    iframesListeningTo.forEach(function (frame) {
       try {
         removeListenersOnWindow(frame.contentWindow)
       } catch (error) {
@@ -65,8 +61,6 @@ export function setupHighlighter(
   function onClick(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-
-    stopInspectingNative()
 
     handlers.onClick?.(event.target as HTMLElement)
   }

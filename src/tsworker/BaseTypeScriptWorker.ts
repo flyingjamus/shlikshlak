@@ -259,6 +259,12 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     return program?.getSourceFile(fileName)
   }
 
+  requireSourceFile(fileName: string) {
+    const sourceFile = this.getSourceFile(fileName)
+    if (!sourceFile) throw new Error('Source file not found')
+    return sourceFile
+  }
+
   getTokenAtPosition(fileName: string, position: number) {
     const program = this._languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)

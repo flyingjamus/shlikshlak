@@ -1,8 +1,18 @@
-import ts, { factory, FileTextChanges, formatting, isJsxOpeningLikeElement, textChanges } from 'typescript'
+import ts, {
+  factory,
+  FileTextChanges,
+  formatting,
+  isJsxOpeningLikeElement,
+  SourceFile,
+  textChanges,
+  Node,
+  TextRange,
+} from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
 import { isDefined } from 'ts-is-defined'
 import { PANELS } from './Panels'
 import { PanelsResponse } from '../Shared/PanelTypes'
+import type { IRange } from 'monaco-editor-core'
 
 export class TypeScriptWorker extends BaseTypeScriptWorker {
   async setAttributeAtPosition(
@@ -11,9 +21,8 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
     attrName: string,
     value?: string
   ): Promise<FileTextChanges[] | void> {
-    const sourceFile = this.getSourceFile(fileName)!
+    const sourceFile = this.requireSourceFile(fileName)
     const token = this.getTokenAtPosition(fileName, position)
-    // typescript.getQuotePreference()
     const name = factory.createIdentifier(attrName)
 
     return textChanges.ChangeTracker.with(
@@ -69,6 +78,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
   }
 
   async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
+    const sourceFile = this.requireSourceFile(fileName)
     const checker = this.getTypeChecker()
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {
@@ -113,9 +123,27 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
           }
         })
 
-        return { attributes, existingAttributes, location: parent.attributes.pos, fileName }
+        return {
+          attributes,
+          existingAttributes,
+          location: parent.attributes.pos,
+          fileName,
+          range: getRange(parent),
+        }
       }
     }
     return { attributes: [], existingAttributes: [] }
+  }
+}
+
+const getRange = (node: Node): IRange => {
+  const sourceFile = node.getSourceFile()
+  const { line: startLineNumber, character: startColumn } = sourceFile.getLineAndCharacterOfPosition(node.pos)
+  const { line: endLineNumber, character: endColumn } = sourceFile.getLineAndCharacterOfPosition(node.end)
+  return {
+    startColumn: startColumn ? startColumn + 2 : startColumn,
+    startLineNumber: startLineNumber + 1,
+    endColumn: endColumn + 1,
+    endLineNumber: endLineNumber + 1,
   }
 }

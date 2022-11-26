@@ -1,17 +1,18 @@
-import create from 'zustand'
+import create, { StoreApi, UseBoundStore } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { del as removeItem, get as getItem, set as setItem } from 'idb-keyval'
-import { Methods } from './Preview/xebug/lib/methods'
 import { AsyncMethodReturns } from 'penpal'
-import Protocol from 'devtools-protocol'
-import { Remote } from 'comlink'
+import type Protocol from 'devtools-protocol'
+import type { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
-import { CodeInfo } from './ReactDevInspectorUtils/inspect'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import { StateStorage } from 'zustand/middleware/persist'
 import { WorkerAdapter } from '../tsworker/workerAdapter'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
-import { DevtoolsMethods } from '../StorybookFrame/Devtools'
+import { DevtoolsMethods } from '../Devtools/Devtools'
+import type { editor } from 'monaco-editor'
+import Store from './ReactDevtools/react-devtools-shared/src/devtools/store'
+import { FrontendBridge } from './ReactDevtools/react-devtools-shared/src/bridge'
 
 export type AppFile = {
   path: string
@@ -52,7 +53,7 @@ export type OpenFile = {
   path: string
 }
 
-type IframeStore = {
+interface IframeStore {
   iframe?: HTMLIFrameElement | null
   frontendReady: boolean
   childConnection?: AsyncMethodReturns<DevtoolsMethods>
@@ -66,18 +67,30 @@ type IframeStore = {
   readFile?: (fileName: string) => Promise<string | undefined>
   panels?: PanelsResponse
   tsWorker?: TypeScriptWorker
+  editor?: editor.IStandaloneCodeEditor
+  getEditor: () => editor.IStandaloneCodeEditor
+  selectedComponent?: OpenFile
+  hoveringComponent?: { x: number; y: number }
+  devtoolsStore?: Store
+  devtoolsBridge?: FrontendBridge
 }
-export const useIframeStore = create<IframeStore>()(
+export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(
-    () => ({
+    (setState, get) => ({
       frontendReady: false,
       expandedIds: [],
       openFile: { path: '/src/stories/Header.tsx', columnNumber: 0, lineNumber: 0 },
+      getEditor() {
+        const editor = get().editor
+        if (!editor) throw new Error('Editor not found')
+        return editor
+      },
+      renderers: {},
     }),
     {
       name: 'iframestore',
       getStorage: () => localStorage,
-      partialize: ({ openFile }) => ({ openFile } as IframeStore),
+      partialize: ({ openFile, selectedComponent }) => ({ openFile, selectedComponent } as IframeStore),
     }
   )
 )

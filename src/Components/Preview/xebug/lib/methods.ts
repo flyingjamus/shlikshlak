@@ -134,9 +134,9 @@ const methods = {
   //
   getNodeReactLocation: getNodeReactLocation,
   init() {
-    console.log('Activating devtools')
-    activate(window)
-    Overlay.init()
+    // console.log('Activating devtools')
+    // activate(window)
+    // Overlay.init()
   },
 } as const
 

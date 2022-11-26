@@ -14,7 +14,7 @@ import { partition } from 'lodash-es'
 const EnumEditor: BaseEditor<{ values: string[] }> = ({ values, value: defaultValue, onChange }) => {
   const [value, setValue] = useState(defaultValue)
   return values.length > 5 ? (
-   <>'placeholder'</>
+    <>'placeholder'</>
   ) : (
     <ToggleButtonGroup
       value={value}
@@ -93,24 +93,23 @@ export const PropsEditor = ({
 }) => {
   // const sortedPanels = partition(panels?.attributes, (v) => v.location)
   return !panels ? null : (
-    <Box>
-      {panels?.attributes.slice(0, 5)
-        .map((attr) => {
-          const existing = panels.existingAttributes.find((v) => v.name === attr.name)
-          const panel = attr.panels?.[0]
-          if (!panel) return null
-          const key = [panels.fileName, panels.location, attr.name].join(':')
-          return (
-            <Box key={key}>
-              <Box>{attr.name}</Box>
-              <PropEditor
-                panelMatch={panel}
-                value={existing?.value}
-                onChange={(newValue) => onAttributeChange(attr, newValue)}
-              />
-            </Box>
-          )
-        })}
+    <Box sx={{ background: 'white' }}>
+      {panels?.attributes.slice(0, 5).map((attr) => {
+        const existing = panels.existingAttributes.find((v) => v.name === attr.name)
+        const panel = attr.panels?.[0]
+        if (!panel) return null
+        const key = [panels.fileName, panels.location, attr.name].join(':')
+        return (
+          <Box key={key}>
+            <Box>{attr.name}</Box>
+            <PropEditor
+              panelMatch={panel}
+              value={existing?.value}
+              onChange={(newValue) => onAttributeChange(attr, newValue)}
+            />
+          </Box>
+        )
+      })}
     </Box>
   )
 }

@@ -1,6 +1,5 @@
 import { DecoratorFunction } from '@storybook/addons'
 import { ReactElement } from 'react'
-import { PreviewOverlay } from '../src/StorybookFrame/PreviewOverlay'
 
 export const parameters = {
   actions: { argTypesRegex: '^on[A-Z].*' },

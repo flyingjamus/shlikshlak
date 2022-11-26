@@ -1,13 +1,14 @@
 import { Box, styled } from '@mui/material'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState, MouseEvent } from 'react'
 import { connectToChild } from 'penpal'
-import { Methods } from './xebug/lib/methods'
-import { useFileStore, useIframeStore } from '../store'
-import { ProtocolDispatchers } from '../../types/protocol-proxy-api'
+import { useIframeStore } from '../store'
 import { Protocol } from 'devtools-protocol/types/protocol'
 import { CodeInfo } from '../ReactDevInspectorUtils/inspect'
-import { throttle } from 'lodash-es'
-import { DevtoolsMethods } from '../../StorybookFrame/Devtools'
+import { DevtoolsMethods } from '../../Devtools/Devtools'
+import { IRange } from 'monaco-editor-core'
+import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
+import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
+import { PreviewOverlay } from '../../Devtools/PreviewOverlay'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -56,12 +57,17 @@ export const parentMethods = {
       nodesMap?.get(backendNodeId)
     },
   },
-  setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
+  async setHighlight({ absolutePath, range }: { absolutePath: string; range: IRange }) {
+    const editor = useIframeStore.getState().getEditor()
+    const tsWorker = await getTypescriptWorker()
 
-    console.log(absolutePath, lineNumber)
+    useIframeStore.setState({ openFile: undefined })
+  },
+  setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
     if (absolutePath) {
+      // editor
       useIframeStore.setState({
-        openFile: {
+        selectedComponent: {
           path: absolutePath.slice('/home/danny/dev/shlikshlak'.length),
           lineNumber: +lineNumber,
           columnNumber: +columnNumber,
@@ -75,91 +81,65 @@ export const parentMethods = {
 
 export type ParentMethods = typeof parentMethods
 
-function getRelativeLocation(e: MouseEvent) {
-  const { x, y } = e.target.getBoundingClientRect()
-  const { x: parentX, y: parentY } = e.target.parentElement.getBoundingClientRect()
-
-  const clientX = x - parentX
-  const clientY = y - parentY
-  return { clientX, clientY }
-}
-
 export const Preview = () => {
   // const ready = useIframeStore((v) => v.frontendReady)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [ready, setReady] = useState(false)
   const childConnection = useIframeStore((v) => v.childConnection)
+  const store = useIframeStore((v) => v.devtoolsStore)
+
+
+
+  const onMouseMove = async (e: MouseEvent) => {
+    const iframe = iframeRef.current?.parentElement
+    if (!iframe) return
+    const { x, y } = iframe.getBoundingClientRect()
+    const id = await childConnection?.highlightPoint({
+      clientX: e.clientX - x,
+      clientY: e.clientY - y,
+    })
+    let parent = store?.getElementByID(id)
+    while (parent) {
+      console.log(parent, parent.parentID)
+      parent = parent.parentID && store?.getElementByID(parent.parentID)
+    }
+    console.log(x, y, id, store?.getElementByID(id))
+  }
+
   useEffect(() => {
-    if (iframeRef.current && !childConnection) {
+    const current = iframeRef.current
+    // current.addEventListener('mousemove', onMouseMove)
+    if (current && !childConnection) {
       console.debug('Connecting to child')
       const connection = connectToChild<DevtoolsMethods>({
-        iframe: iframeRef.current,
+        iframe: current,
         methods: parentMethods,
         childOrigin: '*',
       })
+
       setReady(true)
 
       connection.promise.then(async (childConnection) => {
-        console.debug('Connected')
+        console.debug('Connected to child')
+        const bridge = createBridge(window)
+        const store = createStore(bridge)
         await childConnection.init()
         useIframeStore.setState({
           childConnection: childConnection,
+          devtoolsBridge: bridge,
+          devtoolsStore: store,
         })
       })
-      return () => {}
+      return () => {
+        // current.removeEventListener('mousemove', onMouseMove)
+      }
     }
   }, [childConnection])
 
-  const onMouseMove = useMemo(
-    () =>
-      throttle(async (e) => {
-        const { clientX, clientY } = getRelativeLocation(e)
-
-        console.log(
-          await childConnection?.highlightPoint({
-            clientX: clientX,
-            clientY: clientY,
-          })
-        )
-      }),
-    []
-  )
-
-  const onClick = useMemo(
-    () => async (e: MouseEvent) => {
-      const { clientY, clientX } = getRelativeLocation(e)
-      try {
-      await childConnection?.getCodeInfoFromPoint({
-        clientX,
-        clientY,
-      })
-
-      } catch (e) {
-        console.error(e, 13213)
-      }
-    },
-    [childConnection]
-  )
   return (
     <Box sx={{ background: 'white', position: 'relative' }}>
-      {/*<Box*/}
-      {/*  // onMouseMove={onMouseMove}*/}
-      {/*  onClick={onClick}*/}
-      {/*  sx={{ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0 }}*/}
-      {/*/>*/}
-      <StyledIframe
-        src={
-          // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-page--logged-out' : undefined
-          // ready ? 'http://localhost:6006/iframe.html?viewMode=story&id=example-header--logged-in' : undefined
-          // ready ? 'http://localhost:3002' : undefined
-          ready ? '/stories/aaaaa' : undefined
-        }
-        onLoad={() => {
-          // console.log(useIframeStore.getState().childConnection)
-        }}
-        // src={'http://localhost:6006/iframe.html?viewMode=story&id=example-page--logged-out'}
-        ref={iframeRef}
-      />
+      <PreviewOverlay />
+      <StyledIframe src={ready ? '/stories/aaaaa' : undefined} onLoad={() => {}} ref={iframeRef} />
     </Box>
   )
 }

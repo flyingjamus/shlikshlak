@@ -339,4 +339,6 @@ export type DevToolsHook = {
   registerInternalModuleStop: (moduleStopError: Error) => void;
   // Testing
   dangerous_setTargetConsoleForTesting?: (fakeConsole: Record<string, any>) => void;
+
+  $0?: Node
 };

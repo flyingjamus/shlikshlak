@@ -1,20 +1,19 @@
 import EventEmitter from '../events'
 import { throttle } from 'lodash-es'
 import {
-  SESSION_STORAGE_LAST_SELECTION_KEY,
-  SESSION_STORAGE_RELOAD_AND_PROFILE_KEY,
-  SESSION_STORAGE_RECORD_CHANGE_DESCRIPTIONS_KEY,
   __DEBUG__,
+  SESSION_STORAGE_LAST_SELECTION_KEY,
+  SESSION_STORAGE_RECORD_CHANGE_DESCRIPTIONS_KEY,
+  SESSION_STORAGE_RELOAD_AND_PROFILE_KEY
 } from '../constants'
 import { sessionStorageGetItem, sessionStorageRemoveItem, sessionStorageSetItem } from '../storage'
-import setupHighlighter from './views/Highlighter'
 import {
   initialize as setupTraceUpdates,
-  toggleEnabled as setTraceUpdatesEnabled,
+  toggleEnabled as setTraceUpdatesEnabled
 } from './views/TraceUpdates'
 import { patch as patchConsole } from './console'
-import { currentBridgeProtocol } from '../bridge'
 import type { BackendBridge } from '../bridge'
+import { currentBridgeProtocol } from '../bridge'
 import type {
   InstanceAndStyle,
   NativeType,
@@ -22,7 +21,7 @@ import type {
   PathFrame,
   PathMatch,
   RendererID,
-  RendererInterface,
+  RendererInterface
 } from './types'
 import type { ComponentFilter } from '../types'
 import { isSynchronousXHRSupported } from './utils'
@@ -203,7 +202,7 @@ export default class Agent extends EventEmitter<{
 
     bridge.send('isBackendStorageAPISupported', isBackendStorageAPISupported)
     bridge.send('isSynchronousXHRSupported', isSynchronousXHRSupported())
-    setupHighlighter(bridge, this)
+    // setupHighlighter(bridge, this)
     setupTraceUpdates(this)
   }
 
@@ -294,11 +293,6 @@ export default class Agent extends EventEmitter<{
 
     if (rendererInterface != null) {
       try {
-        console.log(
-          312312312,
-
-          rendererInterface.logElementToConsole(rendererInterface.getFiberIDForNative(node, false))
-        )
         return rendererInterface.getFiberIDForNative(node, true)
       } catch (error) {
         // Some old React versions might throw if they can't find a match.

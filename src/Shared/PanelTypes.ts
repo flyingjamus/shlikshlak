@@ -1,4 +1,5 @@
 import type { TextRange } from 'typescript'
+import type { IRange } from 'monaco-editor-core'
 
 export const PANEL_TYPES = ['string', 'enum', 'boolean'] as const
 export type PanelType = typeof PANEL_TYPES[number]
@@ -20,4 +21,5 @@ export type PanelsResponse = {
   existingAttributes: ExistingAttribute[]
   location?: number
   fileName?: string
+  range?: IRange
 }

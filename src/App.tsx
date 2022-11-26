@@ -5,7 +5,7 @@ import React from 'react'
 window.__DEV__ = false
 
 const Screen = React.lazy(() => import('./Components/Screen/Screen'))
-const StoriesIndex = React.lazy(() => import('./Components/Stories/StoriesIndex'))
+const StoriesIndex = React.lazy(() => import('./stories/StoriesIndex'))
 const router = createBrowserRouter([
   {
     path: '/',

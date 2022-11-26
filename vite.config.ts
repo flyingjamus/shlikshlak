@@ -11,7 +11,13 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      include: [/typescript/, /node_modules/],
+      include: [/typescript/],
+    },
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        stories: resolve(__dirname, 'stories/index.html'),
+      },
     },
   },
   clearScreen: false,
@@ -27,6 +33,21 @@ export default defineConfig({
     //   },
     // },
 
+    {
+      name: 'middleware',
+      apply: 'serve',
+      configureServer(viteDevServer) {
+        return () => {
+          viteDevServer.middlewares.use(async (req, res, next) => {
+            if (req.originalUrl.startsWith('/stories')) {
+              req.url = '/src/stories/index.html'
+            }
+
+            next()
+          })
+        }
+      },
+    },
     VitePWA({
       // strategies: 'generateSW',
       srcDir: resolve(__dirname, 'src'),
@@ -41,6 +62,7 @@ export default defineConfig({
     react({
       babel: {
         plugins: [
+          '@babel/plugin-transform-react-jsx-source',
           [
             '@emotion',
             {
@@ -78,6 +100,6 @@ export default defineConfig({
   ],
   define: {
     'process.env': {},
-    // 'document': {}
+    __DEV__: true,
   },
 })

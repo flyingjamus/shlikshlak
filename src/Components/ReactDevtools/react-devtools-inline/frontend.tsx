@@ -27,7 +27,7 @@ export function createStore(bridge: FrontendBridge, config?: Config): Store {
     ...config,
   })
 }
-export function createBridge(contentWindow: window, wall?: Wall): FrontendBridge {
+export function createBridge(contentWindow: Window, wall?: Wall): FrontendBridge {
   if (wall == null) {
     wall = {
       listen(fn) {

@@ -4,7 +4,7 @@ import connector from '../lib/connector'
 import * as stringifyObj from '../lib/stringifyObj'
 import { getNode, getNodeId } from '../lib/stringifyNode'
 import { Protocol } from 'devtools-protocol/types/protocol'
-import { parentConnection } from '../../../../StorybookFrame/Devtools'
+import { parentConnection } from '../../../../Devtools/Devtools'
 
 type HighlightConfig = Protocol.Overlay.HighlightConfig
 type HighlightNodeRequest = Protocol.Overlay.HighlightNodeRequest

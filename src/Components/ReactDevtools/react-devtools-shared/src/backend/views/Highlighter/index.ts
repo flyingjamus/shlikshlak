@@ -19,7 +19,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     registerListenersOnWindow(window)
   }
 
-  function registerListenersOnWindow(window) {
+  function registerListenersOnWindow(window: Window) {
     // This plug-in may run in non-DOM environments (e.g. React Native).
     if (window && typeof window.addEventListener === 'function') {
       window.addEventListener('click', onClick, true)
@@ -39,7 +39,9 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     removeListenersOnWindow(window)
     iframesListeningTo.forEach(function (frame) {
       try {
-        removeListenersOnWindow(frame.contentWindow)
+        if (frame.contentWindow) {
+          removeListenersOnWindow(frame.contentWindow)
+        }
       } catch (error) {
         // This can error when the iframe is on a cross-origin.
       }
@@ -47,7 +49,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     iframesListeningTo = new Set()
   }
 
-  function removeListenersOnWindow(window) {
+  function removeListenersOnWindow(window: Window) {
     // This plug-in may run in non-DOM environments (e.g. React Native).
     if (window && typeof window.removeEventListener === 'function') {
       window.removeEventListener('click', onClick, true)
@@ -120,8 +122,9 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
   function onClick(event: MouseEvent) {
     event.preventDefault()
     event.stopPropagation()
-    stopInspectingNative()
-    bridge.send('stopInspectingNative', true)
+    // stopInspectingNative()
+    // bridge.send('stopInspectingNative', true)
+
   }
 
   function onMouseEvent(event: MouseEvent) {
@@ -144,7 +147,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
       const iframe: HTMLIFrameElement = target as any
 
       try {
-        if (!iframesListeningTo.has(iframe)) {
+        if (!iframesListeningTo.has(iframe) && iframe.contentWindow) {
           const window = iframe.contentWindow
           registerListenersOnWindow(window)
           iframesListeningTo.add(iframe)
@@ -169,7 +172,6 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     memoize((node: HTMLElement) => {
       const id = agent.getIDForNode(node)
 
-      console.log(3123121, id)
       if (id !== null) {
         bridge.send('selectFiber', id)
       }

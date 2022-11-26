@@ -1,7 +1,7 @@
-import type Agent from "react-devtools-shared/src/backend/agent";
+import type Agent from "../../../../../react-devtools-shared/src/backend/agent";
 import Overlay from "./Overlay";
 const SHOW_DURATION = 2000;
-let timeoutID: TimeoutID | null = null;
+let timeoutID: NodeJS.Timeout | null = null;
 let overlay: Overlay | null = null;
 export function hideOverlay(agent: Agent) {
   if (window.document == null) {

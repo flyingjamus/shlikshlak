@@ -467,7 +467,6 @@ export function getInternalReactConstants(version: string): {
 
     let resolvedContext: any = null
 
-    console.log(fiber)
     switch (tag) {
       case CacheComponent:
         return 'Cache'

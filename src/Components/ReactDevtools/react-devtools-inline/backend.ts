@@ -7,46 +7,7 @@ import { BackendBridge } from '../react-devtools-shared/src/bridge'
 import { Wall } from '../react-devtools-shared/src/types'
 
 function startActivation(contentWindow: window, bridge: BackendBridge) {
-  const onSavedPreferences = (data) => {
-    // This is the only message we're listening for,
-    // so it's safe to cleanup after we've received it.
-    bridge.removeListener('savedPreferences', onSavedPreferences)
-    const {
-      appendComponentStack,
-      breakOnConsoleErrors,
-      componentFilters,
-      showInlineWarningsAndErrors,
-      hideConsoleLogsInStrictMode,
-    } = data
-    contentWindow.__REACT_DEVTOOLS_APPEND_COMPONENT_STACK__ = appendComponentStack
-    contentWindow.__REACT_DEVTOOLS_BREAK_ON_CONSOLE_ERRORS__ = breakOnConsoleErrors
-    contentWindow.__REACT_DEVTOOLS_COMPONENT_FILTERS__ = componentFilters
-    contentWindow.__REACT_DEVTOOLS_SHOW_INLINE_WARNINGS_AND_ERRORS__ = showInlineWarningsAndErrors
-    contentWindow.__REACT_DEVTOOLS_HIDE_CONSOLE_LOGS_IN_STRICT_MODE__ = hideConsoleLogsInStrictMode
-
-    // TRICKY
-    // The backend entry point may be required in the context of an iframe or the parent window.
-    // If it's required within the parent window, store the saved values on it as well,
-    // since the injected renderer interface will read from window.
-    // Technically we don't need to store them on the contentWindow in this case,
-    // but it doesn't really hurt anything to store them there too.
-    if (contentWindow !== window) {
-      window.__REACT_DEVTOOLS_APPEND_COMPONENT_STACK__ = appendComponentStack
-      window.__REACT_DEVTOOLS_BREAK_ON_CONSOLE_ERRORS__ = breakOnConsoleErrors
-      window.__REACT_DEVTOOLS_COMPONENT_FILTERS__ = componentFilters
-      window.__REACT_DEVTOOLS_SHOW_INLINE_WARNINGS_AND_ERRORS__ = showInlineWarningsAndErrors
-      window.__REACT_DEVTOOLS_HIDE_CONSOLE_LOGS_IN_STRICT_MODE__ = hideConsoleLogsInStrictMode
-    }
-
-    finishActivation(contentWindow, bridge)
-  }
-
-  bridge.addListener('savedPreferences', onSavedPreferences)
-  // The backend may be unable to read saved preferences directly,
-  // because they are stored in localStorage within the context of the extension (on the frontend).
-  // Instead it relies on the extension to pass preferences through.
-  // Because we might be in a sandboxed iframe, we have to ask for them by way of postMessage().
-  bridge.send('getSavedPreferences')
+  finishActivation(contentWindow, bridge)
 }
 
 function finishActivation(contentWindow: window, bridge: BackendBridge) {
