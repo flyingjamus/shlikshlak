@@ -14,10 +14,10 @@ const C = ({ className }: { className?: string }) => {
       </div>
       <Stack direction={'row'} flexWrap={'wrap'}>
         {times(2).map((j) => (
-          <Stack direction={'column'} key={j} sx={{flex: 1}}>
+          <Stack direction={'column'} key={j} sx={{ flex: 1 }}>
             {times(20).map((i) => (
               <Card sx={{ marginTop: '12px' }} key={i}>
-                <CardHeader title={'Header'} sx={{ marginBottom: '12px' }}></CardHeader>
+                <CardHeader title={"Header1"} sx={{ marginBottom: '12px' }}></CardHeader>
                 <CardContent>Adslkhsdaj kas akdasdbkdasdakba dsakb</CardContent>
               </Card>
             ))}
@@ -37,7 +37,7 @@ const D = ({ value }: { value: string }) => {
   return <div>HEllo {value}</div>
 }
 
-export const Story = () => (
+export const StoryRoot = () => (
   <div>
     <A />
     <D key="1" value={':-)'} />

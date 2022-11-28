@@ -62,7 +62,7 @@ export default defineConfig({
     react({
       babel: {
         plugins: [
-          '@babel/plugin-transform-react-jsx-source',
+          // BabelPluginReactJSXSource,
           [
             '@emotion',
             {

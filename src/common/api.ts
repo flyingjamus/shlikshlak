@@ -65,4 +65,13 @@ export const filesApi = apiBuilder({
       },
     ],
   })
+  .addEndpoint({
+    method: 'get',
+    path: '/init',
+    alias: 'init',
+    response: z.object({
+      rootPath: z.string(),
+    }),
+    errors: [{ status: 400, schema: z.object({}) }],
+  })
   .build()

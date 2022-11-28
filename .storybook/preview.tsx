@@ -15,7 +15,7 @@ export const decorators: DecoratorFunction<ReactElement>[] = [
   (Story) => (
     <>
       <Story />
-      {/*<PreviewOverlay />*/}
+      {/*<DevtoolsOverlay />*/}
     </>
   ),
 ]

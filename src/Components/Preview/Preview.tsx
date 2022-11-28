@@ -1,14 +1,14 @@
 import { Box, styled } from '@mui/material'
-import { useEffect, useRef, useState, MouseEvent } from 'react'
+import { MouseEvent, useEffect, useRef, useState } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import { Protocol } from 'devtools-protocol/types/protocol'
 import { CodeInfo } from '../ReactDevInspectorUtils/inspect'
-import { DevtoolsMethods } from '../../Devtools/Devtools'
+import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { IRange } from 'monaco-editor-core'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
-import { PreviewOverlay } from '../../Devtools/PreviewOverlay'
+import { DevtoolsOverlay } from '../../Devtools/DevtoolsOverlay'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -94,10 +94,10 @@ export const Preview = () => {
     const iframe = iframeRef.current?.parentElement
     if (!iframe) return
     const { x, y } = iframe.getBoundingClientRect()
-    const id = await childConnection?.highlightPoint({
-      clientX: e.clientX - x,
-      clientY: e.clientY - y,
-    })
+    // const id = await childConnection?.idFromPoint({
+    //   clientX: e.clientX - x,
+    //   clientY: e.clientY - y,
+    // })
     let parent = store?.getElementByID(id)
     while (parent) {
       console.log(parent, parent.parentID)
@@ -138,7 +138,7 @@ export const Preview = () => {
 
   return (
     <Box sx={{ background: 'white', position: 'relative' }}>
-      <PreviewOverlay />
+      <DevtoolsOverlay />
       <StyledIframe src={ready ? '/stories/aaaaa' : undefined} onLoad={() => {}} ref={iframeRef} />
     </Box>
   )

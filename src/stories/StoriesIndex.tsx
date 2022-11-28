@@ -1,5 +1,5 @@
-import { Story } from './Story'
+import { StoryRoot } from './StoryRoot'
 
 export default function StoriesIndex() {
-  return <Story />
+  return <StoryRoot />
 }
