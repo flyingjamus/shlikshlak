@@ -2,11 +2,11 @@ import ts, {
   factory,
   FileTextChanges,
   formatting,
+  isJsxElement,
   isJsxOpeningLikeElement,
-  SourceFile,
-  textChanges,
+  isJsxText,
   Node,
-  TextRange,
+  textChanges,
 } from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
 import { isDefined } from 'ts-is-defined'
@@ -32,37 +32,51 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
         formatContext: formatting.getFormatContext({}, this),
       },
       (t) => {
-        const initializer =
+        const initializerExpression =
           value !== undefined
             ? factory.createJsxExpression(
                 /*dotDotDotToken*/ undefined,
                 factory.createStringLiteral(
-                  value,
+                  value || '',
                   // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
                   false
                 )
               )
             : undefined
         const tokenWithAttr = token?.parent.parent.parent
+        if (!tokenWithAttr) {
+          console.error('tokenWithAttr not found')
+          return
+        }
         const jsxAttributesNode =
-          tokenWithAttr && isJsxOpeningLikeElement(tokenWithAttr) ? tokenWithAttr.attributes : undefined
+          tokenWithAttr && isJsxOpeningLikeElement(tokenWithAttr)
+            ? tokenWithAttr.attributes
+            : isJsxOpeningLikeElement(token?.parent)
+            ? token?.parent.attributes
+            : undefined
         if (!jsxAttributesNode) {
           console.error('Attributes not found')
           return
         }
+        const jsxNode = token.parent.parent.parent.parent
+        const childrenNodes = isJsxElement(jsxNode) && jsxNode.children
         const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
-        if (existingToken && !ts.isJsxSpreadAttribute(existingToken)) {
+        if (attrName === 'children') {
+          if (childrenNodes && childrenNodes.length === 1) {
+            t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value || ''))
+          }
+        } else if (existingToken && !ts.isJsxSpreadAttribute(existingToken)) {
           const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
           if (value !== undefined) {
-            const updates = factory.updateJsxAttribute(existingToken, name, initializer)
+            const updates = factory.updateJsxAttribute(existingToken, name, initializerExpression)
             t.replaceNode(sourceFile, existingToken, updates, options)
           } else {
             t.deleteNode(sourceFile, existingToken)
           }
         } else {
-          const hasSpreadAttribute = jsxAttributesNode.properties.some(ts.isJsxSpreadAttribute)
           const name = factory.createIdentifier(attrName)
-          const jsxAttribute = factory.createJsxAttribute(name, initializer)
+          const jsxAttribute = factory.createJsxAttribute(name, initializerExpression)
+          const hasSpreadAttribute = jsxAttributesNode.properties.some(ts.isJsxSpreadAttribute)
           // formattingScanner requires the Identifier to have a context for scanning attributes with "-" (data-foo).
           ts.setParent(name, jsxAttribute)
           const jsxAttributes = factory.createJsxAttributes(
@@ -110,13 +124,29 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
           }
         })
         .filter(isDefined)
+      const existingIncludingChildren = [
+        ...existingAttributes,
+        ...(isJsxElement(parent.parent)
+          ? parent.parent.children.map((v) => {
+              if (isJsxText(v))
+                return {
+                  name: 'children',
+                  location: {
+                    pos: v.pos,
+                    end: v.end,
+                  },
+                  value: v.getText(),
+                }
+            })
+          : []),
+      ].filter(isDefined)
       const typeAtLocation = checker.getContextualType(parent.attributes)
       if (typeAtLocation) {
-        const attributes = typeAtLocation.getProperties().map((prop) => {
+        const attributes = [...typeAtLocation.getProperties()].map((prop) => {
           const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, parent))
           return {
             name: prop.name,
-            location: existingAttributes.find((v) => v.name === prop.name)?.location,
+            location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
             panels: PANELS.map((v) => {
               return v.matcher(type, checker)
             }).filter(isDefined),
@@ -124,8 +154,8 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
         })
 
         return {
-          attributes,
-          existingAttributes,
+          attributes: [...attributes],
+          existingAttributes: existingIncludingChildren,
           location: parent.attributes.pos,
           fileName,
           range: getRange(parent),

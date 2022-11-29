@@ -6,6 +6,13 @@ export const PANELS: { matcher: (type: typescript.Type, checker: TypeChecker) =>
   [
     {
       matcher: (type: typescript.Type, checker: TypeChecker) => {
+        if (checker.isTypeAssignableTo(checker.getStringType(), type)) {
+          return { name: 'string' }
+        }
+      }
+    },
+    {
+      matcher: (type: typescript.Type, checker: TypeChecker) => {
         if (checker.isTypeAssignableTo(checker.getBooleanType(), type)) {
           return { name: 'boolean' }
         }
@@ -31,13 +38,6 @@ export const PANELS: { matcher: (type: typescript.Type, checker: TypeChecker) =>
         }
       }
     },
-    {
-      matcher: (type: typescript.Type, checker: TypeChecker) => {
-        if (checker.isTypeAssignableTo(checker.getStringType(), type)) {
-          return { name: 'string' }
-        }
-      }
-    }
   ]
 
 export type TypeChecker = typescript.TypeChecker & {
