@@ -17,7 +17,7 @@ const C = ({ className }: { className?: string }) => {
           <Stack direction={'column'} key={j} sx={{ flex: 1 }}>
             {times(20).map((i) => (
               <Card sx={{ marginTop: '12px' }} key={i}>
-                <CardHeader title={"Header1"} sx={{ marginBottom: '12px' }}></CardHeader>
+                <CardHeader title={"Header "} sx={{ marginBottom: '12px' }}></CardHeader>
                 <CardContent>Adslkhsdaj kas akdasdbkdasdakba dsakb</CardContent>
               </Card>
             ))}

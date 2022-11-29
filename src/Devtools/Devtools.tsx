@@ -75,8 +75,6 @@ const devtoolMethods = {
 
 export type DevtoolsMethods = typeof devtoolMethods
 
-console.log('Activating devtools', window.__REACT_DEVTOOLS_GLOBAL_HOOK__)
-initialize(window)
 const connection = connectToParent<ParentMethods>({
   methods: devtoolMethods,
   parentOrigin: '*',

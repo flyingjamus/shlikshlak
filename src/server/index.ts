@@ -74,7 +74,7 @@ app.post('/get_file', async (req, res) => {
 
 app.post('/write_file', async (req, res) => {
   const filePath = getFilePath(req.body.path)
-  console.log('Writing', filePath, req.body.contents)
+  console.log('Writing', filePath)
   try {
     await writeFile(filePath, req.body.contents)
     res.json({})
