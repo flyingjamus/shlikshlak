@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Box, IconButton } from '@mui/material'
 import * as monaco from 'monaco-editor'
-import { useFileStore, useIframeStore } from '../store'
+import { editor } from 'monaco-editor'
+import { OpenFile, useFileStore, useIframeStore } from '../store'
 import { getFileText } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import { apiClient } from '../../client/apiClient'
@@ -11,7 +12,8 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { initVimMode } from 'monaco-vim'
 import { WorkerAdapter } from '../../tsworker/workerAdapter'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
-import IStandaloneCodeEditor = monaco.editor.IStandaloneCodeEditor
+import IModel = editor.IModel
+import ITextModel = editor.ITextModel
 
 monaco.languages.onLanguage('typescript', async () => {
   useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
@@ -33,6 +35,29 @@ monaco.languages.onLanguage('typescript', async () => {
 //   }
 // }
 
+async function updateModelPanels() {
+  const selectedComponent = useIframeStore.getState().selectedComponent
+  if (!selectedComponent) return
+
+  const model = await getOrCreateModel(selectedComponent.path)
+  const worker = await getTypescriptWorker()
+  const uriString = model.uri.toString()
+  const offset = model.getOffsetAt({
+    column: +selectedComponent.columnNumber,
+    lineNumber: +selectedComponent.lineNumber,
+  })
+  const panels = await worker.getPanelsAtPosition(uriString, offset)
+  useIframeStore.setState({ panels: panels })
+  return panels
+}
+
+async function getOrCreateModel(path: string): Promise<ITextModel> {
+  const uri = monaco.Uri.file(path)
+  const fileCode = useFileStore.getState().files?.[path]?.code || (await getFileText(path))
+  if (!fileCode) throw new Error('Missing filecode')
+  return monaco.editor.getModel(uri) || monaco.editor.createModel(fileCode, undefined, uri)
+}
+
 export const MonacoEditor = () => {
   // const monaco: Monaco | null = useMonaco()
   const editor = useIframeStore((v) => v.editor)
@@ -44,36 +69,20 @@ export const MonacoEditor = () => {
     const el = ref.current
     if (!el) throw new Error('Missing ref')
     if (editor) {
-      return
+      return () => {
+        editor.dispose()
+        useIframeStore.setState({ editor: undefined })
+      }
     }
 
     const instance = monaco.editor.create(el, MONACO_OPTIONS)
     const vimMode = initVimMode(instance, statusBarRef.current)
     useIframeStore.setState({ editor: instance })
 
-    // const listener = editor.onDidChangeCursorPosition(
-    //   throttle(
-    //     (e) => {
-    //       const openFile = useIframeStore.getState().openFile
-    //       if (openFile) {
-    //         useIframeStore.setState({
-    //           openFile: {
-    //             ...openFile,
-    //             lineNumber: e.position.lineNumber,
-    //             columnNumber: e.position.column,
-    //           },
-    //         })
-    //       }
-    //     },
-    //     50,
-    //     { trailing: true, leading: false }
-    //   )
-    // )
-
     return () => {
       // listener.dispose()
       // setMonacoInstance(undefined)
-      // editor.dispose()
+      // instance.dispose()
     }
   }, [editor])
 
@@ -89,16 +98,18 @@ export const MonacoEditor = () => {
         const model = editor.getModel()
         if (!model) return
 
-        await apiClient.writeFile({ contents: model?.getValue(), path: model?.uri.path })
+        updateModelPanels().then((v) => v)
+        apiClient.writeFile({ contents: model?.getValue(), path: model?.uri.path }).then((v) => v)
       }),
       editor?.onMouseDown((e) => {
         e.event.stopPropagation()
         e.event.preventDefault()
         if (e.event.leftButton && e.event.detail === 2) {
           // editor.setSelection(new monaco.Selection(0, 0, 0, 0))
+          const selectedComponent = useIframeStore.getState().selectedComponent
           useIframeStore.setState({
             selectedComponent: {
-              path: useIframeStore.getState().selectedComponent?.path,
+              path: selectedComponent?.path,
               lineNumber: e.target.position?.lineNumber,
               columnNumber: e.target.position?.column,
             },
@@ -116,28 +127,18 @@ export const MonacoEditor = () => {
   const workerAdapter = useIframeStore((v) => v.workerAdapter)
   const [delay, setDelay] = useState({})
   const decorations = useRef<string[]>([])
+
   useEffect(() => {
     ;(async () => {
       if (selectedComponent) {
         const path = selectedComponent.path
         if (path) {
-          const uri = monaco.Uri.file(path)
-          const fileCode = files?.[path]?.code || (await getFileText(path))
-          const model =
-            monaco.editor.getModel(uri) || (fileCode && monaco.editor.createModel(fileCode, undefined, uri))
-
+          const model = await getOrCreateModel(path)
           if (editor && model) {
             try {
-              const worker = await getTypescriptWorker()
-              const uriString = uri.toString()
-              const offset = model.getOffsetAt({
-                column: +selectedComponent.columnNumber,
-                lineNumber: +selectedComponent.lineNumber,
-              })
-              const panels = await worker.getPanelsAtPosition(uriString, offset)
-              useIframeStore.setState({ panels: panels })
+              const panels = await updateModelPanels()
               editor.removeDecorations(decorations.current)
-              if (panels.range) {
+              if (panels?.range) {
                 if (editor?.getModel() !== model) {
                   editor.setModel(model)
                 }
@@ -159,14 +160,6 @@ export const MonacoEditor = () => {
                 setDelay({})
               }, 200)
             }
-            // if (editor?.getModel() !== model) {
-            //   editor.setModel(model)
-            //   // editor?.revealLineInCenter(+selectedComponent.lineNumber)
-            // } else {
-            //   editor.setModel(model)
-            //   // editor?.revealLineInCenter(+selectedComponent.lineNumber)
-            // }
-            // monacoInstance?.setPosition({ lineNumber: +openFile.lineNumber, column: +openFile.columnNumber })
             editor.focus()
           }
         }

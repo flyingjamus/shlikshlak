@@ -3,10 +3,10 @@ import { times } from 'lodash-es'
 import { ReactNode } from 'react'
 
 const A = () => {
-  return <B header={"Header :-)"}>This is the content</B>
+  return <B header={"Header Text"}>This is the content!@!#!321</B>
 }
 
-const C = ({ className, children, header }: { className?: string, children: ReactNode, header: ReactNode }) => {
+const C = ({ className, children, header, primary }: { className?: string, children: ReactNode, header: ReactNode, primary: boolean }) => {
   return (
     <div suppressContentEditableWarning>
       <div className={className}>
@@ -18,7 +18,7 @@ const C = ({ className, children, header }: { className?: string, children: Reac
           <Stack direction={'column'} sx={{ flex: 1 }} key={j}>
             {times(20).map((i) => (
               <Card sx={{ marginTop: '12px' }} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"!"}></CardHeader>
+                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"!@"}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}
