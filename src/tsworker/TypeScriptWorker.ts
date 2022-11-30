@@ -19,7 +19,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
     fileName: string,
     position: number,
     attrName: string,
-    value?: string
+    value?: string | boolean | undefined
   ): FileTextChanges[] | void {
     const sourceFile = this.requireSourceFile(fileName)
     const token = this.getTokenAtPosition(fileName, position)
@@ -33,7 +33,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
       },
       (t) => {
         const initializerExpression =
-          value !== undefined
+          value !== undefined && value !== true
             ? factory.createJsxExpression(
                 /*dotDotDotToken*/ undefined,
                 factory.createStringLiteral(

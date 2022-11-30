@@ -3,7 +3,7 @@ import { times } from 'lodash-es'
 import { ReactNode } from 'react'
 
 const A = () => {
-  return <B header={":-)"}>Lorem ipsum</B>
+  return <B header={"Header :-)"}>This is the content</B>
 }
 
 const C = ({ className, children, header }: { className?: string, children: ReactNode, header: ReactNode }) => {

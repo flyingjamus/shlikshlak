@@ -5,18 +5,6 @@ import { monaco } from 'react-monaco-editor'
 import { TypeScriptWorker } from './TypeScriptWorker'
 
 const attributesQueues: Record<string, PQueue> = {}
-// const nextAttributesValues: Map<string, AttributeValue> = new Map()
-const modelCbs: Record<string, (() => void) | undefined> = {}
-
-monaco.editor.onDidCreateModel((model) => {
-  const changeSubscription = model.onDidChangeContent((e) => {
-    const cb = modelCbs[model.uri.toString()]
-    if (cb) {
-      modelCbs[model.uri.toString()] = undefined
-      cb()
-    }
-  })
-})
 
 function textSpanToRange(model: editor.ITextModel, span: TextSpan): IRange {
   const p1 = model.getPositionAt(span.start)
@@ -28,9 +16,6 @@ function textSpanToRange(model: editor.ITextModel, span: TextSpan): IRange {
 
 type AttributeValue = string | boolean | undefined
 
-window.onunhandledrejection = () => {
-  console.log('Unhandled')
-}
 export class WorkerAdapter {
   constructor(private worker: TypeScriptWorker) {
     worker.init()
@@ -40,31 +25,12 @@ export class WorkerAdapter {
     attributesQueues[fileName] ||= new PQueue({ concurrency: 1 })
     const p = attributesQueues[fileName]
     p.clear()
-    console.log(fileName, prop, value)
     p.add(async ({}) => {
-      if (modelCbs[fileName]) {
-        console.error('Callback already there')
-        return
-      }
-
       const fileEdits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
 
       if (!fileEdits?.length) {
         return
       }
-
-      const cbPromise = new Promise<void>((resolve) => {
-        const cb = () => resolve()
-        setTimeout(() => {
-          if (modelCbs[fileName] === cb) {
-            console.error('No CB after timeout')
-            modelCbs[fileName] = undefined
-            cb()
-          }
-          resolve()
-        }, 5000)
-        modelCbs[fileName] = cb
-      })
       fileEdits.forEach((file) => {
         const uri = monaco.Uri.parse(file.fileName)
         const model = monaco.editor.getModel(uri)
@@ -77,7 +43,6 @@ export class WorkerAdapter {
           return null
         })
       })
-      await cbPromise
     })
   }
 }
