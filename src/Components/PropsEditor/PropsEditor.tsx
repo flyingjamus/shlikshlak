@@ -68,10 +68,7 @@ export const PropsEditorWrapper = () => {
   const panels = useIframeStore((v) => v.panels)
   const openFile = useIframeStore((v) => v.openFile)
   const adapter = useIframeStore((v) => v.workerAdapter)
-  const throttled = useMemo(
-    () => adapter && throttle(adapter.setAttribute.bind(adapter), 500, { trailing: true }),
-    [adapter]
-  )
+  const throttled = useMemo(() => adapter?.setAttribute.bind(adapter), [adapter])
   return (
     <PropsEditor
       panels={panels}

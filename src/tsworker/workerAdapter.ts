@@ -1,14 +1,15 @@
-import { editor, IRange } from 'monaco-editor'
+import PQueue from 'p-queue'
+import type { editor, IRange } from 'monaco-editor'
 import { TextSpan } from 'typescript'
 import { monaco } from 'react-monaco-editor'
-import ITextModel = editor.ITextModel
 import { TypeScriptWorker } from './TypeScriptWorker'
 
-const attributesQueue: Record<string, Promise<void> | undefined> = {}
+const attributesQueues: Record<string, PQueue> = {}
+// const nextAttributesValues: Map<string, AttributeValue> = new Map()
 const modelCbs: Record<string, (() => void) | undefined> = {}
 
 monaco.editor.onDidCreateModel((model) => {
-  const changeSubscription = model.onDidChangeContent(() => {
+  const changeSubscription = model.onDidChangeContent((e) => {
     const cb = modelCbs[model.uri.toString()]
     if (cb) {
       modelCbs[model.uri.toString()] = undefined
@@ -17,7 +18,7 @@ monaco.editor.onDidCreateModel((model) => {
   })
 })
 
-function textSpanToRange(model: ITextModel, span: TextSpan): IRange {
+function textSpanToRange(model: editor.ITextModel, span: TextSpan): IRange {
   const p1 = model.getPositionAt(span.start)
   const p2 = model.getPositionAt(span.start + span.length)
   const { lineNumber: startLineNumber, column: startColumn } = p1
@@ -25,18 +26,33 @@ function textSpanToRange(model: ITextModel, span: TextSpan): IRange {
   return { startLineNumber, startColumn, endLineNumber, endColumn }
 }
 
+type AttributeValue = string | boolean | undefined
+
+window.onunhandledrejection = () => {
+  console.log('Unhandled')
+}
 export class WorkerAdapter {
   constructor(private worker: TypeScriptWorker) {
     worker.init()
   }
 
-  async setAttribute(fileName: string, location: number, prop: string, value: string | boolean | undefined) {
-    const p = attributesQueue[fileName] || Promise.resolve().then(() => {})
-    attributesQueue[fileName] = p.then(async () => {
+  async setAttribute(fileName: string, location: number, prop: string, value: AttributeValue) {
+    attributesQueues[fileName] ||= new PQueue({ concurrency: 1 })
+    const p = attributesQueues[fileName]
+    p.clear()
+    console.log(fileName, prop, value)
+    p.add(async ({}) => {
       if (modelCbs[fileName]) {
         console.error('Callback already there')
         return
       }
+
+      const fileEdits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
+
+      if (!fileEdits?.length) {
+        return
+      }
+
       const cbPromise = new Promise<void>((resolve) => {
         const cb = () => resolve()
         setTimeout(() => {
@@ -49,26 +65,19 @@ export class WorkerAdapter {
         }, 5000)
         modelCbs[fileName] = cb
       })
-
-      const fileEdits = await this.worker.setAttributeAtPosition(fileName, location, prop, value)
-
-      if (fileEdits?.length) {
-        fileEdits.forEach((file) => {
-          const uri = monaco.Uri.parse(file.fileName)
-          const model = monaco.editor.getModel(uri)
-          if (!model) return
-          const editOperations = file.textChanges.map((v) => ({
-            range: textSpanToRange(model, v.span),
-            text: v.newText,
-          }))
-          model.pushEditOperations([], editOperations, (inverseEditOperations) => {
-            return null
-          })
+      fileEdits.forEach((file) => {
+        const uri = monaco.Uri.parse(file.fileName)
+        const model = monaco.editor.getModel(uri)
+        if (!model) return
+        const editOperations = file.textChanges.map((v) => ({
+          range: textSpanToRange(model, v.span),
+          text: v.newText,
+        }))
+        model.pushEditOperations([], editOperations, (inverseEditOperations) => {
+          return null
         })
-        await cbPromise
-      } else {
-        modelCbs[fileName] = undefined
-      }
+      })
+      await cbPromise
     })
   }
 }

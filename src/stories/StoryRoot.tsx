@@ -3,7 +3,7 @@ import { times } from 'lodash-es'
 import { ReactNode } from 'react'
 
 const A = () => {
-  return <B header={"Header"}>dasdsdsadsa</B>
+  return <B header={":-)"}>Lorem ipsum</B>
 }
 
 const C = ({ className, children, header }: { className?: string, children: ReactNode, header: ReactNode }) => {
@@ -18,7 +18,7 @@ const C = ({ className, children, header }: { className?: string, children: Reac
           <Stack direction={'column'} sx={{ flex: 1 }} key={j}>
             {times(20).map((i) => (
               <Card sx={{ marginTop: '12px' }} key={i}>
-                <CardHeader title={header} sx={{ marginBottom: '12px' }}></CardHeader>
+                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"!"}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}

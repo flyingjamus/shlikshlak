@@ -15,12 +15,12 @@ import { PanelsResponse } from '../Shared/PanelTypes'
 import type { IRange } from 'monaco-editor-core'
 
 export class TypeScriptWorker extends BaseTypeScriptWorker {
-  async setAttributeAtPosition(
+  setAttributeAtPosition(
     fileName: string,
     position: number,
     attrName: string,
     value?: string
-  ): Promise<FileTextChanges[] | void> {
+  ): FileTextChanges[] | void {
     const sourceFile = this.requireSourceFile(fileName)
     const token = this.getTokenAtPosition(fileName, position)
     const name = factory.createIdentifier(attrName)
@@ -62,8 +62,18 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
         const childrenNodes = isJsxElement(jsxNode) && jsxNode.children
         const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
         if (attrName === 'children') {
-          if (childrenNodes && childrenNodes.length === 1) {
-            t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value || ''))
+          if (childrenNodes) {
+            if (childrenNodes.length === 1) {
+              t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value || ''))
+            } else if (childrenNodes.length === 0) {
+              t.insertNodeAt(sourceFile, childrenNodes.pos, factory.createIdentifier(value || ''), {})
+            } else {
+              console.error('Multiple children')
+              return
+            }
+          } else {
+            console.error('Children are not a JSX Element')
+            return
           }
         } else if (existingToken && !ts.isJsxSpreadAttribute(existingToken)) {
           const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
