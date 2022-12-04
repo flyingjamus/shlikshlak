@@ -103,7 +103,6 @@ const ls = ts.createLanguageService(new LanguageServiceHost(COMPILER_OPTIONS, ''
 const sourceFile = ls.getProgram()?.getSourceFile(filename)
 if (sourceFile) {
   const pos = sourceFile.getPositionOfLineAndCharacter(11, 24)
-  console.log(11111111)
   console.time('get')
   // console.profile('get')
   const completions = ls.getCompletionsAtPosition(filename, pos, {})

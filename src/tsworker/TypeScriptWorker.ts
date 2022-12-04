@@ -1,20 +1,49 @@
-import ts, {
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {
   factory,
   FileTextChanges,
   formatting,
+  isJsxAttribute,
   isJsxElement,
   isJsxOpeningLikeElement,
+  isJsxSpreadAttribute,
   isJsxText,
   Node,
+  resolveModuleName,
+  setParent,
+  SymbolFlags,
   textChanges,
 } from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
 import { isDefined } from 'ts-is-defined'
-import { PANELS } from './Panels'
+import { MatcherContext, PANELS } from './Panels'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import type { IRange } from 'monaco-editor-core'
 
 export class TypeScriptWorker extends BaseTypeScriptWorker {
+  getAliasedSymbolIfNecessary(symbol: Symbol) {
+    if ((symbol.flags & SymbolFlags.Alias) !== 0) return this.checker.getAliasedSymbol(symbol)
+    return symbol
+  }
+
+  getExport(moduleName: string, name: string) {
+    const rootFileName = this.program.getRootFileNames()[0]
+    const resolved = resolveModuleName(moduleName, rootFileName, this.getCompilationSettings(), this)
+    if (!resolved.resolvedModule) throw new Error('Not found')
+    const sourceFile = this.requireSourceFile(resolved.resolvedModule.resolvedFileName)
+
+    const symbolAtLocation = this.checker.getSymbolAtLocation(sourceFile)!
+    const exportsOfModule = this.checker.getExportsOfModule(
+      this.getAliasedSymbolIfNecessary(symbolAtLocation)
+    )
+    const moduleExport = exportsOfModule.find((v) => v.name === name)!
+    if (!moduleExport) throw new Error('Not found')
+
+    const declaredTypeOfSymbol = this.checker.getDeclaredTypeOfSymbol(moduleExport)
+    return declaredTypeOfSymbol
+    return this.checker.getNonNullableType(declaredTypeOfSymbol)
+  }
+
   setAttributeAtPosition(
     fileName: string,
     position: number,
@@ -75,7 +104,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
             console.error('Children are not a JSX Element')
             return
           }
-        } else if (existingToken && !ts.isJsxSpreadAttribute(existingToken)) {
+        } else if (existingToken && !isJsxSpreadAttribute(existingToken)) {
           const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
           if (value !== undefined) {
             const updates = factory.updateJsxAttribute(existingToken, name, initializerExpression)
@@ -86,9 +115,9 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
         } else {
           const name = factory.createIdentifier(attrName)
           const jsxAttribute = factory.createJsxAttribute(name, initializerExpression)
-          const hasSpreadAttribute = jsxAttributesNode.properties.some(ts.isJsxSpreadAttribute)
+          const hasSpreadAttribute = jsxAttributesNode.properties.some(isJsxSpreadAttribute)
           // formattingScanner requires the Identifier to have a context for scanning attributes with "-" (data-foo).
-          ts.setParent(name, jsxAttribute)
+          setParent(name, jsxAttribute)
           const jsxAttributes = factory.createJsxAttributes(
             hasSpreadAttribute
               ? [jsxAttribute, ...jsxAttributesNode.properties]
@@ -102,13 +131,11 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
   }
 
   async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
-    const sourceFile = this.requireSourceFile(fileName)
-    const checker = this.getTypeChecker()
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {
       const existingAttributes = parent.attributes.properties
         .map((attr) => {
-          if (ts.isJsxAttribute(attr)) {
+          if (isJsxAttribute(attr)) {
             const initializerText = attr.initializer?.getText()
             let value
             if (initializerText?.[0] === '{') {
@@ -150,16 +177,23 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
             })
           : []),
       ].filter(isDefined)
-      const typeAtLocation = checker.getContextualType(parent.attributes)
+      const typeAtLocation = this.checker.getContextualType(parent.attributes)
+
       if (typeAtLocation) {
+        const sxPropsType = this.getExport('@mui/system', 'SystemCssProperties')
+        const context: MatcherContext = { c: this.checker, w: this, types: { SxProps: sxPropsType } }
         const attributes = [...typeAtLocation.getProperties()].map((prop) => {
-          const type = checker.getNonNullableType(checker.getTypeOfSymbolAtLocation(prop, parent))
+          console.log(prop)
+          const type = this.checker.getNonNullableType(this.checker.getTypeOfSymbol(prop))
+
           return {
             name: prop.name,
             location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
-            panels: PANELS.map((v) => {
-              return v.matcher(type, checker)
-            }).filter(isDefined),
+            panels: type
+              ? PANELS.map((v) => {
+                  return v.matcher(type, context)
+                }).filter(isDefined)
+              : [],
           }
         })
 

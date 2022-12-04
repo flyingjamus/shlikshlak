@@ -7,6 +7,7 @@ export type PanelMatch =
   | { name: 'string' }
   | { name: 'boolean' }
   | { name: 'enum'; parameters: { values: string[] } }
+  | { name: 'SxProps' }
 
 export type ExistingAttribute = { name: string; value?: string; location: TextRange }
 

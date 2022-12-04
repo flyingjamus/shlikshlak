@@ -1,4 +1,37 @@
-import typescript, { DocumentRegistry } from 'typescript'
+import {
+  CompilerOptions,
+  CompletionEntryDetails,
+  CompletionInfo,
+  createDocumentRegistry,
+  createLanguageService,
+  DefinitionInfo,
+  DocumentRegistry,
+  InlayHint,
+  IScriptSnapshot,
+  isJsxOpeningLikeElement,
+  JsxOpeningLikeElement,
+  NavigationBarItem,
+  LanguageService,
+  Program,
+  QuickInfo,
+  ReferenceEntry,
+  ScriptKind,
+  SignatureHelpItems,
+  SignatureHelpItemsOptions,
+  TextSpan,
+  UserPreferences,
+  FormatCodeOptions,
+  TextChange,
+  RenameLocation,
+  RenameInfoOptions,
+  TypeChecker,
+  EmitOutput,
+  CodeFixAction,
+  RenameInfo,
+  LanguageServiceHost,
+  ScriptSnapshot,
+  getTokenAtPosition,
+} from 'typescript'
 import { AppFile, fileExists, getFile, getFileVersion } from './fileGetter'
 import {
   Diagnostic,
@@ -7,44 +40,37 @@ import {
   TypeScriptWorker as ITypeScriptWorker,
 } from './monaco.contribution'
 import { worker } from 'monaco-editor-core'
-import { PANELS, TypeChecker } from './Panels'
-import { PanelsResponse } from '../Shared/PanelTypes'
-import { isDefined } from 'ts-is-defined'
 import { libFileMap } from '../lib/lib'
 import { fileNameIsLib } from './fileNameIsLib'
 import { ICreateData } from './ICreateData'
 
-const documentRegistry: DocumentRegistry = typescript.createDocumentRegistry()
+const documentRegistry: DocumentRegistry = createDocumentRegistry()
 
-export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITypeScriptWorker {
+export class BaseTypeScriptWorker implements LanguageServiceHost, ITypeScriptWorker {
   private _ctx: worker.IWorkerContext
   private _extraLibs: IExtraLibs = Object.create(null)
-  private _compilerOptions: typescript.CompilerOptions
-  private _inlayHintsOptions?: typescript.UserPreferences
-  private _languageService = typescript.createLanguageService(this, documentRegistry)
+  private _compilerOptions: CompilerOptions
+  private _inlayHintsOptions?: UserPreferences
+  protected languageService = createLanguageService(this, documentRegistry)
 
   constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
+    console.debug('Constructing BaseTypeScriptWorker')
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
     this._extraLibs = createData.extraLibs
     this._inlayHintsOptions = createData.inlayHintsOptions
+    self.c = this.checker
   }
 
-  getCompilationSettings(): typescript.CompilerOptions {
+  getCompilationSettings(): CompilerOptions {
     return this._compilerOptions
   }
 
-  getLanguageService(): typescript.LanguageService {
-    return this._languageService
+  getLanguageService(): LanguageService {
+    return this.languageService
   }
 
-  init() {
-    // console.log(111111)
-    // this.project.addSourceFileAtPath('/src/stories/Header.tsx')
-    // console.log(222222)
-    // this.project.resolveSourceFileDependencies()
-    // console.log(3333)
-  }
+  init() {}
 
   getExtraLibs(): IExtraLibs {
     return this._extraLibs
@@ -113,28 +139,28 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     return (file.exists && file.contents) || undefined
   }
 
-  getScriptSnapshot(fileName: string): typescript.IScriptSnapshot | undefined {
+  getScriptSnapshot(fileName: string): IScriptSnapshot | undefined {
     const text = this.getFileText(fileName)
     if (text === undefined) {
       return
     }
 
-    return typescript.ScriptSnapshot.fromString(text)
+    return ScriptSnapshot.fromString(text)
   }
 
-  getScriptKind?(fileName: string): typescript.ScriptKind {
+  getScriptKind?(fileName: string): ScriptKind {
     const suffix = fileName.substr(fileName.lastIndexOf('.') + 1)
     switch (suffix) {
       case 'ts':
-        return typescript.ScriptKind.TS
+        return ScriptKind.TS
       case 'tsx':
-        return typescript.ScriptKind.TSX
+        return ScriptKind.TSX
       case 'js':
-        return typescript.ScriptKind.JS
+        return ScriptKind.JS
       case 'jsx':
-        return typescript.ScriptKind.JSX
+        return ScriptKind.JSX
       default:
-        return this.getCompilationSettings().allowJs ? typescript.ScriptKind.JS : typescript.ScriptKind.TS
+        return this.getCompilationSettings().allowJs ? ScriptKind.JS : ScriptKind.TS
     }
   }
 
@@ -142,7 +168,7 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     return '/'
   }
 
-  getDefaultLibFileName(options: typescript.CompilerOptions): string {
+  getDefaultLibFileName(options: CompilerOptions): string {
     const esnext = 'lib.esnext.full.d.ts'
     const eslib = `lib.es${2013 + (options.target || 99)}.full.d.ts`
     switch (options.target) {
@@ -194,7 +220,7 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
 
   // --- language features
 
-  private static clearFiles(tsDiagnostics: typescript.Diagnostic[]): Diagnostic[] {
+  private static clearFiles(tsDiagnostics: Diagnostic[]): Diagnostic[] {
     // Clear the `file` field, which cannot be JSON'yfied because it
     // contains cyclic data structures, except for the `fileName`
     // property.
@@ -222,7 +248,7 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     if (fileNameIsLib(fileName)) {
       return []
     }
-    const diagnostics = this._languageService.getSyntacticDiagnostics(fileName)
+    const diagnostics = this.languageService.getSyntacticDiagnostics(fileName)
     return BaseTypeScriptWorker.clearFiles(diagnostics)
   }
 
@@ -230,7 +256,7 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     if (fileNameIsLib(fileName)) {
       return []
     }
-    const diagnostics = this._languageService.getSemanticDiagnostics(fileName)
+    const diagnostics = this.languageService.getSemanticDiagnostics(fileName)
     return BaseTypeScriptWorker.clearFiles(diagnostics)
   }
 
@@ -238,7 +264,7 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     if (fileNameIsLib(fileName)) {
       return []
     }
-    const diagnostics = this._languageService.getSuggestionDiagnostics(fileName)
+    const diagnostics = this.languageService.getSuggestionDiagnostics(fileName)
     return BaseTypeScriptWorker.clearFiles(diagnostics)
   }
 
@@ -246,60 +272,61 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     if (fileNameIsLib(fileName)) {
       return []
     }
-    const diagnostics = this._languageService.getCompilerOptionsDiagnostics()
+    const diagnostics = this.languageService.getCompilerOptionsDiagnostics()
     return BaseTypeScriptWorker.clearFiles(diagnostics)
   }
 
-  getTypeChecker() {
-    return this._languageService.getProgram()!.getTypeChecker() as TypeChecker
+  get program() {
+    return this.languageService.getProgram() as Program
+  }
+
+  get checker() {
+    return this.program.getTypeChecker() as TypeChecker
   }
 
   getSourceFile(fileName: string) {
-    const program = this._languageService.getProgram()
+    const program = this.languageService.getProgram()
     return program?.getSourceFile(fileName)
   }
 
   requireSourceFile(fileName: string) {
     const sourceFile = this.getSourceFile(fileName)
-    if (!sourceFile) throw new Error('Source file not found')
+    if (!sourceFile) throw new Error('Source file not found ' + fileName)
     return sourceFile
   }
 
   getTokenAtPosition(fileName: string, position: number) {
-    const program = this._languageService.getProgram()
+    const program = this.languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
       console.error('Missing source file', fileName)
       return
     }
-    return typescript.getTokenAtPosition(sourceFile, position)
+    return getTokenAtPosition(sourceFile, position)
   }
 
-  getParentTokenAtPosition(fileName: string, position: number): typescript.JsxOpeningLikeElement | undefined {
+  getParentTokenAtPosition(fileName: string, position: number): JsxOpeningLikeElement | undefined {
     const token = this.getTokenAtPosition(fileName, position)
     const parent = token?.parent
-    if (parent && typescript.isJsxOpeningLikeElement(parent)) {
+    if (parent && isJsxOpeningLikeElement(parent)) {
       return parent
     }
   }
 
-  async getCompletionsAtPosition(
-    fileName: string,
-    position: number
-  ): Promise<typescript.CompletionInfo | undefined> {
+  async getCompletionsAtPosition(fileName: string, position: number): Promise<CompletionInfo | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
 
-    return this._languageService.getCompletionsAtPosition(fileName, position, undefined)
+    return this.languageService.getCompletionsAtPosition(fileName, position, undefined)
   }
 
   async getCompletionEntryDetails(
     fileName: string,
     position: number,
     entry: string
-  ): Promise<typescript.CompletionEntryDetails | undefined> {
-    return this._languageService.getCompletionEntryDetails(
+  ): Promise<CompletionEntryDetails | undefined> {
+    return this.languageService.getCompletionEntryDetails(
       fileName,
       position,
       entry,
@@ -313,93 +340,84 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
   async getSignatureHelpItems(
     fileName: string,
     position: number,
-    options: typescript.SignatureHelpItemsOptions | undefined
-  ): Promise<typescript.SignatureHelpItems | undefined> {
+    options: SignatureHelpItemsOptions | undefined
+  ): Promise<SignatureHelpItems | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.getSignatureHelpItems(fileName, position, options)
+    return this.languageService.getSignatureHelpItems(fileName, position, options)
   }
 
-  async getQuickInfoAtPosition(
-    fileName: string,
-    position: number
-  ): Promise<typescript.QuickInfo | undefined> {
+  async getQuickInfoAtPosition(fileName: string, position: number): Promise<QuickInfo | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.getQuickInfoAtPosition(fileName, position)
+    return this.languageService.getQuickInfoAtPosition(fileName, position)
   }
 
   async getOccurrencesAtPosition(
     fileName: string,
     position: number
-  ): Promise<ReadonlyArray<typescript.ReferenceEntry> | undefined> {
+  ): Promise<ReadonlyArray<ReferenceEntry> | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.getOccurrencesAtPosition(fileName, position)
+    return this.languageService.getOccurrencesAtPosition(fileName, position)
   }
 
   async getDefinitionAtPosition(
     fileName: string,
     position: number
-  ): Promise<ReadonlyArray<typescript.DefinitionInfo> | undefined> {
+  ): Promise<ReadonlyArray<DefinitionInfo> | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.getDefinitionAtPosition(fileName, position)
+    return this.languageService.getDefinitionAtPosition(fileName, position)
   }
 
-  async getReferencesAtPosition(
-    fileName: string,
-    position: number
-  ): Promise<typescript.ReferenceEntry[] | undefined> {
+  async getReferencesAtPosition(fileName: string, position: number): Promise<ReferenceEntry[] | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.getReferencesAtPosition(fileName, position)
+    return this.languageService.getReferencesAtPosition(fileName, position)
   }
 
-  async getNavigationBarItems(fileName: string): Promise<typescript.NavigationBarItem[]> {
+  async getNavigationBarItems(fileName: string): Promise<NavigationBarItem[]> {
     if (fileNameIsLib(fileName)) {
       return []
     }
-    return this._languageService.getNavigationBarItems(fileName)
+    return this.languageService.getNavigationBarItems(fileName)
   }
 
-  async getFormattingEditsForDocument(
-    fileName: string,
-    options: typescript.FormatCodeOptions
-  ): Promise<typescript.TextChange[]> {
+  async getFormattingEditsForDocument(fileName: string, options: FormatCodeOptions): Promise<TextChange[]> {
     if (fileNameIsLib(fileName)) {
       return []
     }
-    return this._languageService.getFormattingEditsForDocument(fileName, options)
+    return this.languageService.getFormattingEditsForDocument(fileName, options)
   }
 
   async getFormattingEditsForRange(
     fileName: string,
     start: number,
     end: number,
-    options: typescript.FormatCodeOptions
-  ): Promise<typescript.TextChange[]> {
+    options: FormatCodeOptions
+  ): Promise<TextChange[]> {
     if (fileNameIsLib(fileName)) {
       return []
     }
-    return this._languageService.getFormattingEditsForRange(fileName, start, end, options)
+    return this.languageService.getFormattingEditsForRange(fileName, start, end, options)
   }
 
   async getFormattingEditsAfterKeystroke(
     fileName: string,
     postion: number,
     ch: string,
-    options: typescript.FormatCodeOptions
-  ): Promise<typescript.TextChange[]> {
+    options: FormatCodeOptions
+  ): Promise<TextChange[]> {
     if (fileNameIsLib(fileName)) {
       return []
     }
-    return this._languageService.getFormattingEditsAfterKeystroke(fileName, postion, ch, options)
+    return this.languageService.getFormattingEditsAfterKeystroke(fileName, postion, ch, options)
   }
 
   async findRenameLocations(
@@ -408,11 +426,11 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     findInStrings: boolean,
     findInComments: boolean,
     providePrefixAndSuffixTextForRename: boolean
-  ): Promise<readonly typescript.RenameLocation[] | undefined> {
+  ): Promise<readonly RenameLocation[] | undefined> {
     if (fileNameIsLib(fileName)) {
       return undefined
     }
-    return this._languageService.findRenameLocations(
+    return this.languageService.findRenameLocations(
       fileName,
       position,
       findInStrings,
@@ -421,22 +439,18 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     )
   }
 
-  async getRenameInfo(
-    fileName: string,
-    position: number,
-    options: typescript.RenameInfoOptions
-  ): Promise<typescript.RenameInfo> {
+  async getRenameInfo(fileName: string, position: number, options: RenameInfoOptions): Promise<RenameInfo> {
     if (fileNameIsLib(fileName)) {
       return { canRename: false, localizedErrorMessage: 'Cannot rename in lib file' }
     }
-    return this._languageService.getRenameInfo(fileName, position, options)
+    return this.languageService.getRenameInfo(fileName, position, options)
   }
 
-  async getEmitOutput(fileName: string): Promise<typescript.EmitOutput> {
+  async getEmitOutput(fileName: string): Promise<EmitOutput> {
     if (fileNameIsLib(fileName)) {
-      return { outputFiles: [], emitSkipped: true }
+      return { outputFiles: [], emitSkipped: true, diagnostics: [] }
     }
-    return this._languageService.getEmitOutput(fileName)
+    return this.languageService.getEmitOutput(fileName)
   }
 
   async getCodeFixesAtPosition(
@@ -444,14 +458,14 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     start: number,
     end: number,
     errorCodes: number[],
-    formatOptions: typescript.FormatCodeOptions
-  ): Promise<ReadonlyArray<typescript.CodeFixAction>> {
+    formatOptions: FormatCodeOptions
+  ): Promise<ReadonlyArray<CodeFixAction>> {
     if (fileNameIsLib(fileName)) {
       return []
     }
     const preferences = {}
     try {
-      return this._languageService.getCodeFixesAtPosition(
+      return this.languageService.getCodeFixesAtPosition(
         fileName,
         start,
         end,
@@ -468,22 +482,18 @@ export class BaseTypeScriptWorker implements typescript.LanguageServiceHost, ITy
     this._extraLibs = extraLibs
   }
 
-  async provideInlayHints(
-    fileName: string,
-    start: number,
-    end: number
-  ): Promise<readonly typescript.InlayHint[]> {
+  async provideInlayHints(fileName: string, start: number, end: number): Promise<readonly InlayHint[]> {
     if (fileNameIsLib(fileName)) {
       return []
     }
-    const preferences: typescript.UserPreferences = this._inlayHintsOptions ?? {}
-    const span: typescript.TextSpan = {
+    const preferences: UserPreferences = this._inlayHintsOptions ?? {}
+    const span: TextSpan = {
       start,
       length: end - start,
     }
 
     try {
-      return this._languageService.provideInlayHints(fileName, span, preferences)
+      return this.languageService.provideInlayHints(fileName, span, preferences)
     } catch {
       return []
     }

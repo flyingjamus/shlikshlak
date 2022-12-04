@@ -47,6 +47,7 @@ async function updateModelPanels() {
     lineNumber: +selectedComponent.lineNumber,
   })
   const panels = await worker.getPanelsAtPosition(uriString, offset)
+  console.log(panels)
   useIframeStore.setState({ panels: panels })
   return panels
 }

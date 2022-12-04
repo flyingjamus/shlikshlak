@@ -1,12 +1,30 @@
-import { styled, Button, Stack, Card, CardHeader, CardContent } from '@mui/material'
+  import { styled, Button, Stack, Card, CardHeader, CardContent, SxProps } from '@mui/material'
 import { times } from 'lodash-es'
 import { ReactNode } from 'react'
 
 const A = () => {
-  return <B header={"Header Text"}>This is the content!@!#!321</B>
+  return (
+    <B primary header={'Headertext'}>
+      This is the content!@!#!321
+    </B>
+  )
 }
 
-const C = ({ className, children, header, primary }: { className?: string, children: ReactNode, header: ReactNode, primary: boolean }) => {
+const S: SxProps ={
+  marginBottom: 5
+}
+
+const C = ({
+  className,
+  children,
+  header,
+  primary,
+}: {
+  className?: string
+  children: ReactNode
+  header: ReactNode
+  primary: boolean
+}) => {
   return (
     <div suppressContentEditableWarning>
       <div className={className}>
@@ -15,10 +33,10 @@ const C = ({ className, children, header, primary }: { className?: string, child
       </div>
       <Stack direction={'row'} flexWrap={'wrap'}>
         {times(2).map((j) => (
-          <Stack direction={'column'} sx={{ flex: 1 }} key={j}>
+          <Stack direction={'column'} key={j}>
             {times(20).map((i) => (
-              <Card sx={{ marginTop: '12px' }} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"!@"}></CardHeader>
+              <Card sx={S} key={i}>
+                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"aaa1111"}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}

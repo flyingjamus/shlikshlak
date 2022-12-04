@@ -1,25 +1,52 @@
-import * as typescript from 'typescript'
+import {
+  isTypeReferenceNode,
+  isUnionTypeNode,
+  NodeBuilderFlags,
+  Type,
+  TypeChecker,
+  TypeNode,
+} from 'typescript'
 import { PanelMatch } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
+import type { TypeScriptWorker } from './TypeScriptWorker'
 
-export const PANELS: { matcher: (type: typescript.Type, checker: TypeChecker) => PanelMatch | undefined }[] =
-  [
-    {
-      matcher: (type: typescript.Type, checker: TypeChecker) => {
-        if (checker.isTypeAssignableTo(checker.getStringType(), type)) {
-          return { name: 'string' }
-        }
+export type MatcherContext = {
+  c: TypeChecker
+  w: TypeScriptWorker
+  types: Record<string, Type>
+}
+
+const flattenType = (type: Type): Type[] => {
+  return type.isUnion() ? type.types.flatMap(flattenType) : [type]
+}
+
+export const PANELS: {
+  matcher: (type: Type, context: MatcherContext) => PanelMatch | undefined
+}[] = [
+  {
+    matcher: (type, { w, c, types: { SxProps } }) => {
+      if (flattenType(type).some((v) => v.aliasSymbol && SxProps && v.aliasSymbol === SxProps.aliasSymbol)) {
+        return { name: 'SxProps' }
       }
     },
-    {
-      matcher: (type: typescript.Type, checker: TypeChecker) => {
-        if (checker.isTypeAssignableTo(checker.getBooleanType(), type)) {
-          return { name: 'boolean' }
-        }
+  },
+  {
+    matcher: (type, { w, c }) => {
+      if (c.isTypeAssignableTo(c.getStringType(), type)) {
+        return { name: 'string' }
       }
     },
-    {
-      matcher: (type, checker) => {
+  },
+  {
+    matcher: (type, { w, c }) => {
+      if (c.isTypeAssignableTo(c.getBooleanType(), type)) {
+        return { name: 'boolean' }
+      }
+    },
+  },
+  {
+    matcher: (type, { w, c }) => {
+      if (c.isTypeAssignableTo(c.getBooleanType(), type)) {
         if (type.isUnionOrIntersection()) {
           const values = type.types
             .map((v) => {
@@ -32,16 +59,11 @@ export const PANELS: { matcher: (type: typescript.Type, checker: TypeChecker) =>
             values.sort()
             return {
               name: 'enum',
-              parameters: { values }
+              parameters: { values },
             }
           }
         }
       }
     },
-  ]
-
-export type TypeChecker = typescript.TypeChecker & {
-  isTypeAssignableTo: (source: typescript.Type, target: typescript.Type) => boolean
-  getStringType: () => typescript.Type
-  getBooleanType: () => typescript.Type
-}
+  },
+]

@@ -11,7 +11,7 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      include: [/typescript/],
+      include: [/typescript/, /node_modules/],
     },
     rollupOptions: {
       input: {

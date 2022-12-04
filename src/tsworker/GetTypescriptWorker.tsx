@@ -7,6 +7,7 @@ export async function getTypescriptWorker() {
     try {
       const workerGetter = await monaco.languages.typescript.getTypeScriptWorker()
       typeScriptWorker = (await workerGetter()) as TypeScriptWorker
+      self.tsw = typeScriptWorker
     } catch (e) {
       console.log('Waiting for typescript', e)
       await new Promise((resolve) => setTimeout(resolve, 500))
