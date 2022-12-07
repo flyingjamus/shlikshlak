@@ -99,7 +99,7 @@ export const MonacoEditor = () => {
         const model = editor.getModel()
         if (!model) return
 
-        updateModelPanels().then((v) => v)
+        // updateModelPanels().then((v) => v)
         apiClient.writeFile({ contents: model?.getValue(), path: model?.uri.path }).then((v) => v)
       }),
       editor?.onMouseDown((e) => {
@@ -156,7 +156,7 @@ export const MonacoEditor = () => {
                 decorations.current = []
               }
             } catch (e) {
-              console.log(e)
+              console.error(e)
               setTimeout(() => {
                 setDelay({})
               }, 200)

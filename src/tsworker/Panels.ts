@@ -23,13 +23,13 @@ const flattenType = (type: Type): Type[] => {
 export const PANELS: {
   matcher: (type: Type, context: MatcherContext) => PanelMatch | undefined
 }[] = [
-  {
-    matcher: (type, { w, c, types: { SxProps } }) => {
-      if (flattenType(type).some((v) => v.aliasSymbol && SxProps && v.aliasSymbol === SxProps.aliasSymbol)) {
-        return { name: 'SxProps' }
-      }
-    },
-  },
+  // {
+  //   matcher: (type, { w, c, types: { SxProps } }) => {
+  //     if (flattenType(type).some((v) => v.aliasSymbol && SxProps && v.aliasSymbol === SxProps.aliasSymbol)) {
+  //       return { name: 'SxProps' }
+  //     }
+  //   },
+  // },
   {
     matcher: (type, { w, c }) => {
       if (c.isTypeAssignableTo(c.getStringType(), type)) {

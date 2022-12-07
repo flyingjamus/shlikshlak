@@ -34,9 +34,9 @@ const C = ({
       <Stack direction={'row'} flexWrap={'wrap'}>
         {times(2).map((j) => (
           <Stack direction={'column'} key={j}>
-            {times(20).map((i) => (
+            {times(2).map((i) => (
               <Card sx={S} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"aaa1111"}></CardHeader>
+                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"asdsadsa"} ></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}

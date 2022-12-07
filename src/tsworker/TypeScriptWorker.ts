@@ -180,10 +180,13 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
       const typeAtLocation = this.checker.getContextualType(parent.attributes)
 
       if (typeAtLocation) {
-        const sxPropsType = this.getExport('@mui/system', 'SystemCssProperties')
-        const context: MatcherContext = { c: this.checker, w: this, types: { SxProps: sxPropsType } }
+        // const sxPropsType = this.getExport('@mui/system', 'SystemCssProperties')
+        const context: MatcherContext = {
+          c: this.checker,
+          w: this,
+          // , types: { SxProps: sxPropsType }
+        }
         const attributes = [...typeAtLocation.getProperties()].map((prop) => {
-          console.log(prop)
           const type = this.checker.getNonNullableType(this.checker.getTypeOfSymbol(prop))
 
           return {
