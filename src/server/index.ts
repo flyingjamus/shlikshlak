@@ -4,9 +4,13 @@ import path from 'path'
 import { zodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
 import launchEditor from 'react-dev-utils/launchEditor'
-import dotenv from 'dotenv'
+import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
+import globby from 'globby'
 
-dotenv.config()
+import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
+import getGeneratedList from '../stories/ParseStories/generate/get-generated-list'
+
+// dotenv.config()
 
 export interface RuntimeDirEntry {
   name: string
@@ -97,6 +101,15 @@ app.post('/launch_editor', async (req, res) => {
 
 app.get('/init', async (req, res) => {
   res.json({ rootPath: ROOT_PATH })
+})
+
+app.get('/stories', async (req, res) => {
+  // process.chdir(path.resolve('../vets'))
+  const entries = await globby(['./**/*.stories.ts{,x}'], { gitignore: true })
+  const entryData = await getEntryData(entries)
+  detectDuplicateStoryNames(entryData)
+  const generatedList = getGeneratedList(entryData, 'configFolder', false)
+  res.json({ stories: entryData })
 })
 
 const PORT = 3001

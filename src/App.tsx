@@ -5,14 +5,8 @@ import Screen from './Components/Screen/Screen'
 
 window.__DEV__ = false
 
-const queryClient = new QueryClient()
-
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Screen />
-    </QueryClientProvider>
-  )
+  return <Screen />
 }
 
 export default App

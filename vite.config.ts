@@ -6,12 +6,17 @@ import { resolve } from 'path'
 import { buildSync } from 'esbuild'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      typescript: 'typescript-local',
+    },
+  },
   optimizeDeps: {
     include: ['typescript'],
   },
   build: {
     commonjsOptions: {
-      include: [/typescript/, /node_modules/],
+      include: [/typescript/g] as any,
     },
     rollupOptions: {
       input: {

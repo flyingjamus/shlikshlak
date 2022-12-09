@@ -1,17 +1,16 @@
-  import { styled, Button, Stack, Card, CardHeader, CardContent, SxProps } from '@mui/material'
+import { styled, Button, Stack, Card, CardHeader, CardContent, SxProps } from '@mui/material'
 import { times } from 'lodash-es'
 import { ReactNode } from 'react'
 
 const A = () => {
   return (
-    <B primary header={'Headertext'}>
-      This is the content!@!#!321
-    </B>
+    <B header={'Headertext'} primary>
+      Thisi si the content</B>
   )
 }
 
-const S: SxProps ={
-  marginBottom: 5
+const S: SxProps = {
+  marginBottom: 5,
 }
 
 const C = ({
@@ -35,8 +34,8 @@ const C = ({
         {times(2).map((j) => (
           <Stack direction={'column'} key={j}>
             {times(2).map((i) => (
-              <Card sx={{padding: 13}} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={"1"} ></CardHeader>
+              <Card sx={{ padding: 13 }} key={i}>
+                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={'1'}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}
@@ -52,7 +51,7 @@ const B = styled(C)({
   padding: '20px',
 })
 
-const D = ({ value }: { value: string }) => {
+export const D = ({ value }: { value: string }) => {
   return <div>HEllo {value}</div>
 }
 

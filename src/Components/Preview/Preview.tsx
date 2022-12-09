@@ -2,7 +2,6 @@ import { Box, styled } from '@mui/material'
 import { MouseEvent, useEffect, useRef, useState } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
-import { Protocol } from 'devtools-protocol/types/protocol'
 import { CodeInfo } from '../ReactDevInspectorUtils/inspect'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { IRange } from 'monaco-editor-core'
@@ -20,42 +19,42 @@ const StyledIframe = styled('iframe')({
   flex: 1,
 })
 
-const flattenTree = (nodes: Protocol.DOM.Node[]): Protocol.DOM.Node[] => {
-  return nodes.flatMap((node) => [node, ...((node.children && flattenTree(node.children)) || [])])
-}
+// const flattenTree = (nodes: Protocol.DOM.Node[]): Protocol.DOM.Node[] => {
+//   return nodes.flatMap((node) => [node, ...((node.children && flattenTree(node.children)) || [])])
+// }
 
 export const parentMethods = {
   DOM: {
-    setChildNodes(params: Protocol.DOM.SetChildNodesEvent) {
-      const rootNode = useIframeStore.getState().rootNode
-      if (params.parentId === rootNode?.nodeId) {
-        useIframeStore.setState({
-          rootNode: { ...rootNode, children: params.nodes },
-          nodesMap: new Map(flattenTree([rootNode, ...params.nodes]).map((v) => [v.nodeId, v])),
-        })
-      } else {
-        console.error('Got child nodes for expected node ' + params.parentId)
-      }
-    },
-    childNodeInserted({ node, parentNodeId, previousNodeId }: Protocol.DOM.ChildNodeInsertedEvent) {
-      const nodesMap = new Map(useIframeStore.getState().nodesMap)
-      const parent = nodesMap?.get(parentNodeId)
-      const prev = nodesMap?.get(previousNodeId)
-      if (!parent) throw new Error('No parent')
-
-      const children = parent.children || []
-      children.splice(prev ? children.indexOf(prev) + 1 : 0, 0, node)
-      nodesMap.set(node.nodeId, node)
-      nodesMap.set(parent.nodeId, { ...parent, childNodeCount: children.length, children })
-      useIframeStore.setState({ nodesMap })
-      // nodesMap.get(parentNodeId)
-    },
+    // setChildNodes(params: Protocol.DOM.SetChildNodesEvent) {
+    //   const rootNode = useIframeStore.getState().rootNode
+    //   if (params.parentId === rootNode?.nodeId) {
+    //     useIframeStore.setState({
+    //       rootNode: { ...rootNode, children: params.nodes },
+    //       nodesMap: new Map(flattenTree([rootNode, ...params.nodes]).map((v) => [v.nodeId, v])),
+    //     })
+    //   } else {
+    //     console.error('Got child nodes for expected node ' + params.parentId)
+    //   }
+    // },
+    // childNodeInserted({ node, parentNodeId, previousNodeId }: Protocol.DOM.ChildNodeInsertedEvent) {
+    //   const nodesMap = new Map(useIframeStore.getState().nodesMap)
+    //   const parent = nodesMap?.get(parentNodeId)
+    //   const prev = nodesMap?.get(previousNodeId)
+    //   if (!parent) throw new Error('No parent')
+    //
+    //   const children = parent.children || []
+    //   children.splice(prev ? children.indexOf(prev) + 1 : 0, 0, node)
+    //   nodesMap.set(node.nodeId, node)
+    //   nodesMap.set(parent.nodeId, { ...parent, childNodeCount: children.length, children })
+    //   useIframeStore.setState({ nodesMap })
+    //   // nodesMap.get(parentNodeId)
+    // },
   },
   Overlay: {
-    inspectNodeRequested({ backendNodeId }: Protocol.Overlay.InspectNodeRequestedEvent) {
-      const nodesMap = useIframeStore.getState().nodesMap
-      nodesMap?.get(backendNodeId)
-    },
+    // inspectNodeRequested({ backendNodeId }: Protocol.Overlay.InspectNodeRequestedEvent) {
+    //   const nodesMap = useIframeStore.getState().nodesMap
+    //   nodesMap?.get(backendNodeId)
+    // },
   },
   async setHighlight({ absolutePath, range }: { absolutePath: string; range: IRange }) {
     const editor = useIframeStore.getState().getEditor()
@@ -88,23 +87,21 @@ export const Preview = () => {
   const childConnection = useIframeStore((v) => v.childConnection)
   const store = useIframeStore((v) => v.devtoolsStore)
 
-
-
-  const onMouseMove = async (e: MouseEvent) => {
-    const iframe = iframeRef.current?.parentElement
-    if (!iframe) return
-    const { x, y } = iframe.getBoundingClientRect()
-    // const id = await childConnection?.idFromPoint({
-    //   clientX: e.clientX - x,
-    //   clientY: e.clientY - y,
-    // })
-    let parent = store?.getElementByID(id)
-    while (parent) {
-      console.log(parent, parent.parentID)
-      parent = parent.parentID && store?.getElementByID(parent.parentID)
-    }
-    console.log(x, y, id, store?.getElementByID(id))
-  }
+  // const onMouseMove = async (e: MouseEvent) => {
+  //   const iframe = iframeRef.current?.parentElement
+  //   if (!iframe) return
+  //   const { x, y } = iframe.getBoundingClientRect()
+  //   // const id = await childConnection?.idFromPoint({
+  //   //   clientX: e.clientX - x,
+  //   //   clientY: e.clientY - y,
+  //   // })
+  //   let parent = store?.getElementByID(id)
+  //   while (parent) {
+  //     console.log(parent, parent.parentID)
+  //     parent = parent.parentID && store?.getElementByID(parent.parentID)
+  //   }
+  //   console.log(x, y, id, store?.getElementByID(id))
+  // }
 
   useEffect(() => {
     const current = iframeRef.current
@@ -139,7 +136,7 @@ export const Preview = () => {
   return (
     <Box sx={{ background: 'white', position: 'relative' }}>
       <DevtoolsOverlay />
-      <StyledIframe src={ready ? '/stories/aaaaa' : undefined} onLoad={() => {}} ref={iframeRef} />
+      <StyledIframe src={ready ? '/stories/example--story-root' : undefined} onLoad={() => {}} ref={iframeRef} />
     </Box>
   )
 }

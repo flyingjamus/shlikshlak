@@ -1,5 +1,6 @@
 import { apiBuilder } from '@zodios/core'
 import { z } from 'zod'
+import { StoryEntry } from '../stories/ParseStories/types'
 
 export type ApiFile = z.infer<typeof ApiFile>
 
@@ -23,6 +24,31 @@ const ApiFile = z.discriminatedUnion('exists', [
     exists: z.literal(false),
   }),
 ])
+
+export const StoryApiEntry = z.object({
+  entry: z.string(),
+  stories: z.array(
+    z.object({
+      storyId: z.string(),
+      componentName: z.string(),
+      namedExport: z.string(),
+      locStart: z.number(),
+      locEnd: z.number(),
+    })
+  ),
+
+  exportDefaultProps: z.object({
+    title: z.string().optional(),
+    meta: z.any(),
+  }),
+  namedExportToMeta: z.record(z.any()),
+  namedExportToStoryName: z.record(z.string()),
+  storyParams: z.record(z.object({ title: z.string().optional(), meta: z.any() })),
+  fileId: z.string(),
+  storySource: z.string(),
+})
+
+export type StoryApiEntry = z.infer<typeof StoryApiEntry>
 
 export const filesApi = apiBuilder({
   method: 'post',
@@ -73,5 +99,12 @@ export const filesApi = apiBuilder({
       rootPath: z.string(),
     }),
     errors: [{ status: 400, schema: z.object({}) }],
+  })
+  .addEndpoint({
+    method: 'get',
+    path: '/stories',
+    response: z.object({
+      stories: z.record(StoryApiEntry),
+    }),
   })
   .build()
