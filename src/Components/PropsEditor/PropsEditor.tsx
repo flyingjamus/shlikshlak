@@ -11,11 +11,31 @@ import {
   ToggleButtonGroup,
 } from '@mui/material'
 import { useIframeStore } from '../store'
-import { ExistingAttribute, PanelAttribute, PanelMatch, PanelsResponse } from '../../Shared/PanelTypes'
+import {
+  ExistingAttributeValue,
+  ExistingAttribute,
+  PanelAttribute,
+  PanelMatch,
+  PanelsResponse,
+  ExistingAttributeValueObject,
+} from '../../Shared/PanelTypes'
 import React, { ElementType, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
 
-const EnumEditor: BaseEditor<{ values: string[] }> = ({
+const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
+  return (
+    <Stack width={'100%'}>
+      {value?.map((v, i) => (
+        <Stack key={i} direction={'row'} width={'100%'}>
+          <Box flex={1}>{v.name}</Box>
+          <Box>{v.value}</Box>
+        </Stack>
+      ))}
+    </Stack>
+  )
+}
+
+const EnumEditor: BaseEditor<string, { values: string[] }> = ({
   values,
   value: defaultValue,
   onChange,
@@ -43,16 +63,16 @@ const EnumEditor: BaseEditor<{ values: string[] }> = ({
   )
 }
 
-const StringEditor: BaseEditor = ({ value, onChange, ...props }) => {
+const StringEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
   return <TextField onChange={(e) => onChange(e.target.value || '')} defaultValue={value} {...props} />
 }
 
-const BooleanEditor: BaseEditor = ({ value, onChange, ...props }) => {
+const BooleanEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
   return <Checkbox onChange={(e, v) => onChange(v)} defaultValue={value} {...props} />
 }
 
 export type OnChangeValue = string | boolean | undefined
-type BaseEditor<T = {}> = ElementType<T & { value?: string; onChange: (value: OnChangeValue) => void }>
+type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
 
 const PropEditor = ({
   panelMatch,
@@ -70,6 +90,8 @@ const PropEditor = ({
       return <EnumEditor {...props} values={panelMatch.parameters.values} />
     case 'boolean':
       return <BooleanEditor {...props} />
+    case 'SxProps':
+      return <SxEditor {...props} />
   }
   return null
 }
@@ -157,7 +179,7 @@ const Row = ({
           }}
         />
       </ListItemIcon>
-      <Stack>
+      <Stack width={'100%'}>
         <Box>{attr.name}</Box>
         <Box>
           <PropEditor

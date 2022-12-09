@@ -5,19 +5,24 @@ import {
   formatting,
   isJsxAttribute,
   isJsxElement,
+  isJsxExpression,
   isJsxOpeningLikeElement,
   isJsxSpreadAttribute,
   isJsxText,
+  isObjectLiteralExpression,
+  isObjectTypeDeclaration,
+  isPropertyAssignment,
   Node,
   resolveModuleName,
   setParent,
+  Symbol,
   SymbolFlags,
   textChanges,
 } from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
 import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from './Panels'
-import { PanelsResponse } from '../Shared/PanelTypes'
+import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import type { IRange } from 'monaco-editor-core'
 
 export class TypeScriptWorker extends BaseTypeScriptWorker {
@@ -58,7 +63,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
       {
         host: this,
         preferences: {},
-        formatContext: formatting.getFormatContext({}, this),
+        formatContext: formatting.getFormatContext({}, { getNewLine: () => '\n' }),
       },
       (t) => {
         const initializerExpression =
@@ -133,26 +138,43 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
   async getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {
-      const existingAttributes = parent.attributes.properties
+      const existingAttributes: ExistingAttribute[] = parent.attributes.properties
+        .filter((v) => v.name?.getText() === 'sx')
         .map((attr) => {
           if (isJsxAttribute(attr)) {
-            const initializerText = attr.initializer?.getText()
+            const initializer = attr.initializer
             let value
-            if (initializerText?.[0] === '{') {
-              if (initializerText?.[1] === '"') {
-                value = initializerText?.slice(2, -2).replaceAll('\\"', '"')
-              } else if (initializerText?.[1] === "'") {
-                value = initializerText?.slice(2, -2).replaceAll("\\'", "'")
-              } else {
-                value = initializerText?.slice(2, -2)
+            if (!initializer) {
+              value = undefined
+            } else if (isJsxExpression(initializer)) {
+              const expression = initializer.expression
+              if (expression && isObjectLiteralExpression(expression)) {
+                value = expression.properties
+                  .map((v) => {
+                    if (isPropertyAssignment(v)) {
+                      return { name: v.name.getText(), value: v.initializer.getText() }
+                    }
+                  })
+                  .filter(isDefined)
               }
             } else {
-              value = initializerText?.slice(1, -1)
+              const initializerText = initializer?.getText()
+              if (initializerText?.[0] === '{') {
+                if (initializerText?.[1] === '"') {
+                  value = initializerText?.slice(2, -2).replaceAll('\\"', '"')
+                } else if (initializerText?.[1] === "'") {
+                  value = initializerText?.slice(2, -2).replaceAll("\\'", "'")
+                } else {
+                  value = initializerText?.slice(2, -2)
+                }
+              } else {
+                value = initializerText?.slice(1, -1)
+              }
             }
             return {
               name: attr.name.escapedText.toString(),
               value,
-              hasInitializer: !!attr.initializer,
+              hasInitializer: !!initializer,
               location: {
                 pos: attr.pos,
                 end: attr.end,
@@ -180,11 +202,11 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
       const typeAtLocation = this.checker.getContextualType(parent.attributes)
 
       if (typeAtLocation) {
-        // const sxPropsType = this.getExport('@mui/system', 'SystemCssProperties')
+        const sxPropsType = this.getExport('@mui/system', 'SystemCssProperties')
         const context: MatcherContext = {
           c: this.checker,
           w: this,
-          // , types: { SxProps: sxPropsType }
+          types: { SxProps: sxPropsType },
         }
         const attributes = [...typeAtLocation.getProperties()].map((prop) => {
           const type = this.checker.getNonNullableType(this.checker.getTypeOfSymbol(prop))

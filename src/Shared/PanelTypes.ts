@@ -9,7 +9,14 @@ export type PanelMatch =
   | { name: 'enum'; parameters: { values: string[] } }
   | { name: 'SxProps' }
 
-export type ExistingAttribute = { name: string; value?: string; location: TextRange }
+
+export type ExistingAttributeValueObject = { value: string; name: string }[]
+export type ExistingAttributeValue = string | ExistingAttributeValueObject
+export type ExistingAttribute = {
+  name: string
+  value?: ExistingAttributeValue
+  location: TextRange
+}
 
 export type PanelAttribute = {
   name: string
