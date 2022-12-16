@@ -21,10 +21,7 @@ export const getEntryData = async (entries: string[]): Promise<EntryData> => {
   return entryData
 }
 
-export const getSingleEntry = async (entry: string) => {
-  // fs.promises.readFile is much slower, and we don't mind hogging
-  // the whole CPU core since this is blocking everything else
-  const code = fs.readFileSync(entry, 'utf8')
+export const convertSingleEntry = async (entry: string, code: string) => {
   const result: ParsedStoriesResult = {
     entry,
     stories: [],
@@ -48,4 +45,11 @@ export const getSingleEntry = async (entry: string) => {
   debug(`Parsed data for ${entry}:`)
   debug(result)
   return result
+}
+
+export const getSingleEntry = async (entry: string) => {
+  // fs.promises.readFile is much slower, and we don't mind hogging
+  // the whole CPU core since this is blocking everything else
+  const code = fs.readFileSync(entry, 'utf8')
+  return convertSingleEntry(entry, code)
 }

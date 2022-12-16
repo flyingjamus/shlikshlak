@@ -1,6 +1,6 @@
 import EventEmitter from '../events'
-import { inspect } from 'util'
 import {
+  __DEBUG__,
   PROFILING_FLAG_BASIC_SUPPORT,
   PROFILING_FLAG_TIMELINE_SUPPORT,
   TREE_OPERATION_ADD,
@@ -9,22 +9,21 @@ import {
   TREE_OPERATION_REORDER_CHILDREN,
   TREE_OPERATION_SET_SUBTREE_MODE,
   TREE_OPERATION_UPDATE_ERRORS_OR_WARNINGS,
-  TREE_OPERATION_UPDATE_TREE_BASE_DURATION,
+  TREE_OPERATION_UPDATE_TREE_BASE_DURATION
 } from '../constants'
+import type { ComponentFilter, ElementType } from '../types'
 import { ElementTypeRoot, StrictMode } from '../types'
 import {
   getSavedComponentFilters,
   saveComponentFilters,
   separateDisplayNameAndHOCs,
   shallowDiffers,
-  utfDecodeString,
+  utfDecodeString
 } from '../utils'
 import { localStorageGetItem, localStorageSetItem } from '../storage'
-import { __DEBUG__ } from '../constants'
 import { printStore } from './utils'
 import ProfilerStore from './ProfilerStore'
 import type { Element } from './views/Components/types'
-import type { ComponentFilter, ElementType } from '../types'
 import { BRIDGE_PROTOCOL, BridgeProtocol, currentBridgeProtocol, FrontendBridge } from '../bridge'
 import { TimeoutID } from 'react-window/src/timer'
 import UnsupportedBridgeOperationError from '../UnsupportedBridgeOperationError'
@@ -230,13 +229,7 @@ export default class Store extends EventEmitter<{
 
     if (map.size !== expectedSize) {
       this._throwAndEmitError(
-        Error(
-          `Expected ${mapName} to contain ${expectedSize} items, but it contains ${
-            map.size
-          } items\n\n${inspect(map, {
-            depth: 20,
-          })}`
-        )
+        Error(`Expected ${mapName} to contain ${expectedSize} items, but it contains ${map.size} items`)
       )
     }
   }

@@ -1,8 +1,16 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+  canHaveModifiers,
+  createSourceFile,
   factory,
   FileTextChanges,
+  forEachChildRecursively,
   formatting,
+  getModifiers,
+  isExportAssignment,
+  isExportDeclaration,
+  isExportModifier,
+  isExportSpecifier,
   isJsxAttribute,
   isJsxElement,
   isJsxExpression,
@@ -10,13 +18,15 @@ import {
   isJsxSpreadAttribute,
   isJsxText,
   isObjectLiteralExpression,
-  isObjectTypeDeclaration,
   isPropertyAssignment,
   Node,
   resolveModuleName,
+  ScriptKind,
+  ScriptTarget,
   setParent,
   Symbol,
   SymbolFlags,
+  SyntaxKind,
   textChanges,
 } from 'typescript'
 import { BaseTypeScriptWorker } from './BaseTypeScriptWorker'
@@ -24,8 +34,92 @@ import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from './Panels'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import type { IRange } from 'monaco-editor-core'
+// import * as parse from 'gitignore-to-glob'
+import path from 'path'
+import fs from 'fs'
+import { ParsedStoriesResult } from '../stories/ParseStories/types'
+import getStorynameAndMeta from '../stories/ParseStories/parse/get-storyname-and-meta'
+import getDefaultExport from '../stories/ParseStories/parse/get-default-export'
+import getNamedExports from '../stories/ParseStories/parse/get-named-exports'
+import { fileNameIsLib } from './fileNameIsLib'
+
+// export const convertSingleEntry = async (entry: string, code: string) => {
+//   const result: ParsedStoriesResult = {
+//     entry,
+//     stories: [],
+//     exportDefaultProps: { title: undefined, meta: undefined },
+//     namedExportToMeta: {},
+//     namedExportToStoryName: {},
+//     storyParams: {},
+//     storySource: code.replace(/\r/g, ''),
+//   }
+//   // const ast = getAst(code, entry)
+//   // traverse(ast, {
+//   //   Program: getStorynameAndMeta.bind(this, result),
+//   // })
+//   // traverse(ast, {
+//   //   ExportDefaultDeclaration: getDefaultExport.bind(this, result),
+//   // })
+//   // traverse(ast, {
+//   //   ExportNamedDeclaration: getNamedExports.bind(this, result),
+//   // })
+//   return result
+// }
 
 export class TypeScriptWorker extends BaseTypeScriptWorker {
+  override getScriptFileNames(): string[] {
+    const gitIgnore = this.readFile('/.gitignore')
+      ?.match(/[^\r\n]+/g)
+      ?.filter((pattern) => !!pattern && pattern[0] !== '#')
+
+    const strings = this.readDirectory('/', ['tsx'], gitIgnore)
+    return strings
+  }
+
+  async getAllComponents() {
+    const componentFiles = this.getScriptFileNames()
+    for (const filename of componentFiles) {
+      const contents = this.readFile(filename)
+      if (!contents) {
+        console.error(filename + ' not found')
+        continue
+      }
+
+      const sourceFile = this.program.getSourceFile(filename)
+
+      // console.log(1111)
+      // sourceFile.ex
+      console.log(
+        sourceFile?.symbol &&
+          this.checker.getExportsOfModule(sourceFile?.symbol).map((v) =>
+            //
+            this.checker.getTypeOfSymbol(v)
+          )
+      )
+
+      // sourceFile?.forEachChild((node) => {
+      //   // console.log(node.getText(), node.kind)
+      //
+      //
+      //   // switch (node.kind) {
+      //   //   //   // case SyntaxKind.ImportDeclaration:
+      //   //   //   //   // requires.push(node.moduleSpecifier.text)
+      //   //   //   //   break
+      //   //   case SyntaxKind.VariableStatement: {
+      //   //     // if (isExportAssignment(node))
+      //   //     const modifiers = (canHaveModifiers(node) && getModifiers(node)) || []
+      //   //     if (modifiers?.some(isExportModifier)) console.log(node.getText())
+      //   //
+      //   //     // For syntax 'export ... from '...'''
+      //   //     // if (node.moduleSpecifier) {
+      //   //     //   // requires.push(node.moduleSpecifier.text)
+      //   //     // }
+      //   //     break
+      //   //   }
+      //   // }
+      // })
+    }
+  }
   getAliasedSymbolIfNecessary(symbol: Symbol) {
     if ((symbol.flags & SymbolFlags.Alias) !== 0) return this.checker.getAliasedSymbol(symbol)
     return symbol

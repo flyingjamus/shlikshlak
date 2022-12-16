@@ -28,7 +28,7 @@ const C = ({
     <div suppressContentEditableWarning>
       <div className={className}>
         Inner
-        <Button placeholder="Hello">Hello</Button>
+        <Button placeholder="Hello">sadklhasklj</Button>
       </div>
       <Stack direction={'row'} flexWrap={'wrap'}>
         {times(2).map((j) => (

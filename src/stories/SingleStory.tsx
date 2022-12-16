@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { apiHooks } from '../client/apiClient'
-import { ComponentType, useEffect, useState } from 'react'
+import { ComponentType, Suspense, useEffect, useState } from 'react'
+import { CircularProgress } from '@mui/material'
 
 export const SingleStory = () => {
   const { data } = apiHooks.useQuery('/stories')
@@ -20,7 +21,11 @@ export const SingleStory = () => {
     })()
   }, [id, data])
   if (!Comp) return null
-  return <Comp />
+  return (
+    <Suspense fallback={<CircularProgress />}>
+      <Comp />
+    </Suspense>
+  )
 }
 
 export default SingleStory

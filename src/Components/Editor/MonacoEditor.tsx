@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Box, IconButton } from '@mui/material'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
-import { OpenFile, useFileStore, useIframeStore } from '../store'
+import { useFileStore, useIframeStore } from '../store'
 import { getFileText } from '../../tsworker/fileGetter'
 import { COMPILER_OPTIONS } from './COMPILER_OPTIONS'
 import { apiClient } from '../../client/apiClient'
@@ -12,8 +12,12 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { initVimMode } from 'monaco-vim'
 import { WorkerAdapter } from '../../tsworker/workerAdapter'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
-import IModel = editor.IModel
 import ITextModel = editor.ITextModel
+
+monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
+monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
+monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
+monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
 monaco.languages.onLanguage('typescript', async () => {
   useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
@@ -190,12 +194,5 @@ export const MonacoEditor = () => {
     </Box>
   )
 }
-
-// const get
-
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
-monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIONS)
-monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
-monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
 export default MonacoEditor

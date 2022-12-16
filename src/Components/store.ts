@@ -61,7 +61,6 @@ interface IframeStore {
   nodesMap?: Map<number, Protocol.DOM.Node>
   expandedIds: string[]
   swProxy?: Remote<ServiceWorkerAPI>
-  tsInit?: true
   workerAdapter?: WorkerAdapter
   openFile?: OpenFile
   readFile?: (fileName: string) => Promise<string | undefined>

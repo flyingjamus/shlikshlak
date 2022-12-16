@@ -1,4 +1,5 @@
 import {
+  CodeFixAction,
   CompilerOptions,
   CompletionEntryDetails,
   CompletionInfo,
@@ -6,31 +7,31 @@ import {
   createLanguageService,
   DefinitionInfo,
   DocumentRegistry,
+  EmitOutput,
+  FormatCodeOptions,
+  getTokenAtPosition,
   InlayHint,
   IScriptSnapshot,
   isJsxOpeningLikeElement,
   JsxOpeningLikeElement,
-  NavigationBarItem,
   LanguageService,
+  LanguageServiceHost,
+  matchFiles,
+  NavigationBarItem,
   Program,
   QuickInfo,
   ReferenceEntry,
+  RenameInfo,
+  RenameInfoOptions,
+  RenameLocation,
   ScriptKind,
+  ScriptSnapshot,
   SignatureHelpItems,
   SignatureHelpItemsOptions,
-  TextSpan,
-  UserPreferences,
-  FormatCodeOptions,
   TextChange,
-  RenameLocation,
-  RenameInfoOptions,
+  TextSpan,
   TypeChecker,
-  EmitOutput,
-  CodeFixAction,
-  RenameInfo,
-  LanguageServiceHost,
-  ScriptSnapshot,
-  getTokenAtPosition,
+  UserPreferences,
 } from 'typescript'
 import { AppFile, fileExists, getFile, getFileVersion } from './fileGetter'
 import {
@@ -43,17 +44,18 @@ import { worker } from 'monaco-editor-core'
 import { libFileMap } from '../lib/lib'
 import { fileNameIsLib } from './fileNameIsLib'
 import { ICreateData } from './ICreateData'
+import { isDefined } from 'ts-is-defined'
 
 const documentRegistry: DocumentRegistry = createDocumentRegistry()
 
 export class BaseTypeScriptWorker implements LanguageServiceHost, ITypeScriptWorker {
-  private _ctx: worker.IWorkerContext
+  private _ctx: Pick<worker.IWorkerContext, 'getMirrorModels'>
   private _extraLibs: IExtraLibs = Object.create(null)
   private _compilerOptions: CompilerOptions
   private _inlayHintsOptions?: UserPreferences
   protected languageService = createLanguageService(this, documentRegistry)
 
-  constructor(ctx: worker.IWorkerContext, createData: ICreateData) {
+  constructor(ctx: Pick<worker.IWorkerContext, 'getMirrorModels'>, createData: ICreateData) {
     console.debug('Constructing BaseTypeScriptWorker')
     this._ctx = ctx
     this._compilerOptions = createData.compilerOptions
@@ -204,6 +206,35 @@ export class BaseTypeScriptWorker implements LanguageServiceHost, ITypeScriptWor
 
   readFile(path: string): string | undefined {
     return this.getFileText(path)
+  }
+  public readDirectory(
+    path: string,
+    extensions?: readonly string[],
+    exclude?: readonly string[],
+    include?: readonly string[],
+    depth?: number
+  ): string[] {
+    return matchFiles(
+      path,
+      extensions,
+      exclude,
+      include,
+      true,
+      this.getCurrentDirectory(),
+      depth,
+      (path) => {
+        const file = this.getFile(path)
+        if (file.exists) {
+          return {
+            files: (file.files?.map((v) => v.isFile && v.name).filter(Boolean) as string[]) || [],
+            directories: (file.files?.map((v) => !v.isFile && v.name).filter(Boolean) as string[]) || [],
+          }
+        } else {
+          return { files: [], directories: [] }
+        }
+      },
+      (path) => path
+    )
   }
 
   fileExists(path: string): boolean {
