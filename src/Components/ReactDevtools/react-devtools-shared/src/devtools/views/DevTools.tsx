@@ -1,7 +1,6 @@
 // Reach styles need to come before any component styles.
 // This makes overriding the styles simpler.
 import '@reach/menu-button/styles.css'
-import '@reach/tooltip/styles.css'
 import * as React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import Store from '../store'

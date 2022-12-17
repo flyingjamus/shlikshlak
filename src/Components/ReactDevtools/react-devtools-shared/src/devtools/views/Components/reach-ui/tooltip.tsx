@@ -1,20 +1,6 @@
 import * as React from 'react'
-import ReachTooltip from '@reach/tooltip'
-import tooltipStyles from './Tooltip.module.css'
+import { Tooltip as MuiTooltip } from '@mui/material'
 
-const Tooltip = ({
-  children,
-  className = '',
-  ...props
-}: {
-  children: React.ReactNode
-  className: string
-}) => {
-  return (
-    <ReachTooltip className={`${tooltipStyles.Tooltip} ${className}`} {...props}>
-      {children}
-    </ReachTooltip>
-  )
-}
+const Tooltip = MuiTooltip
 
 export default Tooltip
