@@ -6,11 +6,9 @@ import { filesApi } from '../common/api'
 import launchEditor from 'react-dev-utils/launchEditor'
 import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import globby from 'globby'
-
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
 import getGeneratedList from '../stories/ParseStories/generate/get-generated-list'
-
-// dotenv.config()
+import { getPanelsAtLocation, getPanelsAtPosition } from './ts'
 
 export interface RuntimeDirEntry {
   name: string
@@ -104,7 +102,6 @@ app.get('/init', async (req, res) => {
 })
 
 app.get('/stories', async (req, res) => {
-  // process.chdir(path.resolve('../vets'))
   const entries = await globby(['./**/*.stories.ts{,x}'], { gitignore: true })
   const entryData = await getEntryData(entries)
   detectDuplicateStoryNames(entryData)
@@ -112,6 +109,50 @@ app.get('/stories', async (req, res) => {
   res.json({ stories: entryData })
 })
 
+app.post('/lang/getPanelsAtPosition', async ({ body }, res) => {
+  const { fileName, lineNumber, colNumber } = body
+  console.log(2313212312, body)
+  try {
+    res.json(await getPanelsAtLocation(fileName, lineNumber - 1, colNumber))
+  } catch (e) {
+    console.error(e)
+    res.status(400).json()
+  }
+})
+
 const PORT = 3001
 
-app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`))
+const server = app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`))
+
+// const wss = new WebSocketServer({
+//   noServer: true,
+//   perMessageDeflate: false,
+// })
+// server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
+//   const baseURL = `http://${request.headers.host}/`
+//   const pathname = request.url ? new URL(request.url, baseURL).pathname : undefined
+//   if (pathname === '/sampleServer') {
+//     wss.handleUpgrade(request, socket, head, (webSocket) => {
+//       const socket: IWebSocket = {
+//         send: (content) =>
+//           webSocket.send(content, (error) => {
+//             console.log(content)
+//             if (error) {
+//               throw error
+//             }
+//           }),
+//         onMessage: (cb) => webSocket.on('message', cb),
+//         onError: (cb) => webSocket.on('error', cb),
+//         onClose: (cb) => webSocket.on('close', cb),
+//         dispose: () => webSocket.close(),
+//       }
+//       // launch the server when the web socket is opened
+//       if (webSocket.readyState === webSocket.OPEN) {
+//         launch(socket)
+//       } else {
+//         webSocket.on('open', () => launch(socket))
+//       }
+//     })
+//   }
+// })
+//

@@ -1,6 +1,7 @@
 import { apiBuilder } from '@zodios/core'
 import { z } from 'zod'
 import { StoryEntry } from '../stories/ParseStories/types'
+import { panelsResponseSchema } from '../Shared/PanelTypesZod'
 
 export type ApiFile = z.infer<typeof ApiFile>
 
@@ -50,6 +51,11 @@ export const StoryApiEntry = z.object({
 
 export type StoryApiEntry = z.infer<typeof StoryApiEntry>
 
+const location = z.object({
+  fileName: z.string(),
+  lineNumber: z.number(),
+  colNumber: z.number().optional(),
+})
 export const filesApi = apiBuilder({
   method: 'post',
   path: '/get_file',
@@ -83,11 +89,7 @@ export const filesApi = apiBuilder({
       {
         type: 'Body',
         name: 'body',
-        schema: z.object({
-          fileName: z.string(),
-          lineNumber: z.number(),
-          colNumber: z.number().optional(),
-        }),
+        schema: location,
       },
     ],
   })
@@ -106,5 +108,17 @@ export const filesApi = apiBuilder({
     response: z.object({
       stories: z.record(StoryApiEntry),
     }),
+  })
+  .addEndpoint({
+    method: 'post',
+    path: '/lang/getPanelsAtPosition',
+    response: panelsResponseSchema,
+    parameters: [
+      {
+        type: 'Body',
+        name: 'body',
+        schema: location,
+      },
+    ],
   })
   .build()

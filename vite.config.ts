@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
+// import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
@@ -53,55 +54,58 @@ export default defineConfig({
         }
       },
     },
-    VitePWA({
-      // strategies: 'generateSW',
-      srcDir: resolve(__dirname, 'src'),
-      filename: 'my-sw.ts',
-      // registerType: 'prompt',
-      // injectRegister: 'inline',
-      // devOptions: {
-      //   enabled: true,
-      //   type: 'module',
-      // },
-    }),
-    react({
-      babel: {
-        plugins: [
-          // BabelPluginReactJSXSource,
-          [
-            '@emotion',
-            {
-              importMap: {
-                '@mui/system': {
-                  styled: {
-                    canonicalImport: ['@emotion/styled', 'default'],
-                    styledBaseImport: ['@mui/system', 'styled'],
-                  },
-                },
-                '@mui/core': {
-                  styled: {
-                    canonicalImport: ['@emotion/styled', 'default'],
-                    styledBaseImport: ['@mui/core', 'styled'],
-                  },
-                },
-                '@mui/material': {
-                  styled: {
-                    canonicalImport: ['@emotion/styled', 'default'],
-                    styledBaseImport: ['@mui/material', 'styled'],
-                  },
-                },
-                '@mui/material/styles': {
-                  styled: {
-                    canonicalImport: ['@emotion/styled', 'default'],
-                    styledBaseImport: ['@mui/material/styles', 'styled'],
-                  },
-                },
-              },
-            },
-          ],
-        ],
-      },
-    }),
+    // VitePWA({
+    //   // strategies: 'generateSW',
+    //   srcDir: resolve(__dirname, 'src'),
+    //   filename: 'my-sw.ts',
+    //   // registerType: 'prompt',
+    //   // injectRegister: 'inline',
+    //   // devOptions: {
+    //   //   enabled: true,
+    //   //   type: 'module',
+    //   // },
+    // }),
+
+    react({ jsxImportSource: '@emotion/react' }),
+    // react({
+    //   jsxImportSource: '@emotion/react',
+    //   babel: {
+    //     plugins: [
+    //       [
+    //         '@emotion/babel-plugin',
+    //         {
+    //           importMap: {
+    //             '@mui/system': {
+    //               styled: {
+    //                 canonicalImport: ['@emotion/styled', 'default'],
+    //                 styledBaseImport: ['@mui/system', 'styled'],
+    //               },
+    //             },
+    //             '@mui/core': {
+    //               styled: {
+    //                 canonicalImport: ['@emotion/styled', 'default'],
+    //                 styledBaseImport: ['@mui/core', 'styled'],
+    //               },
+    //             },
+    //             '@mui/material': {
+    //               styled: {
+    //                 canonicalImport: ['@emotion/styled', 'default'],
+    //                 styledBaseImport: ['@mui/material', 'styled'],
+    //               },
+    //             },
+    //             '@mui/material/styles': {
+    //               styled: {
+    //                 canonicalImport: ['@emotion/styled', 'default'],
+    //                 styledBaseImport: ['@mui/material/styles', 'styled'],
+    //               },
+    //             },
+    //           },
+    //           sourceMap: true,
+    //         },
+    //       ],
+    //     ],
+    //   },
+    // }),
   ],
   define: {
     'process.env': {},

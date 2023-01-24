@@ -115,8 +115,8 @@ export const MonacoEditor = () => {
           useIframeStore.setState({
             selectedComponent: {
               path: selectedComponent?.path,
-              lineNumber: e.target.position?.lineNumber,
-              columnNumber: e.target.position?.column,
+              lineNumber: +e.target.position?.lineNumber,
+              columnNumber: +e.target.position?.column,
             },
           })
         }

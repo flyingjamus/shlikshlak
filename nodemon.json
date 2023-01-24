@@ -1,5 +1,5 @@
 {
   "watch": ["src/server"],
-  "exec": "yarn vite-node ./src/server/index",
+  "exec": "esbuild src/server/index.ts --outfile=out/server/index.cjs --bundle --platform=node && node out/server/index.cjs",
   "ext": "js ts"
 }

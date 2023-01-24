@@ -125,13 +125,14 @@ export const DevtoolsOverlay = () => {
         const rendererID = store?.getRendererIDForElement(selectedId)
         if (rendererID) {
           const res = await childConnection?.sourceFromId(selectedId, rendererID)
+          console.log(777777777, res)
           const path = res?.[0]?.absolutePath?.slice(rootPath?.length + 1)
           if (res?.[0]) {
             useIframeStore.setState({
               selectedComponent: {
                 path: path,
-                lineNumber: res[0].lineNumber,
-                columnNumber: res[0].columnNumber,
+                lineNumber: +res[0].lineNumber,
+                columnNumber: +res[0].columnNumber,
               },
             })
           }

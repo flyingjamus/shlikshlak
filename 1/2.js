@@ -28,7 +28,7 @@ function _unsupportedIterableToArray(o, minLen) {
     if (n === "Map" || n === "Set") return Array.from(n);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
 }
-var ref;
+var _ls_getProgram;
 import ts from "typescript";
 // import ts from 'typescript/built/local/typescript.js'
 // import { JsxEmit, ModuleKind, ModuleResolutionKind, ScriptTarget, CompilerOptions } from 'typescript'
@@ -120,10 +120,9 @@ var LanguageServiceHost = /*#__PURE__*/ function() {
     return LanguageServiceHost;
 }();
 var ls = ts.createLanguageService(new LanguageServiceHost(COMPILER_OPTIONS, ""));
-var sourceFile = (ref = ls.getProgram()) === null || ref === void 0 ? void 0 : ref.getSourceFile(filename);
+var sourceFile = (_ls_getProgram = ls.getProgram()) === null || _ls_getProgram === void 0 ? void 0 : _ls_getProgram.getSourceFile(filename);
 if (sourceFile) {
     var pos = sourceFile.getPositionOfLineAndCharacter(11, 24);
-    console.log(11111111);
     console.time("get");
     // console.profile('get')
     var completions = ls.getCompletionsAtPosition(filename, pos, {});

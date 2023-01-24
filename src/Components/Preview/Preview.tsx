@@ -62,20 +62,6 @@ export const parentMethods = {
 
     useIframeStore.setState({ openFile: undefined })
   },
-  setReactFileLocation({ absolutePath, lineNumber, columnNumber }: CodeInfo) {
-    if (absolutePath) {
-      // editor
-      useIframeStore.setState({
-        selectedComponent: {
-          path: absolutePath.slice('/home/danny/dev/shlikshlak'.length),
-          lineNumber: +lineNumber,
-          columnNumber: +columnNumber,
-        },
-      })
-    } else {
-      useIframeStore.setState({ openFile: undefined })
-    }
-  },
 }
 
 export type ParentMethods = typeof parentMethods
@@ -136,7 +122,11 @@ export const Preview = () => {
   return (
     <Box sx={{ background: 'white', position: 'relative' }}>
       <DevtoolsOverlay />
-      <StyledIframe src={ready ? '/stories/example--story-root' : undefined} onLoad={() => {}} ref={iframeRef} />
+      <StyledIframe
+        src={ready ? '/stories/example--story-root' : undefined}
+        onLoad={() => {}}
+        ref={iframeRef}
+      />
     </Box>
   )
 }

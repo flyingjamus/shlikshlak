@@ -19,8 +19,10 @@ import {
   PanelsResponse,
   ExistingAttributeValueObject,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useMemo, useState } from 'react'
+import React, { ElementType, useEffect, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
+import { apiHooks } from '../../client/apiClient'
+import { z } from 'zod'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -97,8 +99,22 @@ const PropEditor = ({
 }
 
 export const PropsEditorWrapper = () => {
-  const panels = useIframeStore((v) => v.panels)
-  const openFile = useIframeStore((v) => v.openFile)
+  // const panels = useIframeStore((v) => v.panels)
+  const openFile = useIframeStore((v) => v.selectedComponent)
+  const { mutate, data: panels } = apiHooks.usePost('/lang/getPanelsAtPosition', {})
+  console.log(1321231, panels)
+  useEffect(() => {
+    if (!openFile) return
+    const { columnNumber, lineNumber, path } = openFile
+    ;(async () => {
+      const newVar = {
+        fileName: path,
+        lineNumber: lineNumber,
+        colNumber: columnNumber,
+      }
+      await mutate(newVar)
+    })()
+  }, [openFile])
   const adapter = useIframeStore((v) => v.workerAdapter)
   const throttled = useMemo(() => adapter?.setAttribute.bind(adapter), [adapter])
   if (!panels) return null

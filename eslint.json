@@ -9,6 +9,7 @@
   },
   "rules": {
     "import/no-unused-modules": [1, { "unusedExports": true }],
-    "@typescript-eslint/no-non-null-asserted-optional-chain": "off"
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
   }
 }

@@ -12,7 +12,6 @@ import type { TypeScriptWorker } from './TypeScriptWorker'
 
 export type MatcherContext = {
   c: TypeChecker
-  w: TypeScriptWorker
   types: Record<string, Type>
 }
 
@@ -24,28 +23,28 @@ export const PANELS: {
   matcher: (type: Type, context: MatcherContext) => PanelMatch | undefined
 }[] = [
   {
-    matcher: (type, { w, c, types: { SxProps } }) => {
+    matcher: (type, { c, types: { SxProps } }) => {
       if (flattenType(type).some((v) => v.aliasSymbol && SxProps && v.aliasSymbol === SxProps.aliasSymbol)) {
         return { name: 'SxProps' }
       }
     },
   },
   {
-    matcher: (type, { w, c }) => {
+    matcher: (type, { c }) => {
       if (c.isTypeAssignableTo(c.getStringType(), type)) {
         return { name: 'string' }
       }
     },
   },
   {
-    matcher: (type, { w, c }) => {
+    matcher: (type, { c }) => {
       if (c.isTypeAssignableTo(c.getBooleanType(), type)) {
         return { name: 'boolean' }
       }
     },
   },
   {
-    matcher: (type, { w, c }) => {
+    matcher: (type, { c }) => {
       if (c.isTypeAssignableTo(c.getBooleanType(), type)) {
         if (type.isUnionOrIntersection()) {
           const values = type.types
