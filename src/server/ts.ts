@@ -1,19 +1,26 @@
 import * as fs from 'fs'
 import * as ts from 'typescript'
 import {
+  CharacterCodes,
+  factory,
+  FileTextChanges,
+  formatting,
   getTokenAtPosition,
   isJsxAttribute,
   isJsxElement,
   isJsxExpression,
   isJsxOpeningLikeElement,
+  isJsxSpreadAttribute,
   isJsxText,
   isObjectLiteralExpression,
   isPropertyAssignment,
   JsxOpeningLikeElement,
   Node,
   resolveModuleName,
+  setParent,
   Symbol,
   SymbolFlags,
+  textChanges,
 } from 'typescript'
 import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
@@ -21,6 +28,7 @@ import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from '../tsworker/Panels'
 import { IRange } from 'monaco-editor-core'
 import path from 'path'
+import { SetAttributesAtPositionRequest } from '../common/api'
 
 const FILE = 'src/stories/example.stories.tsx'
 const rootFileNames = [FILE]
@@ -52,6 +60,9 @@ const servicesHost: ts.LanguageServiceHost = {
   readDirectory: ts.sys.readDirectory,
   directoryExists: ts.sys.directoryExists,
   getDirectories: ts.sys.getDirectories,
+  writeFile(fileName: string, content: string) {
+    console.log('Writefile', fileName, content)
+  },
 }
 
 // Create the language service files
@@ -72,7 +83,6 @@ function getTokenAtFilename(fileName: string, position: number) {
 
 function getParentTokenAtPosition(fileName: string, position: number): JsxOpeningLikeElement | undefined {
   const token = getTokenAtFilename(fileName, position)
-  console.log(132132, token?.getText())
 
   const parent = token?.parent
   if (parent && isJsxOpeningLikeElement(parent)) {
@@ -85,8 +95,8 @@ export async function getPanelsAtLocation(
   line: number,
   col: number
 ): Promise<PanelsResponse> {
+  console.log(line, col, fileName)
   const sourceFile = requireSourceFile(fileName)
-  console.log(line, col)
   return getPanelsAtPosition(FILE, sourceFile.getPositionOfLineAndCharacter(line, col))
 }
 
@@ -264,8 +274,113 @@ function logErrors(fileName: string) {
   })
 }
 
-;(async () => {
-  // emitFile(FILE)
-  // const sourceFile = requireSourceFile(FILE)
-  // console.log(await getPanelsAtPosition(FILE, sourceFile.getPositionOfLineAndCharacter(34, 15)))
-})()
+export function setAttributeAtPosition({
+  fileName,
+  position,
+  attrName,
+  value,
+}: SetAttributesAtPositionRequest): void {
+  const sourceFile = requireSourceFile(fileName)
+  const token = getTokenAtFilename(fileName, position)
+  const name = factory.createIdentifier(attrName)
+
+  const fileTextChanges = textChanges.ChangeTracker.with(
+    {
+      host: servicesHost,
+      preferences: {},
+      formatContext: formatting.getFormatContext({}, { getNewLine: () => '\n' }),
+    },
+    (t) => {
+      const initializerExpression =
+        value !== undefined && value !== true
+          ? factory.createJsxExpression(
+              /*dotDotDotToken*/ undefined,
+              factory.createStringLiteral(
+                value || '',
+                // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
+                false
+              )
+            )
+          : undefined
+      const tokenWithAttr = token?.parent.parent.parent
+      if (!tokenWithAttr) {
+        console.error('tokenWithAttr not found')
+        return
+      }
+      const jsxAttributesNode =
+        tokenWithAttr && isJsxOpeningLikeElement(tokenWithAttr)
+          ? tokenWithAttr.attributes
+          : isJsxOpeningLikeElement(token?.parent)
+          ? token?.parent.attributes
+          : undefined
+      if (!jsxAttributesNode) {
+        console.error('Attributes not found')
+        return
+      }
+      const jsxNode = token.parent.parent.parent.parent
+      const childrenNodes = isJsxElement(jsxNode) && jsxNode.children
+      const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
+      if (attrName === 'children') {
+        if (childrenNodes) {
+          if (childrenNodes.length === 1) {
+            t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value?.toString() || ''))
+          } else if (childrenNodes.length === 0) {
+            t.insertNodeAt(
+              sourceFile,
+              childrenNodes.pos,
+              factory.createIdentifier(value?.toString() || ''),
+              {}
+            )
+          } else {
+            console.error('Multiple children')
+            return
+          }
+        } else {
+          console.error('Children are not a JSX Element')
+          return
+        }
+      } else if (existingToken && !isJsxSpreadAttribute(existingToken)) {
+        const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
+        if (value !== undefined) {
+          const updates = factory.updateJsxAttribute(existingToken, name, initializerExpression)
+          t.replaceNode(sourceFile, existingToken, updates, options)
+        } else {
+          t.deleteNode(sourceFile, existingToken)
+        }
+      } else {
+        const name = factory.createIdentifier(attrName)
+        const jsxAttribute = factory.createJsxAttribute(name, initializerExpression)
+        const hasSpreadAttribute = jsxAttributesNode.properties.some(isJsxSpreadAttribute)
+        // formattingScanner requires the Identifier to have a context for scanning attributes with "-" (data-foo).
+        setParent(name, jsxAttribute)
+        const jsxAttributes = factory.createJsxAttributes(
+          hasSpreadAttribute
+            ? [jsxAttribute, ...jsxAttributesNode.properties]
+            : [...jsxAttributesNode.properties, jsxAttribute]
+        )
+        const options = { prefix: jsxAttributesNode.pos === jsxAttributesNode.end ? ' ' : undefined }
+        t.replaceNode(sourceFile, jsxAttributesNode, jsxAttributes, options)
+      }
+    }
+  )
+  const newContent = applyEdits(sourceFile.text, fileName, fileTextChanges)
+  ts.sys.writeFile(fileName, newContent)
+}
+
+function applyEdits(text: string, textFilename: string, edits: readonly FileTextChanges[]): string {
+  for (const { fileName, textChanges } of edits) {
+    if (fileName !== textFilename) {
+      continue
+    }
+
+    for (let i = textChanges.length - 1; i >= 0; i--) {
+      const {
+        newText,
+        span: { start, length },
+      } = textChanges[i]
+      text = text.slice(0, start) + newText + text.slice(start + length)
+    }
+  }
+
+  return text
+}

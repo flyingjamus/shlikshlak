@@ -14,7 +14,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react/jsx-runtime',
-    "plugin:react-hooks/recommended",
+    'plugin:react-hooks/recommended',
     'prettier',
   ],
   // env: {
@@ -46,6 +46,7 @@ module.exports = {
     '@typescript-eslint/no-unnecessary-type-constraint': 'off',
     '@typescript-eslint/ban-types': 'off',
     'react/jsx-no-undef': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
   },
 
   ignorePatterns: ['src/**/*.js', 'src/lib/**/*', 'src/Components/ReactDevtools'],

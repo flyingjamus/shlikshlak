@@ -56,6 +56,14 @@ const location = z.object({
   lineNumber: z.number(),
   colNumber: z.number().optional(),
 })
+export const SetAttributesAtPositionRequest = z.object({
+  fileName: z.string(),
+  position: z.number(),
+  attrName: z.string(),
+  value: z.union([z.string(), z.boolean(), z.undefined()]).optional(),
+})
+export type SetAttributesAtPositionRequest = z.infer<typeof SetAttributesAtPositionRequest>
+
 export const filesApi = apiBuilder({
   method: 'post',
   path: '/get_file',
@@ -118,6 +126,18 @@ export const filesApi = apiBuilder({
         type: 'Body',
         name: 'body',
         schema: location,
+      },
+    ],
+  })
+  .addEndpoint({
+    method: 'post',
+    path: '/lang/setAttributeAtPosition',
+    response: z.object({}),
+    parameters: [
+      {
+        type: 'Body',
+        name: 'body',
+        schema: SetAttributesAtPositionRequest,
       },
     ],
   })

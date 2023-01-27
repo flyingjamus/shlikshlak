@@ -4,9 +4,8 @@ import { ReactNode } from 'react'
 
 const A = () => {
   return (
-    <B header={'Headertext'} primary>
-      Thisi si the content
-    </B>
+    <B header={'Header text'} primary>
+      Thisi is the content!!!!    </B>
   )
 }
 

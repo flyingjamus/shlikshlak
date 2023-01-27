@@ -19,9 +19,9 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions(COMPILER_OPTIO
 monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
 monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
 
-monaco.languages.onLanguage('typescript', async () => {
-  useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
-})
+// monaco.languages.onLanguage('typescript', async () => {
+//   useIframeStore.setState({ workerAdapter: new WorkerAdapter(await getTypescriptWorker()) })
+// })
 
 // const bindEditor = (editor: IStandaloneCodeEditor) => {
 //   const editorService = editor._codeEditorService

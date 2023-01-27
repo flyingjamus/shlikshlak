@@ -66,7 +66,7 @@ export default defineConfig({
     //   // },
     // }),
 
-    react({ jsxImportSource: '@emotion/react' }),
+    react({ jsxImportSource: '@emotion/react',  }),
     // react({
     //   jsxImportSource: '@emotion/react',
     //   babel: {

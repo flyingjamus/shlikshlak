@@ -8,7 +8,7 @@ import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import globby from 'globby'
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
 import getGeneratedList from '../stories/ParseStories/generate/get-generated-list'
-import { getPanelsAtLocation, getPanelsAtPosition } from './ts'
+import { getPanelsAtLocation, getPanelsAtPosition, setAttributeAtPosition } from './ts'
 
 export interface RuntimeDirEntry {
   name: string
@@ -45,12 +45,6 @@ app.post('/get_file', async (req, res) => {
   try {
     const stats = await stat(filePath)
     if (stats.isFile()) {
-      // if (filePath.endsWith('d.ts')) {
-      //   console.log('inside')
-      //   const bundle = await bundleDts(filePath)
-      //   res.json({ exists: true, type: 'FILE', contents: bundle })
-      //   return
-      // }
       const contents = await readFile(filePath, 'utf-8')
       res.json({ exists: true, type: 'FILE', contents })
     } else if (stats.isDirectory()) {
@@ -111,9 +105,18 @@ app.get('/stories', async (req, res) => {
 
 app.post('/lang/getPanelsAtPosition', async ({ body }, res) => {
   const { fileName, lineNumber, colNumber } = body
-  console.log(2313212312, body)
   try {
-    res.json(await getPanelsAtLocation(fileName, lineNumber - 1, colNumber))
+    res.json(await getPanelsAtLocation(fileName, lineNumber - 1, colNumber!))
+  } catch (e) {
+    console.error(e)
+    res.status(400).json()
+  }
+})
+
+app.post('/lang/setAttributeAtPosition', async ({ body }, res) => {
+  try {
+    await setAttributeAtPosition(body)
+    res.json({})
   } catch (e) {
     console.error(e)
     res.status(400).json()

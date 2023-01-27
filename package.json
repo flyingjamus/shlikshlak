@@ -27,6 +27,7 @@
     "@zodios/react": "^10.4.0",
     "axios": "^1.2.1",
     "babel-plugin-import": "^1.13.5",
+    "chalk": "^5.2.0",
     "clipboard-js": "^0.3.6",
     "comlink": "^4.3.1",
     "cors": "^2.8.5",
