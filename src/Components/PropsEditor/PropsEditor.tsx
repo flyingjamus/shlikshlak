@@ -17,10 +17,11 @@ import {
   PanelMatch,
   PanelsResponse,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useEffect, useState } from 'react'
+import React, { ElementType, useState } from 'react'
 import { partition } from 'lodash-es'
-import { apiHooks } from '../../client/apiClient'
+import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
+import { useQuery } from '@tanstack/react-query'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -99,19 +100,15 @@ const PropEditor = ({
 export const PropsEditorWrapper = () => {
   // const panels = useIframeStore((v) => v.panels)
   const openFile = useIframeStore((v) => v.selectedComponent)
-  const { mutate, data: panels } = apiHooks.usePost('/lang/getPanelsAtPosition', {})
-  useEffect(() => {
+  const { data: panels } = useQuery(['getPanelsAtPosition', openFile], () => {
     if (!openFile) return
     const { columnNumber, lineNumber, path } = openFile
-    ;(async () => {
-      const newVar = {
-        fileName: path,
-        lineNumber: lineNumber,
-        colNumber: columnNumber,
-      }
-      await mutate(newVar)
-    })()
-  }, [openFile])
+    return apiClient.post('/lang/getPanelsAtPosition', {
+      fileName: path,
+      lineNumber: lineNumber,
+      colNumber: columnNumber,
+    })
+  })
   if (!panels) return null
 
   return (

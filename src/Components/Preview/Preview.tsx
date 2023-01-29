@@ -1,8 +1,7 @@
 import { Box, styled } from '@mui/material'
-import { MouseEvent, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
-import { CodeInfo } from '../ReactDevInspectorUtils/inspect'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { IRange } from 'monaco-editor-core'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
@@ -124,6 +123,7 @@ export const Preview = () => {
       <DevtoolsOverlay />
       <StyledIframe
         src={ready ? '/stories/example--story-root' : undefined}
+        // src={ready ? '/stories/example-thin--story-root' : undefined}
         onLoad={() => {}}
         ref={iframeRef}
       />

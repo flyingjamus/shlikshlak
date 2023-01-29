@@ -170,7 +170,6 @@ export const getElementCodeInfo = (element: HTMLElement): CodeInfo | undefined =
   const fiber: Fiber | undefined = getElementFiberUpward(element)
 
   const referenceFiber = getReferenceFiber(fiber)
-  console.log(12331312, referenceFiber)
   return getCodeInfoFromFiber(referenceFiber)
 }
 

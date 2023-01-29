@@ -1,10 +1,10 @@
 import * as fs from 'fs'
 import * as ts from 'typescript'
 import {
-  CharacterCodes,
   factory,
   FileTextChanges,
   formatting,
+  getSnapshotText,
   getTokenAtPosition,
   isJsxAttribute,
   isJsxElement,
@@ -15,6 +15,7 @@ import {
   isObjectLiteralExpression,
   isPropertyAssignment,
   JsxOpeningLikeElement,
+  LanguageServiceMode,
   Node,
   resolveModuleName,
   setParent,
@@ -29,50 +30,43 @@ import { MatcherContext, PANELS } from '../tsworker/Panels'
 import { IRange } from 'monaco-editor-core'
 import path from 'path'
 import { SetAttributesAtPositionRequest } from '../common/api'
+import { initializeNodeSystem } from './nodeServer'
 
 const FILE = 'src/stories/example.stories.tsx'
-const rootFileNames = [FILE]
 const options = COMPILER_OPTIONS
 const files: ts.MapLike<{ version: number }> = {}
 
-// initialize the list of files
-rootFileNames.forEach((fileName) => {
-  files[fileName] = { version: 0 }
+const { serverMode, startSession, logger, cancellationToken } = initializeNodeSystem()
+const ioSession = startSession(
+  {
+    globalPlugins: undefined,
+    pluginProbeLocations: undefined,
+    allowLocalPluginLoads: undefined,
+    useSingleInferredProject: false,
+    useInferredProjectPerProjectRoot: false,
+    suppressDiagnosticEvents: undefined,
+    noGetErrOnBackgroundUpdate: undefined,
+    syntaxOnly: false,
+    serverMode: LanguageServiceMode.Semantic,
+  },
+  logger,
+  cancellationToken
+)
+
+// console.log(
+//   // ioSession.getFileAndProject({ file: FILE }),
+//   ioSession.projectService.applyChangesToFile({ file: path.resolve(FILE) })
+// )
+// ioSession.projectService.useSingleInferredProject
+ioSession.projectService.openExternalProject({
+  options: { ...COMPILER_OPTIONS, rootFiles: [] },
+  projectFileName: 'project',
+  rootFiles: [{ fileName: path.resolve(FILE) }],
 })
-
-// Create the language service host to allow the LS to communicate with the host
-const servicesHost: ts.LanguageServiceHost = {
-  getScriptFileNames: () => rootFileNames,
-  getScriptVersion: (fileName) => files[fileName] && files[fileName].version.toString(),
-  getScriptSnapshot: (fileName) => {
-    if (!fs.existsSync(fileName)) {
-      return undefined
-    }
-
-    return ts.ScriptSnapshot.fromString(fs.readFileSync(fileName).toString())
-  },
-  getCurrentDirectory: () => process.cwd(),
-  getCompilationSettings: () => options,
-  getDefaultLibFileName: (options) =>
-    path.resolve(process.cwd(), 'node_modules/typescript/lib', ts.getDefaultLibFileName(options)),
-  fileExists: ts.sys.fileExists,
-  readFile: ts.sys.readFile,
-  readDirectory: ts.sys.readDirectory,
-  directoryExists: ts.sys.directoryExists,
-  getDirectories: ts.sys.getDirectories,
-  writeFile(fileName: string, content: string) {
-    console.log('Writefile', fileName, content)
-  },
-}
-
-// Create the language service files
-const languageService = ts.createLanguageService(servicesHost, ts.createDocumentRegistry())
-const services = languageService
-const program = languageService.getProgram()!
-const checker = program.getTypeChecker()!
+const project = ioSession.projectService.externalProjects[0]
 
 function getTokenAtFilename(fileName: string, position: number) {
-  const program = languageService.getProgram()
+  const program = project.getLanguageService().getProgram()
   const sourceFile = program?.getSourceFile(fileName)
   if (!sourceFile) {
     console.error('Missing source file', fileName)
@@ -95,9 +89,8 @@ export async function getPanelsAtLocation(
   line: number,
   col: number
 ): Promise<PanelsResponse> {
-  console.log(line, col, fileName)
   const sourceFile = requireSourceFile(fileName)
-  return getPanelsAtPosition(FILE, sourceFile.getPositionOfLineAndCharacter(line, col))
+  return getPanelsAtPosition(sourceFile.fileName, sourceFile.getPositionOfLineAndCharacter(line, col))
 }
 
 export async function getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
@@ -108,6 +101,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
+          console.log(initializer?.getText())
           let value
           if (!initializer) {
             value = undefined
@@ -121,6 +115,8 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
                   }
                 })
                 .filter(isDefined)
+            } else {
+              value = expression?.getText().slice(1, -1) //TODO expression
             }
           } else {
             const initializerText = initializer?.getText()
@@ -164,16 +160,27 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
           })
         : []),
     ].filter(isDefined)
-    const typeAtLocation = checker.getContextualType(parent.attributes)
+    const typeAtLocation = project
+      .getLanguageService()
+      .getProgram()!
+      .getTypeChecker()!
+      .getContextualType(parent.attributes)
 
     if (typeAtLocation) {
-      const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
+      // const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
       const context: MatcherContext = {
-        c: checker,
-        types: { SxProps: sxPropsType },
+        c: project.getLanguageService().getProgram()!.getTypeChecker()!,
+        // types: { SxProps: sxPropsType },
+        types: {},
       }
       const attributes = [...typeAtLocation.getProperties()].map((prop) => {
-        const type = checker.getNonNullableType(checker.getTypeOfSymbol(prop))
+        const type = project
+          .getLanguageService()
+          .getProgram()!
+          .getTypeChecker()!
+          .getNonNullableType(
+            project.getLanguageService().getProgram()!.getTypeChecker()!.getTypeOfSymbol(prop)
+          )
 
         return {
           name: prop.name,
@@ -199,34 +206,50 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
 }
 
 function requireSourceFile(fileName: string) {
-  const sourceFile = program.getSourceFile(fileName)
+  // console.log(31231212, project.getScriptInfo(fileName))
+  // project.projectService.applyChangesToFile(fileName)
+  // console.log(31231212, project.getScriptInfo(fileName))
+  const sourceFile = project.getLanguageService().getProgram()!.getSourceFile(fileName)
   if (!sourceFile) throw new Error('Source file not found ' + fileName)
   return sourceFile
 }
 
 function getExport(moduleName: string, name: string) {
-  const rootFileName = program.getRootFileNames()[0]
+  const rootFileName = project.getLanguageService().getProgram()!.getRootFileNames()[0]
   const resolved = resolveModuleName(
     moduleName,
     rootFileName,
-    servicesHost.getCompilationSettings(),
-    servicesHost
+    project.getLanguageService().getProgram()!.getCompilerOptions(),
+    project
   )
   if (!resolved.resolvedModule) throw new Error('Not found')
   const sourceFile = requireSourceFile(resolved.resolvedModule.resolvedFileName)
 
-  const symbolAtLocation = checker.getSymbolAtLocation(sourceFile)!
-  const exportsOfModule = checker.getExportsOfModule(getAliasedSymbolIfNecessary(symbolAtLocation))
+  const symbolAtLocation = project
+    .getLanguageService()
+    .getProgram()!
+    .getTypeChecker()!
+    .getSymbolAtLocation(sourceFile)!
+  const exportsOfModule = project
+    .getLanguageService()
+    .getProgram()!
+    .getTypeChecker()!
+    .getExportsOfModule(getAliasedSymbolIfNecessary(symbolAtLocation))
   const moduleExport = exportsOfModule.find((v) => v.name === name)!
   if (!moduleExport) throw new Error('Not found')
 
-  const declaredTypeOfSymbol = checker.getDeclaredTypeOfSymbol(moduleExport)
+  const declaredTypeOfSymbol = project
+    .getLanguageService()
+    .getProgram()!
+    .getTypeChecker()!
+    .getDeclaredTypeOfSymbol(moduleExport)
   return declaredTypeOfSymbol
-  return checker.getNonNullableType(declaredTypeOfSymbol)
+  return project.getLanguageService().getProgram()!.getTypeChecker()!.getNonNullableType(declaredTypeOfSymbol)
 }
 
 function getAliasedSymbolIfNecessary(symbol: Symbol) {
-  if ((symbol.flags & SymbolFlags.Alias) !== 0) return checker.getAliasedSymbol(symbol)
+  if ((symbol.flags & SymbolFlags.Alias) !== 0)
+    return project.getLanguageService().getProgram()!.getTypeChecker()!.getAliasedSymbol(symbol)
   return symbol
 }
 
@@ -243,7 +266,7 @@ const getRange = (node: Node): IRange => {
 }
 
 function emitFile(fileName: string) {
-  const output = services.getEmitOutput(fileName)
+  const output = project.getLanguageService().getEmitOutput(fileName)
 
   if (!output.emitSkipped) {
     console.log(`Emitting ${fileName}`)
@@ -258,10 +281,11 @@ function emitFile(fileName: string) {
 }
 
 function logErrors(fileName: string) {
-  const allDiagnostics = services
+  const allDiagnostics = project
+    .getLanguageService()
     .getCompilerOptionsDiagnostics()
-    .concat(services.getSyntacticDiagnostics(fileName))
-    .concat(services.getSemanticDiagnostics(fileName))
+    .concat(project.getLanguageService().getSyntacticDiagnostics(fileName))
+    .concat(project.getLanguageService().getSemanticDiagnostics(fileName))
 
   allDiagnostics.forEach((diagnostic) => {
     const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
@@ -286,7 +310,7 @@ export function setAttributeAtPosition({
 
   const fileTextChanges = textChanges.ChangeTracker.with(
     {
-      host: servicesHost,
+      host: project,
       preferences: {},
       formatContext: formatting.getFormatContext({}, { getNewLine: () => '\n' }),
     },
@@ -363,12 +387,19 @@ export function setAttributeAtPosition({
       }
     }
   )
-  const newContent = applyEdits(sourceFile.text, fileName, fileTextChanges)
-  ts.sys.writeFile(fileName, newContent)
+  // const newContent = applyEdits(sourceFile.text, sourceFile.fileName, fileTextChanges)
+  console.dir(fileTextChanges, { depth: Infinity })
+  for (const change of fileTextChanges) {
+    const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
+    ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
+    console.log(getSnapshotText(scriptInfo.getSnapshot()))
+    ioSession.projectService.host.writeFile(change.fileName, getSnapshotText(scriptInfo.getSnapshot()))
+  }
 }
 
 function applyEdits(text: string, textFilename: string, edits: readonly FileTextChanges[]): string {
   for (const { fileName, textChanges } of edits) {
+    console.log(fileName, textFilename)
     if (fileName !== textFilename) {
       continue
     }
