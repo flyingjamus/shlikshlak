@@ -96,12 +96,12 @@ export async function getPanelsAtLocation(
 export async function getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
   const parent = getParentTokenAtPosition(fileName, position)
   if (parent) {
+    const jsxTag = parent.parent
     const existingAttributes: ExistingAttribute[] = parent.attributes.properties
       // .filter((v) => v.name?.getText() === 'sx')
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
-          console.log(initializer?.getText())
           let value
           if (!initializer) {
             value = undefined
@@ -144,22 +144,20 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
         }
       })
       .filter(isDefined)
-    const existingIncludingChildren = [
-      ...existingAttributes,
-      ...(isJsxElement(parent.parent)
-        ? parent.parent.children.map((v) => {
-            if (isJsxText(v))
-              return {
-                name: 'children',
-                location: {
-                  pos: v.pos,
-                  end: v.end,
-                },
-                value: v.getText(),
-              }
-          })
-        : []),
-    ].filter(isDefined)
+    const existingIncludingChildren = [...existingAttributes].filter(isDefined)
+    if (isJsxElement(jsxTag)) {
+      const childrenStart = jsxTag.openingElement.end
+      const childrenEnd = jsxTag.closingElement.pos
+
+      existingIncludingChildren.push({
+        name: 'children',
+        location: {
+          pos: childrenStart,
+          end: childrenEnd,
+        },
+        value: jsxTag.getText().slice(childrenStart - jsxTag.pos, childrenEnd - jsxTag.pos),
+      })
+    }
     const typeAtLocation = project
       .getLanguageService()
       .getProgram()!
@@ -346,18 +344,15 @@ export function setAttributeAtPosition({
       const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
       if (attrName === 'children') {
         if (childrenNodes) {
-          if (childrenNodes.length === 1) {
+          if (childrenNodes.length) {
             t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value?.toString() || ''))
-          } else if (childrenNodes.length === 0) {
+          } else {
             t.insertNodeAt(
               sourceFile,
               childrenNodes.pos,
               factory.createIdentifier(value?.toString() || ''),
               {}
             )
-          } else {
-            console.error('Multiple children')
-            return
           }
         } else {
           console.error('Children are not a JSX Element')
@@ -375,7 +370,6 @@ export function setAttributeAtPosition({
         const name = factory.createIdentifier(attrName)
         const jsxAttribute = factory.createJsxAttribute(name, initializerExpression)
         const hasSpreadAttribute = jsxAttributesNode.properties.some(isJsxSpreadAttribute)
-        // formattingScanner requires the Identifier to have a context for scanning attributes with "-" (data-foo).
         setParent(name, jsxAttribute)
         const jsxAttributes = factory.createJsxAttributes(
           hasSpreadAttribute
@@ -387,31 +381,9 @@ export function setAttributeAtPosition({
       }
     }
   )
-  // const newContent = applyEdits(sourceFile.text, sourceFile.fileName, fileTextChanges)
-  console.dir(fileTextChanges, { depth: Infinity })
   for (const change of fileTextChanges) {
     const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
     ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
-    console.log(getSnapshotText(scriptInfo.getSnapshot()))
     ioSession.projectService.host.writeFile(change.fileName, getSnapshotText(scriptInfo.getSnapshot()))
   }
-}
-
-function applyEdits(text: string, textFilename: string, edits: readonly FileTextChanges[]): string {
-  for (const { fileName, textChanges } of edits) {
-    console.log(fileName, textFilename)
-    if (fileName !== textFilename) {
-      continue
-    }
-
-    for (let i = textChanges.length - 1; i >= 0; i--) {
-      const {
-        newText,
-        span: { start, length },
-      } = textChanges[i]
-      text = text.slice(0, start) + newText + text.slice(start + length)
-    }
-  }
-
-  return text
 }

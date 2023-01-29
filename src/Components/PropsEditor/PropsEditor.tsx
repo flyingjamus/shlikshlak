@@ -17,7 +17,7 @@ import {
   PanelMatch,
   PanelsResponse,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useState } from 'react'
+import React, { ElementType, useEffect, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
@@ -64,8 +64,28 @@ const EnumEditor: BaseEditor<string, { values: string[] }> = ({
   )
 }
 
-const StringEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
-  return <TextField onChange={(e) => onChange(e.target.value || '')} defaultValue={value} {...props} />
+const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
+  const [focused, setFocused] = useState(false)
+  const [value, setValue] = useState(inputValue)
+  useEffect(() => {
+    if (!focused) {
+      setValue(inputValue || '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue])
+  return (
+    <TextField
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const v = e.target.value
+        setValue(v)
+        onChange(v || '')
+      }}
+      value={value}
+      {...props}
+    />
+  )
 }
 
 const BooleanEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
@@ -100,7 +120,7 @@ const PropEditor = ({
 export const PropsEditorWrapper = () => {
   // const panels = useIframeStore((v) => v.panels)
   const openFile = useIframeStore((v) => v.selectedComponent)
-  const { data: panels } = useQuery(['getPanelsAtPosition', openFile], () => {
+  const { data: panels, refetch } = useQuery(['getPanelsAtPosition', openFile], () => {
     if (!openFile) return
     const { columnNumber, lineNumber, path } = openFile
     return apiClient.post('/lang/getPanelsAtPosition', {
@@ -119,6 +139,7 @@ export const PropsEditorWrapper = () => {
           await setAttribute(panels.fileName, panels.location, attr.name, v)
         }
       }}
+      onBlur={() => refetch()}
     />
   )
 }
@@ -128,9 +149,11 @@ export const PropsEditor = React.memo(
   ({
     panels: { attributes, existingAttributes, fileName, location },
     onAttributeChange,
+    onBlur,
   }: {
     panels: PanelsResponse
     onAttributeChange: OnAttributeChange
+    onBlur: () => void
   }) => {
     const [there, notThere] = partition(attributes, (attr) =>
       existingAttributes.some((v) => attr.name === v.name)
@@ -139,7 +162,7 @@ export const PropsEditor = React.memo(
     const panelAttrs = attributes.length < 10 ? attributes : there
     // const sortedPanels = partition(panels?.attributes, (v) => v.location)
     return (
-      <List sx={{ background: 'white' }} dense>
+      <List sx={{ background: 'white' }} dense onBlur={onBlur}>
         {panelAttrs.map((attr) => {
           const existing = existingAttributes.find((v) => v.name === attr.name)
           const key = [fileName, location, attr.name].join(':')

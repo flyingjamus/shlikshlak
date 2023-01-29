@@ -4,8 +4,10 @@ import { ReactNode } from 'react'
 
 const A = () => {
   return (
-    <B header={"NOOOOO! unsyc"} primary>
-      Thisi is the content!!!!{' '}
+    <B header={'Header ?!'} primary>
+      1{'HEllo'}
+      <br />
+      ?!
     </B>
   )
 }
@@ -59,6 +61,6 @@ export const D = ({ value }: { value: string }) => {
 export const StoryRoot = () => (
   <div>
     <A />
-    <D key="1" value={":-)"} />
+    <D key="1" value={':-)'} />
   </div>
 )
