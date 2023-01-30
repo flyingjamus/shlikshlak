@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import * as ts from 'typescript'
 import {
   factory,
-  FileTextChanges,
   formatting,
   getSnapshotText,
   getTokenAtPosition,
@@ -11,7 +10,6 @@ import {
   isJsxExpression,
   isJsxOpeningLikeElement,
   isJsxSpreadAttribute,
-  isJsxText,
   isObjectLiteralExpression,
   isPropertyAssignment,
   JsxOpeningLikeElement,
@@ -27,16 +25,15 @@ import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from '../tsworker/Panels'
-import { IRange } from 'monaco-editor-core'
 import path from 'path'
 import { SetAttributesAtPositionRequest } from '../common/api'
 import { initializeNodeSystem } from './nodeServer'
+import { logger } from './logger'
+import prettier from 'prettier'
 
 const FILE = 'src/stories/example.stories.tsx'
-const options = COMPILER_OPTIONS
-const files: ts.MapLike<{ version: number }> = {}
 
-const { serverMode, startSession, logger, cancellationToken } = initializeNodeSystem()
+const { startSession, logger: ioLogger, cancellationToken } = initializeNodeSystem()
 const ioSession = startSession(
   {
     globalPlugins: undefined,
@@ -49,15 +46,10 @@ const ioSession = startSession(
     syntaxOnly: false,
     serverMode: LanguageServiceMode.Semantic,
   },
-  logger,
+  ioLogger,
   cancellationToken
 )
 
-// console.log(
-//   // ioSession.getFileAndProject({ file: FILE }),
-//   ioSession.projectService.applyChangesToFile({ file: path.resolve(FILE) })
-// )
-// ioSession.projectService.useSingleInferredProject
 ioSession.projectService.openExternalProject({
   options: { ...COMPILER_OPTIONS, rootFiles: [] },
   projectFileName: 'project',
@@ -155,30 +147,23 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
           pos: childrenStart,
           end: childrenEnd,
         },
-        value: jsxTag.getText().slice(childrenStart - jsxTag.pos, childrenEnd - jsxTag.pos),
+        value: parent.getSourceFile().getText().slice(childrenStart, childrenEnd).trim(),
       })
     }
-    const typeAtLocation = project
-      .getLanguageService()
-      .getProgram()!
-      .getTypeChecker()!
-      .getContextualType(parent.attributes)
+    const languageService = project.getLanguageService()
+    const program = languageService.getProgram()
+    const typeChecker = program!.getTypeChecker()
+    const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
 
     if (typeAtLocation) {
       // const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
       const context: MatcherContext = {
-        c: project.getLanguageService().getProgram()!.getTypeChecker()!,
+        c: typeChecker!,
         // types: { SxProps: sxPropsType },
         types: {},
       }
       const attributes = [...typeAtLocation.getProperties()].map((prop) => {
-        const type = project
-          .getLanguageService()
-          .getProgram()!
-          .getTypeChecker()!
-          .getNonNullableType(
-            project.getLanguageService().getProgram()!.getTypeChecker()!.getTypeOfSymbol(prop)
-          )
+        const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
 
         return {
           name: prop.name,
@@ -204,9 +189,6 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
 }
 
 function requireSourceFile(fileName: string) {
-  // console.log(31231212, project.getScriptInfo(fileName))
-  // project.projectService.applyChangesToFile(fileName)
-  // console.log(31231212, project.getScriptInfo(fileName))
   const sourceFile = project.getLanguageService().getProgram()!.getSourceFile(fileName)
   if (!sourceFile) throw new Error('Source file not found ' + fileName)
   return sourceFile
@@ -251,7 +233,7 @@ function getAliasedSymbolIfNecessary(symbol: Symbol) {
   return symbol
 }
 
-const getRange = (node: Node): IRange => {
+const getRange = (node: Node) => {
   const sourceFile = node.getSourceFile()
   const { line: startLineNumber, character: startColumn } = sourceFile.getLineAndCharacterOfPosition(node.pos)
   const { line: endLineNumber, character: endColumn } = sourceFile.getLineAndCharacterOfPosition(node.end)
@@ -296,12 +278,9 @@ function logErrors(fileName: string) {
   })
 }
 
-export function setAttributeAtPosition({
-  fileName,
-  position,
-  attrName,
-  value,
-}: SetAttributesAtPositionRequest): void {
+export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): boolean {
+  logger.debug(`setAttributeAtPosition ${JSON.stringify(args, null, 2)}`)
+  const { fileName, position, attrName, value } = args
   const sourceFile = requireSourceFile(fileName)
   const token = getTokenAtFilename(fileName, position)
   const name = factory.createIdentifier(attrName)
@@ -314,7 +293,7 @@ export function setAttributeAtPosition({
     },
     (t) => {
       const initializerExpression =
-        value !== undefined && value !== true
+        value !== undefined
           ? factory.createJsxExpression(
               /*dotDotDotToken*/ undefined,
               factory.createStringLiteral(
@@ -345,7 +324,14 @@ export function setAttributeAtPosition({
       if (attrName === 'children') {
         if (childrenNodes) {
           if (childrenNodes.length) {
-            t.replaceNode(sourceFile, childrenNodes[0], factory.createIdentifier(value?.toString() || ''))
+            t.replaceRangeWithText(
+              sourceFile,
+              {
+                pos: jsxNode.openingElement.end,
+                end: jsxNode.closingElement.pos,
+              },
+              value || ''
+            )
           } else {
             t.insertNodeAt(
               sourceFile,
@@ -384,6 +370,34 @@ export function setAttributeAtPosition({
   for (const change of fileTextChanges) {
     const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
     ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
-    ioSession.projectService.host.writeFile(change.fileName, getSnapshotText(scriptInfo.getSnapshot()))
   }
+
+  const languageService = project.getLanguageService()
+  const program = languageService.getProgram()
+  const typeChecker = program!.getTypeChecker()
+
+  const config = prettier.resolveConfig.sync(sourceFile.fileName)
+  const scriptInfo = ioSession.projectService.getScriptInfo(sourceFile.fileName)!
+  try {
+    const formatted = prettier.format(getSnapshotText(scriptInfo.getSnapshot()), {
+      ...config,
+      filepath: sourceFile.fileName,
+    })
+    ioSession.projectService.host.writeFile(sourceFile.fileName, formatted)
+    return true
+  } catch (e) {
+    logger.warn('Prettier, not writing')
+    logger.warn(e)
+    scriptInfo.reloadFromFile()
+    return false
+  }
+  // const diagnostics = typeChecker.getDiagnostics(sourceFile)
+  // if (diagnostics.length) {
+  //   return false
+  // } else {
+  //   ioSession.projectService.host.writeFile(sourceFile.fileName, getSnapshotText(scriptInfo.getSnapshot()))
+  //   return true
+  // }
 }
+
+emitFile(FILE)

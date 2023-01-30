@@ -5,9 +5,7 @@ import { ReactNode } from 'react'
 const A = () => {
   return (
     <B header={'Header ?!'} primary>
-      1{'HEllo'}
-      <br />
-      ?!
+      Hello!
     </B>
   )
 }

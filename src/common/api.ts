@@ -60,7 +60,7 @@ export const SetAttributesAtPositionRequest = z.object({
   fileName: z.string(),
   position: z.number(),
   attrName: z.string(),
-  value: z.union([z.string(), z.boolean(), z.undefined()]).optional(),
+  value: z.union([z.string(), z.undefined()]),
 })
 export type SetAttributesAtPositionRequest = z.infer<typeof SetAttributesAtPositionRequest>
 

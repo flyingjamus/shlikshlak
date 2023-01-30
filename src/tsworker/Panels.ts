@@ -8,7 +8,6 @@ import {
 } from 'typescript'
 import { PanelMatch } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
-import type { TypeScriptWorker } from './TypeScriptWorker'
 
 export type MatcherContext = {
   c: TypeChecker

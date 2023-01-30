@@ -26,17 +26,3 @@ export interface StartSessionOptions {
   syntaxOnly: SessionOptions['syntaxOnly']
   serverMode: SessionOptions['serverMode']
 }
-
-/** @internal */
-export interface StartInput {
-  args: readonly string[]
-  logger: Logger
-  cancellationToken: ServerCancellationToken
-  serverMode: LanguageServiceMode | undefined
-  unknownServerMode?: string
-  startSession: (
-    option: StartSessionOptions,
-    logger: Logger,
-    cancellationToken: ServerCancellationToken
-  ) => Session
-}

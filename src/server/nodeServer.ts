@@ -17,21 +17,14 @@ import {
   normalizePath,
   normalizeSlashes,
   resolveJSModule,
-  startTracing,
+  resolvePath,
   stripQuotes,
   sys,
   toFileNameLowerCase,
   tracing,
-  validateLocaleAndSetLanguage,
-  versionMajorMinor,
   WatchOptions,
 } from 'typescript'
 import {
-  Arguments,
-  findArgument,
-  formatMessage,
-  hasArgument,
-  indent,
   Logger,
   LogLevel,
   ModuleImportResult,
@@ -39,17 +32,14 @@ import {
   nowString,
   nullCancellationToken,
   nullTypingsInstaller,
-  protocol,
   ServerCancellationToken,
   ServerHost,
   Session,
   stringifyIndented,
-  toEvent,
 } from './ts/_namespaces/ts.server'
-import { getLogLevel, StartInput, StartSessionOptions } from './ts/common'
+import { getLogLevel, StartSessionOptions } from './ts/common'
 import { perfLogger } from './ts/perfLogger'
-import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
-import { resolve } from 'path'
+import { LanguageServiceMode } from './ts/_namespaces/ts'
 
 interface LogOptions {
   file?: string
@@ -127,24 +117,19 @@ function parseLoggingEnvironmentString(logEnvStr: string | undefined): LogOption
   }
 }
 
-function parseServerMode(): LanguageServiceMode | string | undefined {
-  const mode = findArgument('--serverMode')
-  if (!mode) return undefined
-
-  switch (mode.toLowerCase()) {
-    case 'semantic':
-      return LanguageServiceMode.Semantic
-    case 'partialsemantic':
-      return LanguageServiceMode.PartialSemantic
-    case 'syntactic':
-      return LanguageServiceMode.Syntactic
-    default:
-      return mode
-  }
-}
-
 /** @internal */
-export function initializeNodeSystem(): StartInput {
+export function initializeNodeSystem(): {
+  args: readonly string[]
+  logger: Logger
+  cancellationToken: ServerCancellationToken
+  serverMode: LanguageServiceMode | undefined
+  unknownServerMode?: string
+  startSession: (
+    option: StartSessionOptions,
+    logger: Logger,
+    cancellationToken: ServerCancellationToken
+  ) => Session
+} {
   const sys = Debug.checkDefined(ts.sys) as ServerHost
   const childProcess: {
     execFileSync(
@@ -381,18 +366,8 @@ export function initializeNodeSystem(): StartInput {
     cancellationToken = nullCancellationToken
   }
 
-  const localeStr = findArgument('--locale')
-  if (localeStr) {
-    validateLocaleAndSetLanguage(localeStr, sys)
-  }
-
-  const modeOrUnknown = parseServerMode()
-  let serverMode: LanguageServiceMode | undefined
+  const serverMode: LanguageServiceMode | undefined = LanguageServiceMode.Semantic
   let unknownServerMode: string | undefined
-  if (modeOrUnknown !== undefined) {
-    if (typeof modeOrUnknown === 'number') serverMode = modeOrUnknown
-    else unknownServerMode = modeOrUnknown
-  }
   return {
     args: process.argv,
     logger,
@@ -404,8 +379,8 @@ export function initializeNodeSystem(): StartInput {
 
   // TSS_LOG "{ level: "normal | verbose | terse", file?: string}"
   function createLogger() {
-    const cmdLineLogFileName = findArgument('--logFile')
-    const cmdLineVerbosity = getLogLevel(findArgument('--logVerbosity'))
+    const cmdLineLogFileName = undefined
+    const cmdLineVerbosity = getLogLevel(undefined)
     const envLogOptions = parseLoggingEnvironmentString(process.env.TSS_LOG)
 
     const unsubstitutedLogFileName = cmdLineLogFileName
@@ -517,9 +492,11 @@ function startNodeSession(
     }
   }
 
-  const typesMapLocation =
-    findArgument(Arguments.TypesMapLocation) ||
-    combinePaths(getDirectoryPath(sys.getExecutingFilePath()), 'typesMap.json')
+  const typesMapLocation = resolvePath(
+    getDirectoryPath(sys.getExecutingFilePath()),
+    '../../node_modules/typescript/lib',
+    'typesMap.json'
+  ) // TODO!!!!!!!!!
 
   const ioSession = new IOSession()
 

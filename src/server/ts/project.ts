@@ -148,6 +148,7 @@ import {
   WatchOptions,
   WatchType,
 } from './_namespaces/ts'
+import path from 'path'
 
 export enum ProjectKind {
   Inferred,
@@ -677,7 +678,10 @@ export abstract class Project implements LanguageServiceHost, ModuleResolutionHo
 
   getDefaultLibFileName() {
     const nodeModuleBinDir = getDirectoryPath(normalizePath(this.projectService.getExecutingFilePath()))
-    return combinePaths(nodeModuleBinDir, getDefaultLibFileName(this.compilerOptions))
+    return combinePaths(
+      path.resolve(nodeModuleBinDir, '..', '..', 'node_modules/typescript/lib'),
+      getDefaultLibFileName(this.compilerOptions)
+    ) // TODO!!!!!
   }
 
   useCaseSensitiveFileNames() {
