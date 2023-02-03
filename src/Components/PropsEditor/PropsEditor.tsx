@@ -82,7 +82,7 @@ const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...prop
         setValue(v)
         onChange(v || '')
       }}
-      value={value}
+      value={value || ''}
       {...props}
     />
   )

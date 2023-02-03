@@ -1,16 +1,13 @@
 import type { Fiber, Source } from 'react-reconciler'
 // import launchEditorEndpoint from 'react-dev-utils/launchEditorEndpoint'
-import queryString from 'querystring'
 import {
-  isNativeTagFiber,
-  isReactSymbolFiber,
-  isForwardRef,
   getDirectParentFiber,
-  getFiberName,
   getElementFiberUpward,
+  getFiberName,
+  isForwardRef,
+  isNativeTagFiber,
+  isReactSymbolFiber
 } from './fiber'
-import getComponentNameFromFiber from '../ReactDevtools/react-reconciler/src/getComponentNameFromFiber'
-import { getInternalReactConstants } from '../ReactDevtools/react-devtools-shared/src/backend/renderer'
 
 export interface CodeInfo {
   lineNumber: string
@@ -165,7 +162,6 @@ export const getReferenceFiber = (baseFiber?: Fiber): Fiber | undefined => {
   return originReferenceFiber
 }
 
-const { getDisplayNameForFiber } = getInternalReactConstants('18.2.0')
 export const getElementCodeInfo = (element: HTMLElement): CodeInfo | undefined => {
   const fiber: Fiber | undefined = getElementFiberUpward(element)
 

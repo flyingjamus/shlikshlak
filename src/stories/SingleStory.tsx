@@ -1,3 +1,4 @@
+import '../Devtools/Devtools'
 import { useParams } from 'react-router-dom'
 import { apiHooks } from '../client/apiClient'
 import { ComponentType, Suspense, useEffect, useState } from 'react'
@@ -22,9 +23,9 @@ export const SingleStory = () => {
   }, [id, data])
   if (!Comp) return null
   return (
-    <Suspense fallback={<CircularProgress />}>
-      <Comp />
-    </Suspense>
+    // <Suspense fallback={<CircularProgress />}>
+    <Comp />
+    // </Suspense>
   )
 }
 

@@ -1,6 +1,5 @@
 import type { Fiber } from 'react-reconciler'
 
-
 /**
  * only native html tag fiber's type will be string,
  * all the others (component / functional component / context) type will be function or object
@@ -16,27 +15,27 @@ export const isReactSymbolFiber = (fiber?: Fiber): boolean => typeof fiber?.type
 export const isForwardRef = (fiber?: Fiber): boolean =>
   fiber?.type?.$$typeof === Symbol.for('react.forward_ref')
 
-
 type FiberHTMLElement = HTMLElement & {
-  [fiberKey: string]: Fiber | undefined,
+  [fiberKey: string]: Fiber | undefined
 }
 
 /**
  * https://stackoverflow.com/questions/29321742/react-getting-a-component-from-a-dom-element-for-debugging
  */
 export const getElementFiber = (element: FiberHTMLElement): Fiber | undefined => {
-  const fiberKey = Object.keys(element).find(key => (
-    /**
-     * for react <= v16.13.1
-     * https://github.com/facebook/react/blob/v16.13.1/packages/react-dom/src/client/ReactDOMComponentTree.js#L21
-     */
-    key.startsWith('__reactInternalInstance$')
-    /**
-     * for react >= v16.14.0
-     * https://github.com/facebook/react/blob/v16.14.0/packages/react-dom/src/client/ReactDOMComponentTree.js#L39
-     */
-    || key.startsWith('__reactFiber$')
-  ))
+  const fiberKey = Object.keys(element).find(
+    (key) =>
+      /**
+       * for react <= v16.13.1
+       * https://github.com/facebook/react/blob/v16.13.1/packages/react-dom/src/client/ReactDOMComponentTree.js#L21
+       */
+      key.startsWith('__reactInternalInstance$') ||
+      /**
+       * for react >= v16.14.0
+       * https://github.com/facebook/react/blob/v16.14.0/packages/react-dom/src/client/ReactDOMComponentTree.js#L39
+       */
+      key.startsWith('__reactFiber$')
+  )
 
   if (fiberKey) {
     return element[fiberKey] as Fiber
@@ -70,7 +69,6 @@ export const getDirectParentFiber = (child: Fiber): Fiber | null => {
   }
   return null
 }
-
 
 /**
  * The displayName property is not guaranteed to be a string.

@@ -1,1 +1,0 @@
-export * from "react-test-renderer/src/ReactTestHostConfig";

@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 const A = () => {
   return (
     <B header={'Header ?!'} primary>
-      Hello!
+      Hello!1
     </B>
   )
 }
@@ -36,7 +36,7 @@ const C = ({
           <Stack direction={'column'} key={j}>
             {times(2).map((i) => (
               <Card sx={{ padding: '13px' }} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={header} action={'1'}></CardHeader>
+                <CardHeader sx={{ marginBottom: '12px' }} title={'Header!!!!1'} action={'123'}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}

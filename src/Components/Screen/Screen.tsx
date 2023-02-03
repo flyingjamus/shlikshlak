@@ -4,7 +4,7 @@ import { Preview } from '../Preview/Preview'
 import { Files } from '../Files/Files'
 import { EditorWrapper } from '../Editor/EditorWrapper'
 import '../../workers'
-import { Inspector } from '../Inspector/Inspector'
+// import { Inspector } from '../Inspector/Inspector'
 import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { Box } from '@mui/material'
 
@@ -12,7 +12,7 @@ const ELEMENT_MAP = {
   files: <Files />,
   preview: <Preview />,
   editor: <EditorWrapper />,
-  inspector: <Inspector />,
+  // inspector: <Inspector />,
   // inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
 } as const

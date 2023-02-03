@@ -1,12 +1,66 @@
 import { type AsyncMethodReturns, connectToParent } from 'penpal'
 import type { ParentMethods } from '../Components/Preview/Preview'
-import { getElementCodeInfo } from '../Components/ReactDevInspectorUtils/inspect'
-import { isEqual } from 'lodash-es'
-import { createBridge, initialize } from '../Components/ReactDevtools/react-devtools-inline/backend'
-import Agent from '../Components/ReactDevtools/react-devtools-shared/src/backend/agent'
-import { initBackend } from '../Components/ReactDevtools/react-devtools-shared/src/backend'
-import { useDevtoolsStore } from './DevtoolsStore'
+import {
+  getCodeInfoFromFiber,
+  getElementCodeInfo,
+  getReferenceFiber,
+} from '../Components/ReactDevInspectorUtils/inspect'
 import { getElementDimensions } from '../Components/ReactDevInspectorUtils/overlay'
+import { uniqueId } from 'lodash-es'
+import {
+  getDirectParentFiber,
+  getElementFiber,
+  getFiberName,
+} from '../Components/ReactDevInspectorUtils/fiber'
+import { Fiber } from 'react-reconciler'
+
+export type AppNode = {
+  id: number
+  index: number
+  key: string | null
+  tag: number
+  displayName?: string
+  parentId?: number | null
+}
+const fiberCache: WeakMap<Fiber, AppNode> = new WeakMap()
+const nodeMap = new Map<number, AppNode>()
+const fiberMap = new Map<number, Fiber>() // TODO memory leaks prob
+
+function fiberToNode(fiber?: Fiber) {
+  if (!fiber) return
+  if (fiber && !fiberCache.has(fiber)) {
+    const { index, key, tag, type } = fiber
+    const id = +uniqueId()
+
+    const parentFiber = getDirectParentFiber(fiber)
+    const node: AppNode = {
+      id,
+      index,
+      key,
+      tag,
+      displayName: getFiberName(fiber),
+      parentId: parentFiber && fiberToNode(parentFiber)?.id,
+    }
+
+    fiberCache.set(fiber, node)
+    nodeMap.set(id, node)
+    fiberMap.set(id, fiber)
+  }
+
+  return fiberCache.get(fiber)!
+}
+
+export async function getNode(id: number): Promise<AppNode | undefined> {
+  return nodeMap.get(id)
+}
+
+export function getDomNodeById(id: number) {
+  return fiberMap.get(id)?.stateNode
+}
+
+export function getNodeFromElement(element: Element) {
+  return fiberToNode(getElementFiber(element as any))
+}
 
 console.debug('Inside devtools')
 
@@ -14,62 +68,22 @@ let connectionMethods: AsyncMethodReturns<ParentMethods> | undefined = undefined
 
 const devtoolMethods = {
   init: () => {},
-  getCodeInfoFromPoint: ({
-    clientX,
-    clientY,
-    depth = 1,
-  }: {
-    clientX: number
-    clientY: number
-    depth?: number
-  }) => {
-    const nodes = document.elementsFromPoint(clientX, clientY)
-    const node = nodes[0]
-    if (!nodes) return
-
-    let remainingDepth = depth
-    let codeInfo = getElementCodeInfo(node)
-    let currentNode: HTMLElement | null = node
-    while (currentNode && codeInfo && remainingDepth) {
-      currentNode = currentNode.parentElement
-      const newCodeInfo = getElementCodeInfo(currentNode!)
-      if (!isEqual(newCodeInfo, codeInfo)) {
-        remainingDepth--
-        codeInfo = newCodeInfo
-      }
-    }
-
-    return codeInfo
-  },
-  idFromPoint: async (x?: number, y?: number) => {
-    if (x === undefined || y === undefined) return
-    const { getAgent } = useDevtoolsStore.getState()
-    const agent = getAgent()
+  nodesFromPoint: async (x: number, y: number) => {
     const nodes = document.elementsFromPoint(x, y)
-    const node = nodes[0]
-    return node && agent.getIDForNode(node)
+    return nodes.map((v) => getNodeFromElement(v)).filter(Boolean)
   },
-  elementStyle: async (id: number, rendererId: number) => {
-    const { getAgent } = useDevtoolsStore.getState()
-    const agent = getAgent()
-    const renderer = agent.rendererInterfaces[rendererId]
-    const rendererNodes =
-      (id && (renderer?.findNativeNodesForFiberID(id) as any as Array<HTMLElement> | null | undefined)) ||
-      undefined
-
-    return rendererNodes?.map(
-      (v) =>
-        ({
-          rect: v.getBoundingClientRect(),
-          dims: getElementDimensions(v),
-        } as const)
-    )
+  getNodeById: (id: number) => {
+    return getNode(id)
   },
-  sourceFromId: async (id: number, rendererId: number) => {
-    const agent = useDevtoolsStore.getState().getAgent()
-    const renderer = agent.rendererInterfaces[rendererId]
-    const nativeNodes = renderer.findNativeNodesForFiberID(id)
-    return nativeNodes?.map((node) => getElementCodeInfo(node as HTMLElement))
+  elementStyle: async (id: number) => {
+    const domNode: Element = getDomNodeById(id)
+    return domNode ? [{ rect: domNode.getBoundingClientRect(), dims: getElementDimensions(domNode) }] : []
+  },
+  sourceFromId: async (id: number) => {
+    const fiber = fiberMap.get(id)
+    const referenceFiber = getReferenceFiber(fiber)
+    console.log(referenceFiber, getCodeInfoFromFiber(referenceFiber))
+    return getCodeInfoFromFiber(referenceFiber)
   },
 }
 
@@ -82,17 +96,7 @@ const connection = connectToParent<ParentMethods>({
 
 connection.promise.then((parentMethods) => {
   console.log('Connected to parent')
-  const bridge = createBridge(window)
-  const agent = new Agent(bridge)
   const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
-  bridge.emit('startInspectingNative')
-  agent.addListener('selectFiber', (v) => console.log('Select fiber', v))
-  agent.addListener('showNativeHighlight', (v) => console.log('Show native', v))
-  useDevtoolsStore.setState({ bridge, agent })
-
-  if (hook) {
-    initBackend(hook, agent, window)
-  }
 
   connectionMethods = parentMethods
 })

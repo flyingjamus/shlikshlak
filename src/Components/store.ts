@@ -2,7 +2,6 @@ import create, { StoreApi, UseBoundStore } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { del as removeItem, get as getItem, set as setItem } from 'idb-keyval'
 import { AsyncMethodReturns } from 'penpal'
-import type Protocol from 'devtools-protocol'
 import type { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { PanelsResponse } from '../Shared/PanelTypes'
@@ -11,8 +10,6 @@ import { WorkerAdapter } from '../tsworker/workerAdapter'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
 import type { DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
-import Store from './ReactDevtools/react-devtools-shared/src/devtools/store'
-import { FrontendBridge } from './ReactDevtools/react-devtools-shared/src/bridge'
 
 export type AppFile = {
   path: string
@@ -57,8 +54,6 @@ interface IframeStore {
   iframe?: HTMLIFrameElement | null
   frontendReady: boolean
   childConnection?: AsyncMethodReturns<DevtoolsMethods>
-  rootNode?: Protocol.DOM.Node
-  nodesMap?: Map<number, Protocol.DOM.Node>
   expandedIds: string[]
   swProxy?: Remote<ServiceWorkerAPI>
   workerAdapter?: WorkerAdapter
@@ -70,8 +65,6 @@ interface IframeStore {
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile
   hoveringComponent?: { x: number; y: number }
-  devtoolsStore?: Store
-  devtoolsBridge?: FrontendBridge
 }
 export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "module": "CommonJS"
   },
-  "include": ["**/*.ts", "../src/Components/ReactDevtools/react-devtools-inline"]
+  "include": ["**/*.ts"]
 }

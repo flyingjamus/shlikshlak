@@ -5,7 +5,6 @@ import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { IRange } from 'monaco-editor-core'
 import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
-import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
 import { DevtoolsOverlay } from '../../Devtools/DevtoolsOverlay'
 
 const StyledIframe = styled('iframe')({
@@ -76,14 +75,14 @@ export const Preview = () => {
   //   const iframe = iframeRef.current?.parentElement
   //   if (!iframe) return
   //   const { x, y } = iframe.getBoundingClientRect()
-  //   // const id = await childConnection?.idFromPoint({
+  //   // const id = await childConnection?.nodesFromPoint({
   //   //   clientX: e.clientX - x,
   //   //   clientY: e.clientY - y,
   //   // })
   //   let parent = store?.getElementByID(id)
   //   while (parent) {
-  //     console.log(parent, parent.parentID)
-  //     parent = parent.parentID && store?.getElementByID(parent.parentID)
+  //     console.log(parent, parent.parentId)
+  //     parent = parent.parentId && store?.getElementByID(parent.parentId)
   //   }
   //   console.log(x, y, id, store?.getElementByID(id))
   // }
@@ -103,13 +102,9 @@ export const Preview = () => {
 
       connection.promise.then(async (childConnection) => {
         console.debug('Connected to child')
-        const bridge = createBridge(window)
-        const store = createStore(bridge)
         await childConnection.init()
         useIframeStore.setState({
           childConnection: childConnection,
-          devtoolsBridge: bridge,
-          devtoolsStore: store,
         })
       })
       return () => {
@@ -123,6 +118,7 @@ export const Preview = () => {
       <DevtoolsOverlay />
       <StyledIframe
         src={ready ? '/stories/example--story-root' : undefined}
+        // src={ready ? 'http://localhost:3002/login' : undefined}
         // src={ready ? '/stories/example-thin--story-root' : undefined}
         onLoad={() => {}}
         ref={iframeRef}

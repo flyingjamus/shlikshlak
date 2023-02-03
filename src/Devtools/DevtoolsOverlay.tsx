@@ -1,13 +1,11 @@
 import { Box } from '@mui/material'
 import { useEffect, useRef } from 'react'
-import type { Element } from '../Components/ReactDevtools/react-devtools-shared/src/devtools/views/Components/types'
 import { last, throttle } from 'lodash-es'
-import {
-  getElementDimensions,
-  getNestedBoundingClientRect,
-} from '../Components/ReactDevInspectorUtils/overlay'
 import { useIframeStore } from '../Components/store'
 import { apiHooks } from '../client/apiClient'
+import type { AppNode } from './Devtools'
+
+const store = null
 
 function setStyle(elem: HTMLElement, propertyObject: Partial<CSSStyleDeclaration>) {
   for (const property in propertyObject) elem.style[property] = propertyObject[property] as string
@@ -36,7 +34,6 @@ export const DevtoolsOverlay = () => {
   const selectedRef = useRef<HTMLDivElement>(null)
   const ref = useRef<HTMLDivElement>()
   const childConnection = useIframeStore((v) => v.childConnection)
-  const store = useIframeStore((v) => v.devtoolsStore)
   const { data: initData } = apiHooks.useQuery('/init')
   const rootPath = initData?.rootPath || ''
 
@@ -49,30 +46,30 @@ export const DevtoolsOverlay = () => {
 
     const current = ref.current!
 
-    const getAncestors = (element: Element) => {
-      let parent: Element | null | undefined = element
-      const res: Element[] = []
+    const getAncestors = async (element: AppNode) => {
+      let parent: AppNode | null | undefined = element
+      const res: AppNode[] = []
       // TODO id StoryRoot better
       while (parent && parent.displayName !== 'StoryRoot') {
         res.push(parent)
-        parent = (parent.parentID && store?.getElementByID(parent.parentID)) || undefined
+        parent = (parent.parentId && (await childConnection?.getNodeById(parent.parentId))) || undefined
       }
       return res
     }
 
     const listener = throttle(async () => {
-      const elementId = await childConnection?.idFromPoint(x, y)
-      const hoverElement = elementId && store?.getElementByID(elementId)
+      if (!x || !y || !childConnection) return
+      const hoverAncestors = await childConnection.nodesFromPoint(x, y)
+      const hoverElement = hoverAncestors[0]
       if (hoverElement) {
-        const hoverAncestors = getAncestors(hoverElement)
         if (ctrl) {
-          highlightedId = elementId
+          highlightedId = hoverElement.id
         } else if (selectedId) {
-          const selected = store?.getElementByID(selectedId)
+          const selected = await childConnection.getNodeById(selectedId)
           if (selected) {
-            const selectedAncestors = getAncestors(selected)
+            const selectedAncestors = await getAncestors(selected)
             for (const element of hoverAncestors) {
-              if (element.parentID && selectedAncestors.some((v) => v.id === element.parentID)) {
+              if (element?.parentId && selectedAncestors.some((v) => v.id === element.parentId)) {
                 highlightedId = element.id
                 break
               }
@@ -99,12 +96,9 @@ export const DevtoolsOverlay = () => {
     }, 100)
 
     const setElementStyle = async (highlightedId: number, el: HTMLElement) => {
-      const rendererIDForElement = store?.getRendererIDForElement(highlightedId)
-      if (rendererIDForElement) {
-        const elementStyle = await childConnection?.elementStyle(highlightedId, rendererIDForElement)
-        const highlightStyle = getHightlightStyle(elementStyle?.[0]?.rect)
-        setStyle(el, highlightStyle)
-      }
+      const elementStyle = await childConnection?.elementStyle(highlightedId)
+      const highlightStyle = getHightlightStyle(elementStyle?.[0]?.rect)
+      setStyle(el, highlightStyle)
     }
 
     const clickListener = async (e: MouseEvent) => {
@@ -121,19 +115,16 @@ export const DevtoolsOverlay = () => {
       } else {
         setElementStyle(selectedId, selectedEl)
 
-        const rendererID = store?.getRendererIDForElement(selectedId)
-        if (rendererID) {
-          const res = await childConnection?.sourceFromId(selectedId, rendererID)
-          const path = res?.[0]?.absolutePath?.slice(rootPath?.length + 1)
-          if (res?.[0]) {
-            useIframeStore.setState({
-              selectedComponent: {
-                path: path,
-                lineNumber: +res[0].lineNumber,
-                columnNumber: +res[0].columnNumber,
-              },
-            })
-          }
+        const res = await childConnection?.sourceFromId(selectedId)
+        const path = res?.absolutePath?.slice(rootPath?.length + 1)
+        if (res && path) {
+          useIframeStore.setState({
+            selectedComponent: {
+              path: path,
+              lineNumber: +res.lineNumber,
+              columnNumber: +res.columnNumber,
+            },
+          })
         }
       }
       listener()
