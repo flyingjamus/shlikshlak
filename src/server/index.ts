@@ -8,8 +8,7 @@ import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import globby from 'globby'
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
 import getGeneratedList from '../stories/ParseStories/generate/get-generated-list'
-import { getPanelsAtLocation, getPanelsAtPosition, setAttributeAtPosition } from './ts'
-import PQueue from 'p-queue'
+import { getPanelsAtLocation, setAttributeAtPosition } from './ts'
 
 export interface RuntimeDirEntry {
   name: string

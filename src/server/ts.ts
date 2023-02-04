@@ -28,10 +28,12 @@ import { MatcherContext, PANELS } from '../tsworker/Panels'
 import path from 'path'
 import { SetAttributesAtPositionRequest } from '../common/api'
 import { initializeNodeSystem } from './nodeServer'
-import { logger } from './logger'
 import prettier from 'prettier'
+import { createLogger } from './logger'
+export const logger = createLogger('ts')
 
-const FILE = 'src/stories/example.stories.tsx'
+// const FILE = 'src/stories/example.stories.tsx'
+const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
 
 const { startSession, logger: ioLogger, cancellationToken } = initializeNodeSystem()
 const ioSession = startSession(
@@ -179,7 +181,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
       return {
         attributes: [...attributes],
         existingAttributes: existingIncludingChildren,
-        location: parent.attributes.pos,
+        location: parent.pos,
         fileName,
         range: getRange(parent),
       }
@@ -189,6 +191,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
 }
 
 function requireSourceFile(fileName: string) {
+  logger.debug('Require source file ' + fileName)
   const sourceFile = project.getLanguageService().getProgram()!.getSourceFile(fileName)
   if (!sourceFile) throw new Error('Source file not found ' + fileName)
   return sourceFile
@@ -318,10 +321,12 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
         console.error('Attributes not found')
         return
       }
-      const jsxNode = token.parent.parent.parent.parent
+      // const jsxNode = token.parent.parent.parent.parent
+      const jsxNode = token.parent.parent
       const childrenNodes = isJsxElement(jsxNode) && jsxNode.children
       const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
       if (attrName === 'children') {
+        debugger
         if (childrenNodes) {
           if (childrenNodes.length) {
             t.replaceRangeWithText(

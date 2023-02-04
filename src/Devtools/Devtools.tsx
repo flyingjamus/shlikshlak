@@ -32,7 +32,8 @@ function fiberToNode(fiber?: Fiber) {
     const { index, key, tag, type } = fiber
     const id = +uniqueId()
 
-    const parentFiber = getDirectParentFiber(fiber)
+    // const parentFiber = getDirectParentFiber(fiber)
+    const parentFiber = fiber.return
     const node: AppNode = {
       id,
       index,
@@ -62,8 +63,6 @@ export function getNodeFromElement(element: Element) {
   return fiberToNode(getElementFiber(element as any))
 }
 
-console.debug('Inside devtools')
-
 let connectionMethods: AsyncMethodReturns<ParentMethods> | undefined = undefined
 
 const devtoolMethods = {
@@ -82,7 +81,6 @@ const devtoolMethods = {
   sourceFromId: async (id: number) => {
     const fiber = fiberMap.get(id)
     const referenceFiber = getReferenceFiber(fiber)
-    console.log(referenceFiber, getCodeInfoFromFiber(referenceFiber))
     return getCodeInfoFromFiber(referenceFiber)
   },
 }
@@ -96,15 +94,7 @@ const connection = connectToParent<ParentMethods>({
 
 connection.promise.then((parentMethods) => {
   console.log('Connected to parent')
-  const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
+  // const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
 
   connectionMethods = parentMethods
 })
-
-// const el = document.createElement('div')
-// document.body.append(el)
-// ReactDOM.createRoot(el as HTMLElement).render(
-//   // <React.StrictMode>
-//   <DevtoolsOverlay />
-//   // </React.StrictMode>
-// )

@@ -68,6 +68,7 @@ export const DevtoolsOverlay = () => {
           const selected = await childConnection.getNodeById(selectedId)
           if (selected) {
             const selectedAncestors = await getAncestors(selected)
+            console.log(selectedAncestors)
             for (const element of hoverAncestors) {
               if (element?.parentId && selectedAncestors.some((v) => v.id === element.parentId)) {
                 highlightedId = element.id
@@ -116,7 +117,8 @@ export const DevtoolsOverlay = () => {
         setElementStyle(selectedId, selectedEl)
 
         const res = await childConnection?.sourceFromId(selectedId)
-        const path = res?.absolutePath?.slice(rootPath?.length + 1)
+        // const path = res?.absolutePath?.slice(rootPath?.length + 1)
+        const path = res?.absolutePath
         if (res && path) {
           useIframeStore.setState({
             selectedComponent: {

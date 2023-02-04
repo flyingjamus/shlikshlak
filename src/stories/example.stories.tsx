@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 const A = () => {
   return (
     <B header={'Header ?!'} primary>
-      Hello!1
+      Hello!11
     </B>
   )
 }
@@ -29,14 +29,14 @@ const C = ({
     <div suppressContentEditableWarning>
       <div className={className}>
         Inner
-        <Button placeholder="Hello">sadklhasklj</Button>
+        <Button placeholder={'Hello?'}>sadklhasklj1321312312</Button>
       </div>
       <Stack direction={'row'} flexWrap={'wrap'}>
         {times(2).map((j) => (
           <Stack direction={'column'} key={j}>
             {times(2).map((i) => (
               <Card sx={{ padding: '13px' }} key={i}>
-                <CardHeader sx={{ marginBottom: '12px' }} title={'Header!!!!1'} action={'123'}></CardHeader>
+                <CardHeader sx={{ marginBottom: '12px' }} title={'Hello?1'} action={'12321'}></CardHeader>
                 <CardContent>{children}</CardContent>
               </Card>
             ))}

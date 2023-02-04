@@ -1,6 +1,7 @@
 import {
   Box,
   Checkbox,
+  LinearProgress,
   List,
   ListItem,
   ListItemIcon,
@@ -120,7 +121,11 @@ const PropEditor = ({
 export const PropsEditorWrapper = () => {
   // const panels = useIframeStore((v) => v.panels)
   const openFile = useIframeStore((v) => v.selectedComponent)
-  const { data: panels, refetch } = useQuery(['getPanelsAtPosition', openFile], () => {
+  const {
+    data: panels,
+    refetch,
+    isLoading,
+  } = useQuery(['getPanelsAtPosition', openFile], () => {
     if (!openFile) return
     const { columnNumber, lineNumber, path } = openFile
     return apiClient.post('/lang/getPanelsAtPosition', {
@@ -129,7 +134,13 @@ export const PropsEditorWrapper = () => {
       colNumber: columnNumber,
     })
   })
-  if (!panels) return null
+  if (!openFile) return null
+  if (isLoading)
+    return (
+      <Box>
+        <LinearProgress />
+      </Box>
+    )
 
   return (
     <PropsEditor

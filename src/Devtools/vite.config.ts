@@ -3,19 +3,21 @@ import { resolve } from 'path'
 
 export default defineConfig({
   build: {
-    sourcemap: 'inline',
+    sourcemap: false,
     commonjsOptions: {
       include: [/node_modules/],
     },
+    target: 'esnext',
     rollupOptions: {
-      external: ['/@react-refresh'],
+      // external: ['/@react-refresh'],
     },
     lib: {
-      entry: [resolve(__dirname, 'Devtools.tsx')],
+      entry: resolve(__dirname, 'Devtools.tsx'),
       name: 'Devtools',
-      fileName: (format, entryName) => {
-        return `${entryName}.${format === 'cjs' ? 'cjs' : 'js'}`
-      },
+      fileName: 'Devtools',
+      // fileName: (format, entryName) => {
+      //   return `${entryName}.${format === 'cjs' ? 'cjs' : 'js'}`
+      // },
       // formats: ['es']
     },
   },
