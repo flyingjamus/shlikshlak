@@ -9,16 +9,16 @@ export default defineConfig({
     },
     target: 'esnext',
     rollupOptions: {
-      // external: ['/@react-refresh'],
+      external: ['react'],
     },
     lib: {
-      entry: resolve(__dirname, 'Devtools.tsx'),
+      entry: [resolve(__dirname, 'Devtools.tsx'), resolve(__dirname, 'hook.ts')],
       name: 'Devtools',
-      fileName: 'Devtools',
+      // fileName: 'Devtools',
       // fileName: (format, entryName) => {
       //   return `${entryName}.${format === 'cjs' ? 'cjs' : 'js'}`
       // },
-      // formats: ['es']
+      formats: ['es', 'cjs']
     },
   },
   clearScreen: false,

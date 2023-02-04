@@ -2,16 +2,11 @@ import { type AsyncMethodReturns, connectToParent } from 'penpal'
 import type { ParentMethods } from '../Components/Preview/Preview'
 import {
   getCodeInfoFromFiber,
-  getElementCodeInfo,
-  getReferenceFiber,
+  getReferenceFiber
 } from '../Components/ReactDevInspectorUtils/inspect'
 import { getElementDimensions } from '../Components/ReactDevInspectorUtils/overlay'
 import { uniqueId } from 'lodash-es'
-import {
-  getDirectParentFiber,
-  getElementFiber,
-  getFiberName,
-} from '../Components/ReactDevInspectorUtils/fiber'
+import { getElementFiber } from '../Components/ReactDevInspectorUtils/fiber'
 import { Fiber } from 'react-reconciler'
 
 export type AppNode = {
@@ -39,7 +34,7 @@ function fiberToNode(fiber?: Fiber) {
       index,
       key,
       tag,
-      displayName: getFiberName(fiber),
+      displayName: window.getDisplayNameForFiber(fiber),
       parentId: parentFiber && fiberToNode(parentFiber)?.id,
     }
 
