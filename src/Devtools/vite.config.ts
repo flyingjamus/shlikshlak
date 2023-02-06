@@ -9,7 +9,7 @@ export default defineConfig({
     },
     target: 'esnext',
     rollupOptions: {
-      external: ['react'],
+      external: ['react', 'react-devtools-inline/backend'],
     },
     lib: {
       entry: [resolve(__dirname, 'Devtools.tsx'), resolve(__dirname, 'hook.ts')],

@@ -141,6 +141,7 @@ export const PropsEditorWrapper = () => {
         <LinearProgress />
       </Box>
     )
+  if (!panels) return null
 
   return (
     <PropsEditor

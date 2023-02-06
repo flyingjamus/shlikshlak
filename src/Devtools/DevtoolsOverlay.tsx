@@ -4,6 +4,7 @@ import { last, throttle } from 'lodash-es'
 import { useIframeStore } from '../Components/store'
 import { apiHooks } from '../client/apiClient'
 import type { AppNode } from './Devtools'
+import { useDevtoolsStore } from './DevtoolsStore'
 
 const store = null
 
@@ -29,6 +30,10 @@ function getHightlightStyle(rect?: DOMRect) {
   }
 }
 
+function setHighlightedId(id: number | undefined) {
+  useDevtoolsStore.setState({ highlightedId: id })
+}
+
 export const DevtoolsOverlay = () => {
   const highlightRef = useRef<HTMLDivElement>(null)
   const selectedRef = useRef<HTMLDivElement>(null)
@@ -37,12 +42,25 @@ export const DevtoolsOverlay = () => {
   const { data: initData } = apiHooks.useQuery('/init')
   const rootPath = initData?.rootPath || ''
 
+  const highlightedId = useDevtoolsStore((v) => v.highlightedId)
+  const selectedId = useDevtoolsStore((v) => v.selectedId)
+
   useEffect(() => {
-    let highlightedId: number | undefined
-    let selectedId: number | undefined
+    ;(async () => {
+      const el = highlightRef.current
+      if (highlightedId && el) {
+        const elementStyle = await childConnection?.elementStyle(highlightedId)
+        const highlightStyle = getHightlightStyle(elementStyle?.[0]?.rect)
+        setStyle(el, highlightStyle)
+      }
+    })()
+  }, [childConnection, highlightedId])
+
+  useEffect(() => {
     let x: number | undefined = undefined
     let y: number | undefined = undefined
     let ctrl = false
+    let hoverAncestors: AppNode[] | undefined
 
     const current = ref.current!
 
@@ -58,32 +76,35 @@ export const DevtoolsOverlay = () => {
     }
 
     const listener = throttle(async () => {
+      const highlightedId = useDevtoolsStore.getState().highlightedId
+      const selectedId = useDevtoolsStore.getState().selectedId
       if (!x || !y || !childConnection) return
-      const hoverAncestors = await childConnection.nodesFromPoint(x, y)
+      hoverAncestors = await childConnection.nodesFromPoint(x, y)
+
       const hoverElement = hoverAncestors[0]
       if (hoverElement) {
-        if (ctrl) {
-          highlightedId = hoverElement.id
+        if (!ctrl) {
+          setHighlightedId(hoverElement.id)
         } else if (selectedId) {
           const selected = await childConnection.getNodeById(selectedId)
           if (selected) {
             const selectedAncestors = await getAncestors(selected)
-            console.log(selectedAncestors)
-            for (const element of hoverAncestors) {
-              if (element?.parentId && selectedAncestors.some((v) => v.id === element.parentId)) {
-                highlightedId = element.id
+            for (const [i, element] of hoverAncestors.entries()) {
+              const parent = hoverAncestors[i + 1]
+              if (parent && selectedAncestors.some((v) => v.id === parent.id)) {
+                setHighlightedId(element.id)
                 break
               }
             }
             if (!highlightedId) {
-              highlightedId = last(hoverAncestors)?.id
+              setHighlightedId(last(hoverAncestors)?.id)
             }
           }
         } else {
-          highlightedId = last(hoverAncestors)?.id
+          setHighlightedId(last(hoverAncestors)?.id)
         }
-        if (highlightedId === selectedId) {
-          highlightedId = undefined
+        if (useDevtoolsStore.getState().highlightedId === useDevtoolsStore.getState().selectedId) {
+          setHighlightedId(undefined)
         }
       }
 
@@ -102,21 +123,16 @@ export const DevtoolsOverlay = () => {
       setStyle(el, highlightStyle)
     }
 
-    const clickListener = async (e: MouseEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
+    const highlightById = async (id: number) => {
       const selectedEl = selectedRef.current
       if (!selectedEl) return
-
-      if (highlightedId) {
-        selectedId = highlightedId
-      }
-      if (!selectedId) {
+      useDevtoolsStore.setState({ selectedId: id })
+      if (!id) {
         selectedEl.style.display = 'none'
       } else {
-        setElementStyle(selectedId, selectedEl)
+        setElementStyle(id, selectedEl)
 
-        const res = await childConnection?.sourceFromId(selectedId)
+        const res = await childConnection?.sourceFromId(id)
         // const path = res?.absolutePath?.slice(rootPath?.length + 1)
         const path = res?.absolutePath
         if (res && path) {
@@ -129,7 +145,21 @@ export const DevtoolsOverlay = () => {
           })
         }
       }
+
       listener()
+    }
+
+    const clickListener = async (e: MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      const highlightedId = useDevtoolsStore.getState().highlightedId
+      const selected = highlightedId && (await childConnection?.getNodeById(highlightedId))
+      const selectedAncestors = selected && (await getAncestors(selected))
+      useIframeStore.setState({ elementsStack: selectedAncestors || undefined })
+      if (highlightedId) {
+        await highlightById(highlightedId)
+      }
     }
 
     const keyDownListener = (e: KeyboardEvent) => {
@@ -153,7 +183,7 @@ export const DevtoolsOverlay = () => {
     }
 
     const mouseOutListener = (e: MouseEvent) => {
-      highlightedId = undefined
+      setHighlightedId(undefined)
       x = undefined
       y = undefined
       listener()
@@ -171,10 +201,13 @@ export const DevtoolsOverlay = () => {
       window.removeEventListener('keyup', keyUpListener)
       current.removeEventListener('mouseout', mouseOutListener)
     }
-  }, [childConnection, rootPath?.length, store])
+  }, [childConnection, highlightedId, rootPath.length, selectedId])
 
   return (
-    <Box ref={ref} sx={{ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0 }}>
+    <Box
+      ref={ref}
+      sx={{ position: 'absolute', width: '100%', height: '100%', left: 0, top: 0, overflow: 'hidden' }}
+    >
       <Box
         ref={highlightRef}
         sx={{

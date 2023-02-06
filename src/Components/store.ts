@@ -6,9 +6,8 @@ import type { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import { StateStorage } from 'zustand/middleware/persist'
-import { WorkerAdapter } from '../tsworker/workerAdapter'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
-import type { DevtoolsMethods } from '../Devtools/Devtools'
+import type { AppNode, DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
 
 export type AppFile = {
@@ -56,7 +55,6 @@ interface IframeStore {
   childConnection?: AsyncMethodReturns<DevtoolsMethods>
   expandedIds: string[]
   swProxy?: Remote<ServiceWorkerAPI>
-  workerAdapter?: WorkerAdapter
   openFile?: OpenFile
   readFile?: (fileName: string) => Promise<string | undefined>
   panels?: PanelsResponse
@@ -65,6 +63,7 @@ interface IframeStore {
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile
   hoveringComponent?: { x: number; y: number }
+  elementsStack?: AppNode[]
 }
 export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(

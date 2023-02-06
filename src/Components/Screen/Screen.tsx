@@ -7,6 +7,7 @@ import '../../workers'
 // import { Inspector } from '../Inspector/Inspector'
 import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { Box } from '@mui/material'
+import { ElementsStack } from '../PropsEditor/ElementsStack'
 
 const ELEMENT_MAP = {
   files: <Files />,
@@ -15,6 +16,7 @@ const ELEMENT_MAP = {
   // inspector: <Inspector />,
   // inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
+  elements: <ElementsStack />,
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
@@ -27,7 +29,7 @@ export const Screen = () => {
       renderTile={(id, path) => ELEMENT_MAP[id]}
       initialValue={{
         direction: 'row',
-        first: 'editor',
+        first: 'elements',
         second: {
           first: 'props',
           second: 'preview',

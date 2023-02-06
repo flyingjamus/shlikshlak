@@ -5957,6 +5957,14 @@ react-dev-utils@^12.0.1:
     strip-ansi "^6.0.1"
     text-table "^0.2.0"
 
+react-devtools-inline@^4.27.1:
+  version "4.27.1"
+  resolved "https://registry.yarnpkg.com/react-devtools-inline/-/react-devtools-inline-4.27.1.tgz#9e08e0c3093c98ffa99754ad4b04e0f2ce94203b"
+  integrity sha512-jOYZcnHbpCTrxMIJEduasX2ExZ8ppimusGzpk45aJGauBiGGwqJ1Q+KETmHidsNGK6O3Ao/osBmvVdwgowcq8w==
+  dependencies:
+    source-map-js "^0.6.2"
+    sourcemap-codec "^1.4.8"
+
 react-dnd-html5-backend@^14.1.0:
   version "14.1.0"
   resolved "https://registry.yarnpkg.com/react-dnd-html5-backend/-/react-dnd-html5-backend-14.1.0.tgz#b35a3a0c16dd3a2bfb5eb7ec62cf0c2cace8b62f"
@@ -6591,6 +6599,11 @@ sort-by@^1.2.0:
   integrity sha512-aRyW65r3xMnf4nxJRluCg0H/woJpksU1dQxRtXYzau30sNBOmf5HACpDd9MZDhKh7ALQ5FgSOfMPwZEtUmMqcg==
   dependencies:
     object-path "0.6.0"
+
+source-map-js@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-0.6.2.tgz#0bb5de631b41cfbda6cfba8bd05a80efdfd2385e"
+  integrity sha512-/3GptzWzu0+0MBQFrDKzw/DvvMTUORvgY6k6jd/VS6iCR4RDTKWH6v6WPwQoUO8667uQEf9Oe38DxAYWY5F/Ug==
 
 source-map-js@^1.0.2:
   version "1.0.2"

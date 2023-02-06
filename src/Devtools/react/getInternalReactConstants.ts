@@ -1,5 +1,4 @@
 import { Fiber } from 'react-reconciler'
-
 import { gt, gte } from 'semver'
 import {
   CONCURRENT_MODE_NUMBER,
@@ -19,7 +18,7 @@ import {
   SCOPE_SYMBOL_STRING,
   SERVER_CONTEXT_SYMBOL_STRING,
   STRICT_MODE_NUMBER,
-  STRICT_MODE_SYMBOL_STRING,
+  STRICT_MODE_SYMBOL_STRING
 } from './ReactSymbols'
 import { getDisplayName, getWrappedDisplayName } from './getDisplayName'
 
@@ -73,14 +72,7 @@ type ReactTypeOfSideEffectType = {
   Hydrating: number
 }
 
-export function getInternalReactConstants(version: string): {
-  getDisplayNameForFiber: getDisplayNameForFiberType
-  getTypeSymbol: getTypeSymbolType
-  ReactPriorityLevels: ReactPriorityLevelsType
-  ReactTypeOfSideEffect: ReactTypeOfSideEffectType
-  ReactTypeOfWork: WorkTagMap
-  StrictModeBits: number
-} {
+export function getInternalReactConstants(version: string) {
   const ReactTypeOfSideEffect: ReactTypeOfSideEffectType = {
     DidCapture: 0b10000000,
     NoFlags: 0b00,
@@ -344,9 +336,8 @@ export function getInternalReactConstants(version: string): {
   // **********************************************************
   // End of copied code.
   // **********************************************************
-  function getTypeSymbol(type: any): Symbol | number {
+  function getTypeSymbol(type: any): Symbol | number | string {
     const symbolOrNumber = typeof type === 'object' && type !== null ? type.$$typeof : type
-    // $FlowFixMe Flow doesn't know about typeof "symbol"
     return typeof symbolOrNumber === 'symbol' ? symbolOrNumber.toString() : symbolOrNumber
   }
 
@@ -374,7 +365,7 @@ export function getInternalReactConstants(version: string): {
     TracingMarkerComponent,
   } = ReactTypeOfWork
 
-  function resolveFiberType(type: any) {
+  function resolveFiberType(type: any): any {
     const typeSymbol = getTypeSymbol(type)
 
     switch (typeSymbol) {
@@ -418,7 +409,7 @@ export function getInternalReactConstants(version: string): {
       case ForwardRef:
         return getWrappedDisplayName(elementType, resolvedType, 'ForwardRef', 'Anonymous')
 
-      case HostRoot:
+      case HostRoot: {
         const fiberRoot = fiber.stateNode
 
         if (fiberRoot != null && fiberRoot._debugRootType !== null) {
@@ -426,6 +417,7 @@ export function getInternalReactConstants(version: string): {
         }
 
         return null
+      }
 
       case HostComponent:
         return type
@@ -467,7 +459,7 @@ export function getInternalReactConstants(version: string): {
       case TracingMarkerComponent:
         return 'TracingMarker'
 
-      default:
+      default: {
         const typeSymbol = getTypeSymbol(type)
 
         switch (typeSymbol) {
@@ -512,6 +504,7 @@ export function getInternalReactConstants(version: string): {
             // This may mean a new element type that has not yet been added to DevTools.
             return null
         }
+      }
     }
   }
 

@@ -1,7 +1,6 @@
 import { getInternalReactConstants } from './react/getInternalReactConstants'
 
 function installHook(target: any) {
-  console.log('Loading')
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
     return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
   }
@@ -492,12 +491,14 @@ function installHook(target: any) {
     },
   })
 
-  console.log('loaded')
+  console.log('Loaded hook')
   return hook
 }
 
 const hook = installHook(window)
 
+type ReactRenderer = { version: string; reconcilerVersion?: string }
+window.__shlikshlak__ = {} as any
 const attachRenderer = (id: number, renderer: ReactRenderer) => {
   const version = renderer.reconcilerVersion || renderer.version
   const {
@@ -508,7 +509,7 @@ const attachRenderer = (id: number, renderer: ReactRenderer) => {
     ReactTypeOfSideEffect,
     StrictModeBits,
   } = getInternalReactConstants(version)
-  window.getDisplayNameForFiber = getDisplayNameForFiber
+  window.__shlikshlak__.getDisplayNameForFiber = getDisplayNameForFiber
 }
 
 // Connect renderers that have already injected themselves.

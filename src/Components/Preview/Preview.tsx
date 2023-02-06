@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
-import { IRange } from 'monaco-editor-core'
-import { getTypescriptWorker } from '../../tsworker/GetTypescriptWorker'
 import { DevtoolsOverlay } from '../../Devtools/DevtoolsOverlay'
 
 const StyledIframe = styled('iframe')({

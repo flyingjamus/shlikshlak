@@ -1,20 +1,20 @@
 import { type AsyncMethodReturns, connectToParent } from 'penpal'
 import type { ParentMethods } from '../Components/Preview/Preview'
-import {
-  getCodeInfoFromFiber,
-  getReferenceFiber
-} from '../Components/ReactDevInspectorUtils/inspect'
+import { getCodeInfoFromFiber, getReferenceFiber } from '../Components/ReactDevInspectorUtils/inspect'
 import { getElementDimensions } from '../Components/ReactDevInspectorUtils/overlay'
 import { uniqueId } from 'lodash-es'
 import { getElementFiber } from '../Components/ReactDevInspectorUtils/fiber'
 import { Fiber } from 'react-reconciler'
+import { isDefined } from 'ts-is-defined'
+
+const s = window.__shlikshlak__
 
 export type AppNode = {
   id: number
   index: number
   key: string | null
   tag: number
-  displayName?: string
+  displayName?: string | null
   parentId?: number | null
 }
 const fiberCache: WeakMap<Fiber, AppNode> = new WeakMap()
@@ -29,12 +29,13 @@ function fiberToNode(fiber?: Fiber) {
 
     // const parentFiber = getDirectParentFiber(fiber)
     const parentFiber = fiber.return
+    const referenceFiber = getReferenceFiber(fiber)
     const node: AppNode = {
       id,
       index,
       key,
       tag,
-      displayName: window.getDisplayNameForFiber(fiber),
+      displayName: s.getDisplayNameForFiber(fiber),
       parentId: parentFiber && fiberToNode(parentFiber)?.id,
     }
 
@@ -64,7 +65,9 @@ const devtoolMethods = {
   init: () => {},
   nodesFromPoint: async (x: number, y: number) => {
     const nodes = document.elementsFromPoint(x, y)
-    return nodes.map((v) => getNodeFromElement(v)).filter(Boolean)
+    const filter = nodes.map((v) => getNodeFromElement(v)).filter(isDefined)
+
+    return filter
   },
   getNodeById: (id: number) => {
     return getNode(id)

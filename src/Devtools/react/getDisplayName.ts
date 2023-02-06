@@ -11,10 +11,7 @@ export function getWrappedDisplayName(
   return displayName || `${wrapperName}(${getDisplayName(innerType, fallbackName)})`
 }
 
-export function getDisplayName(
-  type: (...args: Array<any>) => any,
-  fallbackName = 'Anonymous'
-): string {
+export function getDisplayName(type: (...args: Array<any>) => any, fallbackName = 'Anonymous'): string {
   const nameFromCache = cachedDisplayNames.get(type)
 
   if (nameFromCache != null) {
@@ -26,10 +23,13 @@ export function getDisplayName(
   // The displayName property is not guaranteed to be a string.
   // It's only safe to use for our purposes if it's a string.
   // github.com/facebook/react-devtools/issues/803
-  if (typeof type.displayName === 'string') {
-    displayName = type.displayName
-  } else if (typeof type.name === 'string' && type.name !== '') {
-    displayName = type.name
+  if (typeof (type as any).displayName === 'string') {
+    displayName = (type as any).displayName
+  } else {
+    // noinspection SuspiciousTypeOfGuard
+    if (typeof type.name === 'string' && type.name !== '') {
+      displayName = type.name
+    }
   }
 
   cachedDisplayNames.set(type, displayName)
