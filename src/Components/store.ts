@@ -9,6 +9,7 @@ import { StateStorage } from 'zustand/middleware/persist'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
 import type { AppNode, DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
+import { FrontendBridge, Store } from 'react-devtools-inline/frontend'
 
 export type AppFile = {
   path: string
@@ -53,6 +54,8 @@ interface IframeStore {
   iframe?: HTMLIFrameElement | null
   frontendReady: boolean
   childConnection?: AsyncMethodReturns<DevtoolsMethods>
+  bridge?: FrontendBridge
+  store?: Store
   expandedIds: string[]
   swProxy?: Remote<ServiceWorkerAPI>
   openFile?: OpenFile
@@ -63,7 +66,6 @@ interface IframeStore {
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile
   hoveringComponent?: { x: number; y: number }
-  elementsStack?: AppNode[]
 }
 export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(

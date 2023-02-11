@@ -2368,6 +2368,14 @@
     "@types/webpack" "^4"
     "@types/webpack-dev-server" "3"
 
+"@types/react-devtools-inline@^4.24.3":
+  version "4.24.3"
+  resolved "https://registry.yarnpkg.com/@types/react-devtools-inline/-/react-devtools-inline-4.24.3.tgz#cb0cecb16da7ae61eae24c7e43c089439673f7b6"
+  integrity sha512-X0nJAleUjtq28+rVyzQ+q3KNhSnwWnh19FVEPAzLtgq6s/vGn1hDK8kzKWb7jnSnaTGd89a6yZxXC4rIOrhrEA==
+  dependencies:
+    "@types/react" "*"
+    "@types/react-reconciler" "*"
+
 "@types/react-dom@^18.0.9":
   version "18.0.9"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.0.9.tgz#ffee5e4bfc2a2f8774b15496474f8e7fe8d0b504"
@@ -2382,7 +2390,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-reconciler@^0.28.2":
+"@types/react-reconciler@*", "@types/react-reconciler@^0.28.2":
   version "0.28.2"
   resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.28.2.tgz#f16b0e8cc4748af70ca975eaaace0d79582c71fa"
   integrity sha512-8tu6lHzEgYPlfDf/J6GOQdIc+gs+S2yAqlby3zTsB3SP2svlqTYe5fwZNtZyfactP74ShooP2vvi1BOp9ZemWw==
@@ -6059,14 +6067,6 @@ react-penpal@^1.0.4:
   dependencies:
     penpal "^5.3.0"
 
-react-reconciler@^0.29.0:
-  version "0.29.0"
-  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.29.0.tgz#ee769bd362915076753f3845822f2d1046603de7"
-  integrity sha512-wa0fGj7Zht1EYMRhKWwoo1H9GApxYLBuhoAuXN0TlltESAjDssB+Apf0T/DngVqaMyPypDmabL37vw/2aRM98Q==
-  dependencies:
-    loose-envify "^1.1.0"
-    scheduler "^0.23.0"
-
 react-refresh@^0.14.0:
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.14.0.tgz#4e02825378a5f227079554d4284889354e5f553e"
@@ -6101,6 +6101,11 @@ react-virtualized-auto-sizer@^1.0.7:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.7.tgz#bfb8414698ad1597912473de3e2e5f82180c1195"
   integrity sha512-Mxi6lwOmjwIjC1X4gABXMJcKHsOo0xWl3E3ugOgufB8GJU+MqrtY35aBuvCYv/razQ1Vbp7h1gWJjGjoNN5pmA==
+
+react-virtuoso@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-4.1.0.tgz#44138385d87bddc7597867778f2cbcd9d4dfea79"
+  integrity sha512-Vcq5WXn18PvPT55kdeGQ8BN3K95XyPe7hum8zG6Tx7g1CtUYVsQKN7fouMxBSy+XymEDB5ynGy8JWhuqyLLtPw==
 
 react-window@^1.8.8:
   version "1.8.8"

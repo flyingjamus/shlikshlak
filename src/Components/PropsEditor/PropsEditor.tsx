@@ -23,6 +23,11 @@ import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
 import { useQuery } from '@tanstack/react-query'
+import { useDevtoolsStore } from '../../Devtools/DevtoolsStore'
+import path from 'path'
+import { useBridge } from './UseBridge'
+import { useStore } from './UseStore'
+import { inspectElement } from './InspectElement'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -118,20 +123,42 @@ const PropEditor = ({
   return null
 }
 
+export interface Source {
+  fileName: string
+  lineNumber: number
+  columnNumber: number
+}
 export const PropsEditorWrapper = () => {
-  // const panels = useIframeStore((v) => v.panels)
-  const openFile = useIframeStore((v) => v.selectedComponent)
+  const bridge = useBridge()
+  const store = useStore()
+  const [selected, setSelected] = useState<Source | null>(null)
+  useEffect(() => {
+    if (!bridge) return
+    const handleSelectFiber = async (id: number) => {
+      const result = await inspectElement({ bridge, id, store })
+      console.log(31231212, result)
+      if (result.type === 'full-data') {
+        setSelected(result.value.source)
+      }
+      // return dispatchWrapper({ type: 'SELECT_ELEMENT_BY_ID', payload: id })
+    }
+    bridge.addListener('selectFiber', handleSelectFiber)
+    return () => bridge.removeListener('selectFiber', handleSelectFiber)
+  }, [bridge, store])
+  console.log(selected)
+  const openFile = selected
+
   const {
     data: panels,
     refetch,
     isLoading,
   } = useQuery(['getPanelsAtPosition', openFile], () => {
-    if (!openFile) return
-    const { columnNumber, lineNumber, path } = openFile
+    if (!openFile?.fileName) return null
+    const { columnNumber, lineNumber, fileName } = openFile
     return apiClient.post('/lang/getPanelsAtPosition', {
-      fileName: path,
-      lineNumber: lineNumber,
-      colNumber: columnNumber,
+      fileName: fileName,
+      lineNumber: +lineNumber,
+      colNumber: +columnNumber,
     })
   })
   if (!openFile) return null

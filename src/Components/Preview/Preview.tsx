@@ -1,9 +1,12 @@
 import { Box, styled } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { DevtoolsOverlay } from '../../Devtools/DevtoolsOverlay'
+
+import { createBridge, createStore, FrontendBridge, Store } from 'react-devtools-inline/frontend'
+import { InspectHostNodesToggle } from './InspectHostNodesToggle'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -15,54 +18,90 @@ const StyledIframe = styled('iframe')({
   flex: 1,
 })
 
-// const flattenTree = (nodes: Protocol.DOM.Node[]): Protocol.DOM.Node[] => {
-//   return nodes.flatMap((node) => [node, ...((node.children && flattenTree(node.children)) || [])])
-// }
-
 export const parentMethods = {}
 
 export type ParentMethods = typeof parentMethods
 
+export function initialize(
+  contentWindow: Window,
+  {
+    bridge,
+    store,
+  }: {
+    bridge?: FrontendBridge
+    store?: Store
+  } = {}
+) {
+  if (bridge == null) {
+    bridge = createBridge(contentWindow)
+  }
+
+  // Type refinement.
+  const frontendBridge = bridge as any as FrontendBridge
+
+  if (store == null) {
+    store = createStore(frontendBridge)
+  }
+
+  const onGetSavedPreferences = () => {
+    frontendBridge.removeListener('getSavedPreferences', onGetSavedPreferences)
+    frontendBridge.send('savedPreferences', {
+      appendComponentStack: false,
+      breakOnConsoleErrors: false,
+      componentFilters: [],
+      showInlineWarningsAndErrors: true,
+      hideConsoleLogsInStrictMode: false,
+    })
+  }
+
+  frontendBridge.addListener('getSavedPreferences', onGetSavedPreferences)
+
+  return { bridge, store }
+}
+
 export const Preview = () => {
-  // const ready = useIframeStore((v) => v.frontendReady)
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [ready, setReady] = useState(false)
   const childConnection = useIframeStore((v) => v.childConnection)
 
   useEffect(() => {
     const current = iframeRef.current
     if (current && !childConnection) {
-      console.debug('Connecting to child')
+      const { bridge, store } = initialize(current.contentWindow as Window)
+      console.debug('Connecting to child', bridge, store)
       const connection = connectToChild<DevtoolsMethods>({
         iframe: current,
         methods: parentMethods,
         childOrigin: '*',
       })
-
-      setReady(true)
-
       connection.promise.then(async (childConnection) => {
         console.debug('Connected to child')
         await childConnection.init()
         useIframeStore.setState({
           childConnection: childConnection,
+          bridge,
+          store,
         })
       })
-      return () => {
-      }
+      return () => {}
     }
   }, [childConnection])
 
   return (
-    <Box sx={{ background: 'white', position: 'relative' }}>
-      <DevtoolsOverlay />
-      <StyledIframe
-        // src={ready ? '/stories/example--story-root' : undefined}
-        src={ready ? 'http://localhost:3002/login' : undefined}
-        // src={ready ? '/stories/example-thin--story-root' : undefined}
-        onLoad={() => {}}
-        ref={iframeRef}
-      />
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ flexShrink: 0 }}>
+        <InspectHostNodesToggle />
+      </Box>
+      <Box sx={{ background: 'white', position: 'relative' , flex: 1}}>
+        {/*<DevtoolsOverlay />*/}
+        <StyledIframe
+          // src={ready ? '/stories/example--story-root' : undefined}
+          src={'http://localhost:3002/login'}
+          // src={ready ? '/stories/example-thin--story-root' : undefined}
+          onLoad={() => {}}
+          ref={iframeRef}
+        />
+      </Box>
     </Box>
   )
 }
+

@@ -24,7 +24,7 @@ export type ViewId = keyof typeof ELEMENT_MAP
 export const Screen = () => {
   return (
     <Box
-      // sx={{ background: 'white' }}
+      sx={{ '.mosaic-root': { overflow: 'hidden' } }}
       component={Mosaic<ViewId>}
       renderTile={(id, path) => ELEMENT_MAP[id]}
       initialValue={{

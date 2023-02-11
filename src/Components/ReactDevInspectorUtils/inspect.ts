@@ -6,7 +6,7 @@ import {
   getFiberName,
   isForwardRef,
   isNativeTagFiber,
-  isReactSymbolFiber
+  isReactSymbolFiber,
 } from './fiber'
 
 export interface CodeInfo {
