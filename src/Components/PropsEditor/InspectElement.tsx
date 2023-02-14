@@ -1,7 +1,8 @@
-import { BackendEvents, FrontendBridge, InspectedElementPayload } from 'react-devtools-inline/frontend'
 import { useBridge } from './UseBridge'
 import { Store, useStore } from './UseStore'
 import { useEffect, useState } from 'react'
+import { BackendEvents, FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
+import { InspectedElementPayload } from '../ReactDevtools/react-devtools-shared/src/backend/types'
 
 function getPromiseForRequestID<T>(
   requestID: number,

@@ -1,5 +1,5 @@
 import { Fiber } from 'react-reconciler'
-import { gt, gte } from 'semver'
+// import { gt, gte } from 'semver'
 import {
   CONCURRENT_MODE_NUMBER,
   CONCURRENT_MODE_SYMBOL_STRING,

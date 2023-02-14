@@ -1,0 +1,22 @@
+import ErrorStackParser from "error-stack-parser";
+import testErrorStack, { SOURCE_STACK_FRAME_LINE_NUMBER } from "./ErrorTesterCompiled";
+let sourceMapsAreAppliedToErrors: boolean | null = null;
+// Source maps are automatically applied to Error stack frames.
+export function areSourceMapsAppliedToErrors(): boolean {
+  if (sourceMapsAreAppliedToErrors === null) {
+    try {
+      testErrorStack();
+      sourceMapsAreAppliedToErrors = false;
+    } catch (error) {
+      const parsed = ErrorStackParser.parse(error);
+      const topStackFrame = parsed[0];
+      const lineNumber = topStackFrame.lineNumber;
+
+      if (lineNumber === SOURCE_STACK_FRAME_LINE_NUMBER) {
+        sourceMapsAreAppliedToErrors = true;
+      }
+    }
+  }
+
+  return sourceMapsAreAppliedToErrors === true;
+}

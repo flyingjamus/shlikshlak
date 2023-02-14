@@ -1,0 +1,1 @@
+export * from "react-art/src/ReactARTHostConfig";

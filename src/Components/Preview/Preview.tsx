@@ -3,9 +3,10 @@ import { useEffect, useRef } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
-
-import { createBridge, createStore, FrontendBridge, Store } from 'react-devtools-inline/frontend'
 import { InspectHostNodesToggle } from './InspectHostNodesToggle'
+import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
+import Store from '../ReactDevtools/react-devtools-shared/src/devtools/store'
+import { FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -90,7 +91,7 @@ export const Preview = () => {
       <Box sx={{ flexShrink: 0 }}>
         <InspectHostNodesToggle />
       </Box>
-      <Box sx={{ background: 'white', position: 'relative' , flex: 1}}>
+      <Box sx={{ background: 'white', position: 'relative', flex: 1 }}>
         <StyledIframe
           // src={ready ? '/stories/example--story-root' : undefined}
           src={'http://localhost:3002/login'}
@@ -102,4 +103,3 @@ export const Preview = () => {
     </Box>
   )
 }
-

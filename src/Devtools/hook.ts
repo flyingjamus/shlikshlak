@@ -1,4 +1,4 @@
-import { getInternalReactConstants } from './react/getInternalReactConstants'
+import { BrowserTheme } from 'react-devtools-inline'
 
 function installHook(target: any) {
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
@@ -501,15 +501,15 @@ type ReactRenderer = { version: string; reconcilerVersion?: string }
 window.__shlikshlak__ = {} as any
 const attachRenderer = (id: number, renderer: ReactRenderer) => {
   const version = renderer.reconcilerVersion || renderer.version
-  const {
-    getDisplayNameForFiber,
-    getTypeSymbol,
-    ReactPriorityLevels,
-    ReactTypeOfWork,
-    ReactTypeOfSideEffect,
-    StrictModeBits,
-  } = getInternalReactConstants(version)
-  window.__shlikshlak__.getDisplayNameForFiber = getDisplayNameForFiber
+  // const {
+  //   getDisplayNameForFiber,
+  //   getTypeSymbol,
+  //   ReactPriorityLevels,
+  //   ReactTypeOfWork,
+  //   ReactTypeOfSideEffect,
+  //   StrictModeBits,
+  // } = getInternalReactConstants(version)
+  // window.__shlikshlak__.getDisplayNameForFiber = getDisplayNameForFiber
 }
 
 // Connect renderers that have already injected themselves.
