@@ -1,16 +1,14 @@
 import { type AsyncMethodReturns, connectToParent } from 'penpal'
 import type { ParentMethods } from '../Components/Preview/Preview'
-import {
-  CodeInfo,
-  getCodeInfoFromFiber,
-  getReferenceFiber
-} from '../Components/ReactDevInspectorUtils/inspect'
-import { getElementDimensions } from '../Components/ReactDevInspectorUtils/overlay'
+import { CodeInfo, getCodeInfoFromFiber, getReferenceFiber } from './ReactDevInspectorUtils/inspect'
+import { getElementDimensions } from './ReactDevInspectorUtils/overlay'
 import { uniqueId } from 'lodash-es'
-import { getElementFiber } from '../Components/ReactDevInspectorUtils/fiber'
+import { getElementFiber } from './ReactDevInspectorUtils/fiber'
 import type { Fiber } from 'react-reconciler'
 import { isDefined } from 'ts-is-defined'
-import { activate } from 'react-devtools-inline'
+import { activate, createBridge, initialize } from 'react-devtools-inline'
+import { setupHighlighter } from './ReactDevInspectorUtils/highlight'
+import Agent from './Agent'
 
 const s = window.__shlikshlak__
 
@@ -110,7 +108,33 @@ const connection = connectToParent<ParentMethods>({
 
 connection.promise.then((parentMethods) => {
   console.log('Connected to parent')
-  // const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
-  activate(window)
+  const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
+  const bridge = createBridge(window)
+  activate(window, { bridge })
+
   connectionMethods = parentMethods
+  setupHighlighter({
+    onClick: (element) => {},
+    onPointerOver: (element) => {
+      for (const [rendererId, rendererInterface] of hook.rendererInterfaces.entries()) {
+        const fiber = rendererInterface.getFiberForNative(element)
+        if (!fiber || !rendererInterface?.renderer) continue
+        const referenceFiber = getReferenceFiber(fiber)
+        const data = rendererInterface.renderer.findHostInstanceByFiber(referenceFiber)
+        // rendererInterface.getFiberIDForNative
+        const id = rendererInterface.getFiberIDForNative(element)
+        bridge.send('highlightNativeElement', {
+          displayName: null,
+          hideAfterTimeout: false,
+          id,
+          openNativeElementsPanel: false,
+          rendererID: rendererId,
+          scrollIntoView: false,
+        })
+        console.log(1111, element, id, rendererId)
+      }
+      // const fiber = getElementFiber(element as any)
+      // console.log(fiber, referenceFiber)
+    },
+  })
 })

@@ -20,7 +20,6 @@ export const GetAllComponents = () => {
         { compilerOptions: COMPILER_OPTIONS, extraLibs: {} }
       )
       // t.
-      console.log(1312312, t.getAllComponents())
     })()
   }, [])
   return null

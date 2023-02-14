@@ -136,7 +136,6 @@ export const PropsEditorWrapper = () => {
     if (!bridge) return
     const handleSelectFiber = async (id: number) => {
       const result = await inspectElement({ bridge, id, store })
-      console.log(31231212, result)
       if (result.type === 'full-data') {
         setSelected(result.value.source)
       }
@@ -145,7 +144,6 @@ export const PropsEditorWrapper = () => {
     bridge.addListener('selectFiber', handleSelectFiber)
     return () => bridge.removeListener('selectFiber', handleSelectFiber)
   }, [bridge, store])
-  console.log(selected)
   const openFile = selected
 
   const {

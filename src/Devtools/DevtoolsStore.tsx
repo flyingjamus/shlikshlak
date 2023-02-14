@@ -1,5 +1,5 @@
 import create, { StoreApi, UseBoundStore } from 'zustand'
-import { getElementDimensions, Rect } from '../Components/ReactDevInspectorUtils/overlay'
+import { getElementDimensions, Rect } from './ReactDevInspectorUtils/overlay'
 
 interface DevtoolsStore {
   box?: Rect
