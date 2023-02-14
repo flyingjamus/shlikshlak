@@ -3,7 +3,7 @@ import type { ParentMethods } from '../Components/Preview/Preview'
 import {
   CodeInfo,
   getCodeInfoFromFiber,
-  getReferenceFiber,
+  getReferenceFiber
 } from '../Components/ReactDevInspectorUtils/inspect'
 import { getElementDimensions } from '../Components/ReactDevInspectorUtils/overlay'
 import { uniqueId } from 'lodash-es'
@@ -70,11 +70,12 @@ let connectionMethods: AsyncMethodReturns<ParentMethods> | undefined = undefined
 
 const devtoolMethods = {
   init: () => {},
+  highlight: () => {
+    console.log(1232132)
+  },
   nodesFromPoint: async (x: number, y: number) => {
     const nodes = document.elementsFromPoint(x, y)
-    const filter = nodes.map((v) => getNodeFromElement(v)).filter(isDefined)
-
-    return filter
+    return nodes.map((v) => getNodeFromElement(v)).filter(isDefined)
   },
   getNodeById: (id: number) => {
     return getNode(id)

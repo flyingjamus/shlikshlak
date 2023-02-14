@@ -38,7 +38,7 @@ export function useHighlightNativeElement() {
       const rendererID = store.getRendererIDForElement(id)
       if (element !== null && rendererID !== null) {
         bridge.send('highlightNativeElement', {
-          displayName: element.displayName,
+          displayName: null,
           hideAfterTimeout: false,
           id,
           openNativeElementsPanel: false,
@@ -65,7 +65,7 @@ export const ElementsStack = () => {
   return store ? <Tree /> : null
 }
 
-type ElementWithInspected = Element & { inspected: InspectedElement }
+type ElementWithInspected = Element & { inspected?: InspectedElement }
 export const Tree = () => {
   const bridge = useBridge()
   const store = useStore()
@@ -107,8 +107,10 @@ export const Tree = () => {
             if (!v) return
 
             const inspected = await inspectElement({ bridge, store, id: v.id })
-            if (inspected?.type === 'full-data' && inspected.value.source) {
+            if (inspected?.type === 'full-data') {
               return { ...v, inspected: inspected.value }
+            } else {
+              return v
             }
           })
       )
@@ -124,10 +126,26 @@ export const Tree = () => {
       style={{ height: '100%' }}
       totalCount={flatTree?.length}
       itemContent={(i) => {
-        if (!store || !flatTree[i]) return <Box height={'16px'}></Box>
-        return <Item element={flatTree[i]} />
+        const element = flatTree[i]
+        if (!store || !element) return <Box height={'16px'}></Box>
+        return element.inspected?.source ? <Item element={element} /> : <NoItem element={element} />
       }}
     />
+  )
+}
+
+const NoItem = ({ element }: { element: ElementWithInspected }) => {
+  const { depth, displayName, id } = element
+  return (
+    <Box
+      sx={{
+        marginLeft: `${depth * 4}px`,
+        opacity: 0.5,
+        fontSize: 'small'
+      }}
+    >
+      {displayName}
+    </Box>
   )
 }
 
@@ -141,6 +159,7 @@ const Item = ({ element }: { element: ElementWithInspected }) => {
       sx={{
         marginLeft: `${depth * 4}px`,
         cursor: 'pointer',
+        fontWeight: 500,
       }}
       // onClick={() => {
       //   useDevtoolsStore.setState({ selectedNode: v })

@@ -1,0 +1,16 @@
+{
+  "name": "shlikshlak-runner",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "vite-node index.tsx"
+  },
+  "dependencies": {
+    "@expo/spawn-async": "^1.7.0",
+    "ink": "^3.2.0",
+    "react": "^17.0.2",
+    "vite-node": "^0.28.5"
+  },
+  "devDependencies": {}
+}

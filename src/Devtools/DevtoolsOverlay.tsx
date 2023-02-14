@@ -5,6 +5,7 @@ import { useIframeStore } from '../Components/store'
 import { apiHooks } from '../client/apiClient'
 import type { AppNode } from './Devtools'
 import { useDevtoolsStore } from './DevtoolsStore'
+import { useHighlightNativeElement } from '../Components/PropsEditor/ElementsStack'
 
 function setStyle(elem: HTMLElement, propertyObject: Partial<CSSStyleDeclaration>) {
   for (const property in propertyObject) elem.style[property] = propertyObject[property] as string
@@ -42,6 +43,7 @@ export const DevtoolsOverlay = () => {
 
   const highlightedId = useDevtoolsStore((v) => v.highlightedNode?.id)
   const selectedId = useDevtoolsStore((v) => v.selectedNode?.id)
+  const { highlightNativeElement, clearHighlightNativeElement } = useHighlightNativeElement()
 
   useEffect(() => {
     ;(async () => {
@@ -93,7 +95,7 @@ export const DevtoolsOverlay = () => {
       const hoverElement = hoverAncestors[0]
       if (hoverElement) {
         if (!ctrl) {
-          setHighlightedElement(hoverElement)
+          highlightNativeElement(hoverElement.id)
         } else if (selectedId) {
           const selected = await childConnection.getNodeById(selectedId)
           if (selected) {
@@ -119,6 +121,7 @@ export const DevtoolsOverlay = () => {
         }
       }
 
+      childConnection.highlight(highlightedId)
       const el = highlightRef.current
       if (!el) return
       if (!highlightedId) {

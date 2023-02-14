@@ -92,7 +92,7 @@ export const Preview = () => {
         <InspectHostNodesToggle />
       </Box>
       <Box sx={{ background: 'white', position: 'relative' , flex: 1}}>
-        {/*<DevtoolsOverlay />*/}
+        <DevtoolsOverlay />
         <StyledIframe
           // src={ready ? '/stories/example--story-root' : undefined}
           src={'http://localhost:3002/login'}
