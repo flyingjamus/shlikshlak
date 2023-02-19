@@ -5,9 +5,10 @@ export type PanelMatch =
   | { name: 'boolean' }
   | { name: 'enum'; parameters: { values: string[] } }
   | { name: 'SxProps' }
+  | { name: 'Children' }
 
 export type ExistingAttributeValueObject = { value: string; name: string }[]
-export type ExistingAttributeValue = string | ExistingAttributeValueObject
+export type ExistingAttributeValue = string | true
 type Location = {
   pos: number
   end: number
@@ -15,6 +16,7 @@ type Location = {
 export type ExistingAttribute = {
   name: string
   value?: ExistingAttributeValue
+  hasInitializer?: boolean
   location: Location
 }
 

@@ -13,21 +13,21 @@ import {
 import { useIframeStore } from '../store'
 import {
   ExistingAttribute,
+  ExistingAttributeValue,
   ExistingAttributeValueObject,
   PanelAttribute,
   PanelMatch,
   PanelsResponse,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useEffect, useState } from 'react'
+import React, { ElementType, useEffect, useRef, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
 import { useQuery } from '@tanstack/react-query'
-import { useDevtoolsStore } from '../../Devtools/DevtoolsStore'
-import path from 'path'
 import { useBridge } from './UseBridge'
 import { useStore } from './UseStore'
 import { inspectElement } from './InspectElement'
+import { Source } from '../ReactDevtools/react-devtools-shared/shared/ReactElementType'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -70,12 +70,12 @@ const EnumEditor: BaseEditor<string, { values: string[] }> = ({
   )
 }
 
-const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
+const BaseStringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
   const [focused, setFocused] = useState(false)
   const [value, setValue] = useState(inputValue)
   useEffect(() => {
     if (!focused) {
-      setValue(inputValue || '')
+      setValue(inputValue)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValue])
@@ -86,9 +86,23 @@ const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...prop
       onChange={(e) => {
         const v = e.target.value
         setValue(v)
-        onChange(v || '')
+        onChange(v)
       }}
-      value={value || ''}
+      value={value}
+      {...props}
+    />
+  )
+}
+
+const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
+  const isExpression = !inputValue || inputValue.startsWith('{')
+  const stringInput = (isExpression ? inputValue?.slice(2, -2) : inputValue?.slice(1, -1)) || ''
+  return (
+    <BaseStringEditor
+      onChange={(v) => {
+        onChange(isExpression ? `{'${v}'}` : `'${v}'`)
+      }}
+      value={stringInput}
       {...props}
     />
   )
@@ -98,7 +112,11 @@ const BooleanEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
   return <Checkbox onChange={(e, v) => onChange(v)} defaultValue={value} {...props} />
 }
 
-export type OnChangeValue = string | boolean | undefined
+const ChildrenEditor: BaseEditor<string> = ({ ...props }) => {
+  return <BaseStringEditor {...props} />
+}
+
+export type OnChangeValue = string | true | undefined
 type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
 
 const PropEditor = ({
@@ -119,32 +137,46 @@ const PropEditor = ({
       return <BooleanEditor {...props} />
     case 'SxProps':
       return <SxEditor {...props} />
+    case 'Children':
+      return <ChildrenEditor {...props} />
   }
   return null
 }
 
-export interface Source {
-  fileName: string
-  lineNumber: number
-  columnNumber: number
+const useFiberSource = (id: number | undefined) => {
+  // TODO cache result for different responses
+  const bridge = useBridge()
+  const store = useStore()
+  const [result, setResult] = useState<Source | null>(null)
+  useEffect(() => {
+    ;(async () => {
+      if (!id) {
+        setResult(null)
+        return
+      }
+      const result = await inspectElement({ bridge, id, store })
+      if (result.type === 'full-data') {
+        setResult(result.value.source || null)
+      }
+    })()
+  }, [bridge, store, id])
+
+  return result
 }
+
 export const PropsEditorWrapper = () => {
   const bridge = useBridge()
   const store = useStore()
-  const [selected, setSelected] = useState<Source | null>(null)
+  const openFile = useFiberSource(useIframeStore((v) => v.selectedFiberId))
+
   useEffect(() => {
     if (!bridge) return
     const handleSelectFiber = async (id: number) => {
-      const result = await inspectElement({ bridge, id, store })
-      if (result.type === 'full-data') {
-        setSelected(result.value.source)
-      }
-      // return dispatchWrapper({ type: 'SELECT_ELEMENT_BY_ID', payload: id })
+      useIframeStore.setState({ selectedFiberId: id })
     }
     bridge.addListener('selectFiber', handleSelectFiber)
     return () => bridge.removeListener('selectFiber', handleSelectFiber)
   }, [bridge, store])
-  const openFile = selected
 
   const {
     data: panels,
@@ -159,6 +191,24 @@ export const PropsEditorWrapper = () => {
       colNumber: +columnNumber,
     })
   })
+
+  useEffect(() => {
+    console.log('Cleaning', panels)
+    setSeenPanels([])
+  }, [openFile])
+  useEffect(() => {
+    if (panels) {
+      setSeenPanels((prev) => {
+        const set = new Set(prev)
+        for (const attr of panels.existingAttributes) {
+          set.add(attr.name)
+        }
+        return Array.from(set.values())
+      })
+    }
+  }, [panels])
+  const [seenPanels, setSeenPanels] = useState<string[]>([])
+
   if (!openFile) return null
   if (isLoading)
     return (
@@ -170,6 +220,7 @@ export const PropsEditorWrapper = () => {
 
   return (
     <PropsEditor
+      seenPanels={seenPanels}
       panels={panels}
       onAttributeChange={async (attr, v) => {
         if (panels?.location && panels.fileName) {
@@ -184,16 +235,21 @@ export const PropsEditorWrapper = () => {
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
 export const PropsEditor = React.memo(
   ({
+    seenPanels,
     panels: { attributes, existingAttributes, fileName, location },
     onAttributeChange,
     onBlur,
   }: {
+    seenPanels: string[]
     panels: PanelsResponse
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
-    const [there, notThere] = partition(attributes, (attr) =>
-      existingAttributes.some((v) => attr.name === v.name)
+    console.log(seenPanels)
+    const [there, notThere] = partition(
+      attributes,
+      (attr) =>
+        existingAttributes.some((existing) => attr.name === existing.name) || seenPanels.includes(attr.name)
     )
 
     const panelAttrs = attributes.length < 10 ? attributes : there
@@ -208,7 +264,9 @@ export const PropsEditor = React.memo(
               key={key}
               attr={attr}
               existing={existing}
-              onChange={(newValue) => onAttributeChange(attr, newValue)}
+              onChange={(newValue) => {
+                onAttributeChange(attr, newValue)
+              }}
             />
           )
         })}
@@ -235,14 +293,14 @@ const Row = ({
     <ListItem>
       <ListItemIcon>
         <Checkbox
-          checked={!!existing}
-          onChange={() => {
-            if (existing) {
-              setPrevValue(existing.value)
-              onChange(undefined)
-            } else {
+          defaultChecked={!!existing}
+          onChange={(e, checked) => {
+            if (checked) {
               onChange(prevValue)
               setPrevValue(undefined)
+            } else {
+              setPrevValue(existing?.value)
+              onChange(undefined)
             }
           }}
         />
@@ -254,7 +312,7 @@ const Row = ({
             panelMatch={panel}
             value={existing?.value || prevValue}
             onChange={onChange}
-            disabled={!existing}
+            disabled={!!prevValue}
           />
         </Box>
       </Stack>

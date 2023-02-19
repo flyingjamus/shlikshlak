@@ -3,6 +3,7 @@ import { throttle } from 'lodash-es'
 import Agent from '../../../../../react-devtools-shared/src/backend/agent'
 import { hideOverlay, showOverlay } from './Highlighter'
 import type { BackendBridge } from '../../../bridge'
+import { getReferenceFiber } from '../../../../../../../Devtools/ReactDevInspectorUtils/inspect'
 // This plug-in provides in-page highlighting of the selected element.
 // It is used by the browser extension and the standalone DevTools shell (when connected to a browser).
 // It is not currently the mechanism used to highlight React Native views.
@@ -155,10 +156,18 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
       }
     }
 
-    // Don't pass the name explicitly.
-    // It will be inferred from DOM tag and Fiber owner.
-    showOverlay([target], null, agent, false)
-    selectFiberForNode(target)
+    const rendererInterface = agent.getBestMatchingRendererInterface(target)
+    const fiber = rendererInterface?.getFiberForNative(target)
+    if (rendererInterface && fiber) {
+      const referenceFiber = getReferenceFiber(fiber)
+      if (referenceFiber) {
+        const nativeNodes = rendererInterface.findNativeNodesForFiber(referenceFiber)
+
+        if (nativeNodes[0]) {
+          showOverlay(nativeNodes, null, agent, false)
+        }
+      }
+    }
   }
 
   function onPointerUp(event: MouseEvent) {
@@ -166,12 +175,31 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     event.stopPropagation()
   }
 
-  const selectFiberForNode = throttle(
-    memoize((node: HTMLElement) => {
-      const id = agent.getIDForNode(node)
-
+  const selectFiberById = throttle(
+    memoize((id: number) => {
       if (id !== null) {
         bridge.send('selectFiber', id)
+      }
+    }),
+    200, // Don't change the selection in the very first 200ms
+    // because those are usually unintentional as you lift the cursor.
+    { leading: false }
+  )
+  const selectFiberForNode = throttle(
+    memoize((target: HTMLElement) => {
+      const rendererInterface = agent.getBestMatchingRendererInterface(target)
+      const fiber = rendererInterface?.getFiberForNative(target)
+      if (rendererInterface && fiber) {
+        const referenceFiber = getReferenceFiber(fiber)
+        if (referenceFiber) {
+          const nativeNodes = rendererInterface.findNativeNodesForFiber(referenceFiber)
+
+          const id = rendererInterface.getFiberId(referenceFiber)
+
+          if (id !== null) {
+            bridge.send('selectFiber', id)
+          }
+        }
       }
     }),
     200, // Don't change the selection in the very first 200ms

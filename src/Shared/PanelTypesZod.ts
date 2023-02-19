@@ -9,6 +9,9 @@ export const panelMatchSchema = z.union([
     name: z.literal('boolean'),
   }),
   z.object({
+    name: z.literal('Children'),
+  }),
+  z.object({
     name: z.literal('enum'),
     parameters: z.object({
       values: z.array(z.string()),

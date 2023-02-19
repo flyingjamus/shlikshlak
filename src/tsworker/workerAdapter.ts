@@ -3,7 +3,7 @@ import { apiClient } from '../client/apiClient'
 
 const attributesQueues: Record<string, PQueue> = {}
 
-type AttributeValue = string | boolean | undefined
+type AttributeValue = string | true | undefined
 
 export async function setAttribute(fileName: string, location: number, prop: string, value: AttributeValue) {
   attributesQueues[fileName] ||= new PQueue({ concurrency: 1 })

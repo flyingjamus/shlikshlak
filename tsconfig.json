@@ -17,10 +17,10 @@
     "jsx": "react-jsx",
     "baseUrl": "/",
     "paths": {
-      "typescript": ["typescript-local"]
+//      "typescript": ["typescript-local"]
     },
-    "typeRoots": ["src/types"]
+    "typeRoots": ["src/types", "node_modules/@types"]
   },
-  "include": ["src"],
+  "include": ["src", "node_modules/@types/ts-expose-internals"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,9 +1,9 @@
 import { useIframeStore } from '../store'
-import { Box } from '@mui/material'
+import { Box, lighten } from '@mui/material'
 import { useDevtoolsStore } from '../../Devtools/DevtoolsStore'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppNode } from '../../Devtools/Devtools'
-import { Virtuoso } from 'react-virtuoso'
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso'
 import { Element, useStore } from './UseStore'
 import { useBridge } from './UseBridge'
 import { times } from 'lodash-es'
@@ -118,19 +118,39 @@ export const Tree = () => {
       setFlatTree(results.filter(isDefined))
     })()
   }, [bridge, rerender, store])
+  const { clearHighlightNativeElement, highlightNativeElement } = useHighlightNativeElement()
+
+  const selectedFiberId = useIframeStore((v) => v.selectedFiberId)
+  const ref = useRef<VirtuosoHandle>(null)
+  useEffect(() => {
+    if (selectedFiberId) {
+      const index = flatTree?.findIndex((v) => v.id === selectedFiberId)
+      if (index && index > -1) {
+        ref.current?.scrollIntoView({ index, align: 'center' })
+      }
+    }
+  }, [flatTree, selectedFiberId])
 
   if (!store || !flatTree) return null
 
   return (
-    <Virtuoso
-      style={{ height: '100%' }}
-      totalCount={flatTree?.length}
-      itemContent={(i) => {
-        const element = flatTree[i]
-        if (!store || !element) return <Box height={'16px'}></Box>
-        return element.inspected?.source ? <Item element={element} /> : <NoItem element={element} />
+    <Box
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {
+        clearHighlightNativeElement()
       }}
-    />
+    >
+      <Virtuoso
+        ref={ref}
+        style={{ height: '100%' }}
+        totalCount={flatTree?.length}
+        itemContent={(i) => {
+          const element = flatTree[i]
+          if (!store || !element) return <Box height={'16px'}></Box>
+          return element.inspected?.source ? <Item element={element} /> : <NoItem element={element} />
+        }}
+      />
+    </Box>
   )
 }
 
@@ -141,7 +161,7 @@ const NoItem = ({ element }: { element: ElementWithInspected }) => {
       sx={{
         marginLeft: `${depth * 4}px`,
         opacity: 0.5,
-        fontSize: 'small'
+        fontSize: 'small',
       }}
     >
       {displayName}
@@ -152,15 +172,23 @@ const NoItem = ({ element }: { element: ElementWithInspected }) => {
 const Item = ({ element }: { element: ElementWithInspected }) => {
   const bridge = useBridge()
   const store = useStore()
+  const selectedFiberId = useIframeStore((v) => v.selectedFiberId)
   const { depth, displayName, id } = element
   const { clearHighlightNativeElement, highlightNativeElement } = useHighlightNativeElement()
   return (
     <Box
-      sx={{
-        marginLeft: `${depth * 4}px`,
+      sx={({ palette }) => ({
         cursor: 'pointer',
         fontWeight: 500,
-      }}
+        // display: 'inline-flex',
+        padding: '4px',
+        paddingLeft: `${depth * 4}px`,
+        // border: '1px solid',
+        background: selectedFiberId === id ? lighten(palette.secondary.light, 0.7) : 'transparent',
+        '&:hover': {
+          background: palette.grey[300],
+        },
+      })}
       // onClick={() => {
       //   useDevtoolsStore.setState({ selectedNode: v })
       // }}

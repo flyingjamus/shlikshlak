@@ -1,45 +1,42 @@
-import type Agent from "../../../../../react-devtools-shared/src/backend/agent";
-import Overlay from "./Overlay";
-const SHOW_DURATION = 2000;
-let timeoutID: NodeJS.Timeout | null = null;
-let overlay: Overlay | null = null;
+import type Agent from '../../../backend/agent'
+import Overlay from './Overlay'
+const SHOW_DURATION = 2000
+let timeoutID: NodeJS.Timeout | null = null
+let overlay: Overlay | null = null
 export function hideOverlay(agent: Agent) {
   if (window.document == null) {
-    agent.emit('hideNativeHighlight');
-    return;
+    agent.emit('hideNativeHighlight')
+    return
   }
 
-  timeoutID = null;
+  timeoutID = null
 
   if (overlay !== null) {
-    overlay.remove();
-    overlay = null;
+    overlay.remove()
+    overlay = null
   }
 }
-export function showOverlay(elements: Array<HTMLElement> | null, componentName: string | null, agent: Agent, hideAfterTimeout: boolean) {
-  if (window.document == null) {
-    if (elements != null && elements[0] != null) {
-      agent.emit('showNativeHighlight', elements[0]);
-    }
-
-    return;
-  }
-
+export function showOverlay(
+  elements: Array<HTMLElement> | null,
+  componentName: string | null,
+  agent: Agent,
+  hideAfterTimeout: boolean
+) {
   if (timeoutID !== null) {
-    clearTimeout(timeoutID);
+    clearTimeout(timeoutID)
   }
 
   if (elements == null) {
-    return;
+    return
   }
 
   if (overlay === null) {
-    overlay = new Overlay(agent);
+    overlay = new Overlay(agent)
   }
 
-  overlay.inspect(elements, componentName);
+  overlay.inspect(elements, componentName)
 
   if (hideAfterTimeout) {
-    timeoutID = setTimeout(() => hideOverlay(agent), SHOW_DURATION);
+    timeoutID = setTimeout(() => hideOverlay(agent), SHOW_DURATION)
   }
 }

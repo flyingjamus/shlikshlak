@@ -85,7 +85,6 @@ import hasOwnProperty from '../../shared/hasOwnProperty'
 import { getStyleXData } from './StyleX/utils'
 import { createProfilingHooks } from './profilingHooks'
 import type { GetTimelineData, ToggleProfilingStatus } from './profilingHooks'
-import type { Fiber } from '../../../react-reconciler/src/ReactInternalTypes'
 import type {
   ChangeDescription,
   CommitDataBackend,
@@ -103,7 +102,8 @@ import type {
   SerializedElement,
   WorkTagMap,
 } from './types'
-import type { ComponentFilter, ElementType, Plugins } from '../../../react-devtools-shared/src/types'
+import type { ComponentFilter, ElementType, Plugins } from '../types'
+import { Fiber } from 'react-reconciler'
 type getDisplayNameForFiberType = (fiber: Fiber) => string | null
 type getTypeSymbolType = (type: any) => Symbol | number
 type ReactPriorityLevelsType = {
@@ -122,7 +122,6 @@ type ReactTypeOfSideEffectType = {
   Incomplete: number
   Hydrating: number
 }
-
 
 const enableProfilerChangedHookIndices = true
 const enableStyleXFeatures = false
@@ -4446,7 +4445,17 @@ export function attach(
     traceUpdatesEnabled = isEnabled
   }
 
+  function getFiberId(fiber: Fiber): number {
+    return getFiberIDThrows(fiber)
+  }
+
+  function findNativeNodesForFiber(fiber: Fiber) {
+    const id = getFiberIDThrows(fiber)
+    return findNativeNodesForFiberID(id)
+  }
+
   return {
+    findNativeNodesForFiber,
     cleanup,
     clearErrorsAndWarnings,
     clearErrorsForFiberID,
@@ -4457,6 +4466,7 @@ export function attach(
     flushInitialOperations,
     getBestMatchForTrackedPath,
     getDisplayNameForFiberID,
+    getFiberId,
     getFiberForNative,
     getFiberIDForNative,
     getInstanceAndStyle,

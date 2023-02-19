@@ -9,7 +9,8 @@ import { StateStorage } from 'zustand/middleware/persist'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
 import type { AppNode, DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
-import { FrontendBridge, Store } from 'react-devtools-inline/frontend'
+import { FrontendBridge } from './ReactDevtools/react-devtools-shared/src/bridge'
+import Store from './ReactDevtools/react-devtools-shared/src/devtools/store'
 
 export type AppFile = {
   path: string
@@ -65,7 +66,7 @@ interface IframeStore {
   editor?: editor.IStandaloneCodeEditor
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile
-  hoveringComponent?: { x: number; y: number }
+  selectedFiberId?: number
 }
 export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(

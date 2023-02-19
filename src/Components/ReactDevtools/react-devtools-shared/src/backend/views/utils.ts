@@ -66,7 +66,7 @@ export function mergeRectOffsets(rects: Array<Rect>): Rect {
 }
 // Calculate a boundingClientRect for a node relative to boundaryWindow,
 // taking into account any offsets caused by intermediate iframes.
-export function getNestedBoundingClientRect(node: HTMLElement, boundaryWindow: typeof window): Rect {
+export function getNestedBoundingClientRect(node: HTMLElement, boundaryWindow: Window): Rect {
   const ownerIframe = getOwnerIframe(node)
 
   if (ownerIframe && getOwnerWindow(node) !== boundaryWindow) {

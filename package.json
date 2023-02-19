@@ -20,7 +20,6 @@
     "@mui/lab": "^5.0.0-alpha.112",
     "@mui/material": "^5.11.0",
     "@tanstack/react-query": "^4.20.4",
-    "@types/react-devtools-inline": "^4.24.3",
     "@types/ts-expose-internals": "npm:ts-expose-internals@4.9.4",
     "@zodios/core": "^10.7.1",
     "@zodios/express": "^10.4.4",

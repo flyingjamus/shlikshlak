@@ -1,6 +1,6 @@
 import { getElementDimensions, getNestedBoundingClientRect } from '../utils'
 import type { Rect } from '../utils'
-import type Agent from 'react-devtools-shared/src/backend/agent'
+import Agent from '../../agent'
 type Box = {
   top: number
   left: number
@@ -117,8 +117,8 @@ class OverlayTip {
 }
 
 export default class Overlay {
-  window: window
-  tipBoundsWindow: window
+  window: Window
+  tipBoundsWindow: Window
   container: HTMLElement
   tip: OverlayTip
   rects: Array<OverlayRect>
@@ -159,7 +159,7 @@ export default class Overlay {
 
     while (this.rects.length > elements.length) {
       const rect = this.rects.pop()
-      rect.remove()
+      rect?.remove()
     }
 
     if (elements.length === 0) {

@@ -2786,14 +2786,6 @@
     "@types/webpack" "^4"
     "@types/webpack-dev-server" "3"
 
-"@types/react-devtools-inline@^4.24.3":
-  version "4.24.3"
-  resolved "https://registry.yarnpkg.com/@types/react-devtools-inline/-/react-devtools-inline-4.24.3.tgz#cb0cecb16da7ae61eae24c7e43c089439673f7b6"
-  integrity sha512-X0nJAleUjtq28+rVyzQ+q3KNhSnwWnh19FVEPAzLtgq6s/vGn1hDK8kzKWb7jnSnaTGd89a6yZxXC4rIOrhrEA==
-  dependencies:
-    "@types/react" "*"
-    "@types/react-reconciler" "*"
-
 "@types/react-dom@^18.0.9":
   version "18.0.9"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.0.9.tgz#ffee5e4bfc2a2f8774b15496474f8e7fe8d0b504"
@@ -2808,7 +2800,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-reconciler@*", "@types/react-reconciler@^0.28.2":
+"@types/react-reconciler@^0.28.2":
   version "0.28.2"
   resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.28.2.tgz#f16b0e8cc4748af70ca975eaaace0d79582c71fa"
   integrity sha512-8tu6lHzEgYPlfDf/J6GOQdIc+gs+S2yAqlby3zTsB3SP2svlqTYe5fwZNtZyfactP74ShooP2vvi1BOp9ZemWw==

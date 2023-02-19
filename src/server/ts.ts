@@ -96,36 +96,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
-          let value
-          if (!initializer) {
-            value = undefined
-          } else if (isJsxExpression(initializer)) {
-            const expression = initializer.expression
-            if (expression && isObjectLiteralExpression(expression)) {
-              value = expression.properties
-                .map((v) => {
-                  if (isPropertyAssignment(v)) {
-                    return { name: v.name.getText(), value: v.initializer.getText() }
-                  }
-                })
-                .filter(isDefined)
-            } else {
-              value = expression?.getText().slice(1, -1) //TODO expression
-            }
-          } else {
-            const initializerText = initializer?.getText()
-            if (initializerText?.[0] === '{') {
-              if (initializerText?.[1] === '"') {
-                value = initializerText?.slice(2, -2).replaceAll('\\"', '"')
-              } else if (initializerText?.[1] === "'") {
-                value = initializerText?.slice(2, -2).replaceAll("\\'", "'")
-              } else {
-                value = initializerText?.slice(2, -2)
-              }
-            } else {
-              value = initializerText?.slice(1, -1)
-            }
-          }
+          const value = initializer?.getText()
           return {
             name: attr.name.escapedText.toString(),
             value,
@@ -158,10 +129,8 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
     const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
 
     if (typeAtLocation) {
-      // const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
       const context: MatcherContext = {
         c: typeChecker!,
-        // types: { SxProps: sxPropsType },
         types: {},
       }
       const attributes = [...typeAtLocation.getProperties()].map((prop) => {
@@ -170,11 +139,14 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
         return {
           name: prop.name,
           location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
-          panels: type
-            ? PANELS.map((v) => {
-                return v.matcher(type, context)
-              }).filter(isDefined)
-            : [],
+          panels:
+            prop.name === 'children'
+              ? [{ name: 'Children' } as const]
+              : type
+              ? PANELS.map((v) => {
+                  return v.matcher(type, context)
+                }).filter(isDefined)
+              : [],
         }
       })
 
@@ -295,17 +267,17 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
       formatContext: formatting.getFormatContext({}, { getNewLine: () => '\n' }),
     },
     (t) => {
-      const initializerExpression =
-        value !== undefined
-          ? factory.createJsxExpression(
-              /*dotDotDotToken*/ undefined,
-              factory.createStringLiteral(
-                value || '',
-                // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
-                false
-              )
-            )
-          : undefined
+      // const initializerExpression =
+      //   value !== undefined
+      //     ? factory.createJsxExpression(
+      //         /*dotDotDotToken*/ undefined,
+      //         factory.inlineExpressions(
+      //           value || '',
+      //           // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
+      //           false
+      //         )
+      //       )
+      //     : undefined
       const tokenWithAttr = token?.parent.parent.parent
       if (!tokenWithAttr) {
         console.error('tokenWithAttr not found')
@@ -326,7 +298,6 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
       const childrenNodes = isJsxElement(jsxNode) && jsxNode.children
       const existingToken = jsxAttributesNode?.properties.find((v) => v.name?.getText() === attrName)
       if (attrName === 'children') {
-        debugger
         if (childrenNodes) {
           if (childrenNodes.length) {
             t.replaceRangeWithText(
@@ -352,14 +323,21 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
       } else if (existingToken && !isJsxSpreadAttribute(existingToken)) {
         const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
         if (value !== undefined) {
-          const updates = factory.updateJsxAttribute(existingToken, name, initializerExpression)
-          t.replaceNode(sourceFile, existingToken, updates, options)
+          const updates = factory.updateJsxAttribute(
+            existingToken,
+            name,
+            factory.createJsxExpression(undefined, value)
+          )
+          // t.replaceNode(sourceFile, existingToken, updates, options)
+          // factory.inlineExpressions()
+          console.log(111, existingToken.initializer?.getText())
+          t.replaceNodeWithText(sourceFile, existingToken.initializer, value)
         } else {
           t.deleteNode(sourceFile, existingToken)
         }
       } else {
         const name = factory.createIdentifier(attrName)
-        const jsxAttribute = factory.createJsxAttribute(name, initializerExpression)
+        const jsxAttribute = factory.createJsxAttribute(name, factory.createStringLiteral('placeholder'))
         const hasSpreadAttribute = jsxAttributesNode.properties.some(isJsxSpreadAttribute)
         setParent(name, jsxAttribute)
         const jsxAttributes = factory.createJsxAttributes(
@@ -368,7 +346,8 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
             : [...jsxAttributesNode.properties, jsxAttribute]
         )
         const options = { prefix: jsxAttributesNode.pos === jsxAttributesNode.end ? ' ' : undefined }
-        t.replaceNode(sourceFile, jsxAttributesNode, jsxAttributes, options)
+        // t.replaceNode(sourceFile, jsxAttributesNode, jsxAttributes, options)
+        t.insertText(sourceFile, jsxAttributesNode.end, ` ${attrName}=${value}`)
       }
     }
   )
