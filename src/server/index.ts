@@ -125,6 +125,11 @@ app.post('/lang/setAttributeAtPosition', async ({ body }, res) => {
 
 const PORT = 3001
 
+;(async () => {
+  const res = await getPanelsAtLocation('/home/danny/dev/nimbleway/pages/login.tsx', 157, 19)
+  console.dir(res.existingAttributes, {depth: Infinity})
+})()
+
 const server = app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`))
 
 // const wss = new WebSocketServer({

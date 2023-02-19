@@ -52,11 +52,13 @@ const ioSession = startSession(
   cancellationToken
 )
 
-ioSession.projectService.openExternalProject({
-  options: { ...COMPILER_OPTIONS, rootFiles: [] },
-  projectFileName: 'project',
-  rootFiles: [{ fileName: path.resolve(FILE) }],
-})
+ioSession.projectService.openClientFile(path.resolve(FILE))
+debugger
+// ({
+//   options: { ...COMPILER_OPTIONS, rootFiles: [] },
+//   projectFileName: 'project',
+//   rootFiles: [{ fileName: path.resolve(FILE) }],
+// })
 const project = ioSession.projectService.externalProjects[0]
 
 function getTokenAtFilename(fileName: string, position: number) {
@@ -90,21 +92,40 @@ export async function getPanelsAtLocation(
 export async function getPanelsAtPosition(fileName: string, position: number): Promise<PanelsResponse> {
   const parent = getParentTokenAtPosition(fileName, position)
   if (parent) {
+    const languageService = project.getLanguageService()
+    const program = languageService.getProgram()
+    const typeChecker = program!.getTypeChecker()
+    const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
     const jsxTag = parent.parent
+    const matcherContext: MatcherContext = {
+      c: typeChecker!,
+      types: {},
+    }
     const existingAttributes: ExistingAttribute[] = parent.attributes.properties
-      // .filter((v) => v.name?.getText() === 'sx')
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
+          const type = initializer && typeChecker.getTypeAtLocation(attr)
+          console.log(typeChecker.typeToString(type))
           const value = initializer?.getText()
+          const name = attr.name.escapedText.toString()
           return {
-            name: attr.name.escapedText.toString(),
+            name: name,
             value,
             hasInitializer: !!initializer,
             location: {
               pos: attr.pos,
               end: attr.end,
             },
+            panels: !type
+              ? []
+              : name === 'children'
+              ? [{ name: 'Children' } as const]
+              : type
+              ? PANELS.map((v) => {
+                  return (v.reverseMatch || v.matcher)(type, matcherContext)
+                }).filter(isDefined)
+              : [],
           }
         }
       })
@@ -123,16 +144,8 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
         value: parent.getSourceFile().getText().slice(childrenStart, childrenEnd).trim(),
       })
     }
-    const languageService = project.getLanguageService()
-    const program = languageService.getProgram()
-    const typeChecker = program!.getTypeChecker()
-    const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
 
     if (typeAtLocation) {
-      const context: MatcherContext = {
-        c: typeChecker!,
-        types: {},
-      }
       const attributes = [...typeAtLocation.getProperties()].map((prop) => {
         const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
 
@@ -144,7 +157,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
               ? [{ name: 'Children' } as const]
               : type
               ? PANELS.map((v) => {
-                  return v.matcher(type, context)
+                  return v.matcher(type, matcherContext)
                 }).filter(isDefined)
               : [],
         }

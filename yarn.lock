@@ -2889,10 +2889,10 @@
   resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.2.tgz#fc25ad9943bcac11cceb8168db4f275e0e72e756"
   integrity sha512-F5DIZ36YVLE+PN+Zwws4kJogq47hNgX3Nx6WyDJ3kcplxyke3XIzB8uK5n/Lpm1HBsbGzd6nmGehL8cPekP+Tg==
 
-"@types/ts-expose-internals@npm:ts-expose-internals@4.9.4":
-  version "4.9.4"
-  resolved "https://registry.yarnpkg.com/ts-expose-internals/-/ts-expose-internals-4.9.4.tgz#d7836b0ecd174af17ba0038c0840efa5a2d21654"
-  integrity sha512-qHR+gMYDv45VSikUwg7CG8NXXXED2EspZ/WnZN1eQJEIlyzUHw3YIrzrKv47NQCaXKGvp01kZFlQ3y8BCGTahw==
+"@types/ts-expose-internals@npm:ts-expose-internals@4.9.5":
+  version "4.9.5"
+  resolved "https://registry.yarnpkg.com/ts-expose-internals/-/ts-expose-internals-4.9.5.tgz#c30a77d4c95a423e1c79bbabc95f9b9d00f2fbe3"
+  integrity sha512-+T1UsxhFi+hbVyYwHrOUb9tjyhry1iJoiDwDRjZZTiBREb7oE78kRHSqyFv8gZhwZCFFOGZyI66X2gHUFAt8lA==
 
 "@types/uglify-js@*":
   version "3.17.0"
@@ -9732,10 +9732,15 @@ typescript@>=4.5.2:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.3.tgz#3aea307c1746b8c384435d8ac36b8a2e580d85db"
   integrity sha512-CIfGzTelbKNEnLpLdGFgdyKhG23CKdKgQPOBc+OUNrkJ2vr+KSzsSV5kq5iWhEQbok+quxgGzrAtGWCyU7tHnA==
 
-typescript@^4.5.2, typescript@^4.9.4:
+typescript@^4.5.2:
   version "4.9.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.4.tgz#a2a3d2756c079abda241d75f149df9d561091e78"
   integrity sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==
+
+typescript@^4.9.5:
+  version "4.9.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
+  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
 ufo@^1.0.0:
   version "1.0.1"

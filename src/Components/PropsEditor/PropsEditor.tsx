@@ -193,7 +193,6 @@ export const PropsEditorWrapper = () => {
   })
 
   useEffect(() => {
-    console.log('Cleaning', panels)
     setSeenPanels([])
   }, [openFile])
   useEffect(() => {
@@ -245,7 +244,6 @@ export const PropsEditor = React.memo(
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
-    console.log(seenPanels)
     const [there, notThere] = partition(
       attributes,
       (attr) =>

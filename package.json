@@ -20,7 +20,7 @@
     "@mui/lab": "^5.0.0-alpha.112",
     "@mui/material": "^5.11.0",
     "@tanstack/react-query": "^4.20.4",
-    "@types/ts-expose-internals": "npm:ts-expose-internals@4.9.4",
+    "@types/ts-expose-internals": "npm:ts-expose-internals@4.9.5",
     "@zodios/core": "^10.7.1",
     "@zodios/express": "^10.4.4",
     "@zodios/react": "^10.4.0",
@@ -128,7 +128,7 @@
     "prettier": "^2.8.3",
     "ts-node": "^10.9.1",
     "ts-to-zod": "^1.13.1",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "vite": "^4.0.4",
     "vite-node": "^0.25.8"
   },
