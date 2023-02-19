@@ -14,12 +14,12 @@ import {
   isPropertyAssignment,
   JsxOpeningLikeElement,
   LanguageServiceMode,
-  Node,
+  Node, normalizePath,
   resolveModuleName,
   setParent,
   Symbol,
   SymbolFlags,
-  textChanges,
+  textChanges
 } from 'typescript'
 import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
@@ -30,6 +30,7 @@ import { SetAttributesAtPositionRequest } from '../common/api'
 import { initializeNodeSystem } from './nodeServer'
 import prettier from 'prettier'
 import { createLogger } from './logger'
+import { asNormalizedPath } from './ts/utilitiesPublic'
 export const logger = createLogger('ts')
 
 // const FILE = 'src/stories/example.stories.tsx'
@@ -52,12 +53,14 @@ const ioSession = startSession(
   cancellationToken
 )
 
-ioSession.projectService.openExternalProject({
-  options: { ...COMPILER_OPTIONS, rootFiles: [] },
-  projectFileName: 'project',
-  rootFiles: [{ fileName: path.resolve(FILE) }],
-})
-const project = ioSession.projectService.externalProjects[0]
+ioSession.projectService.openClientFile(path.resolve(FILE))
+const project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)
+// ({
+//   options: { ...COMPILER_OPTIONS, rootFiles: [] },
+//   projectFileName: 'project',
+//   rootFiles: [{ fileName: path.resolve(FILE) }],
+// })
+// const project = ioSession.projectService.externalProjects[0]
 
 function getTokenAtFilename(fileName: string, position: number) {
   const program = project.getLanguageService().getProgram()

@@ -34,6 +34,7 @@ import { ModuleImportResult, ServerHost } from './ts/types'
 import { LogLevel, Msg } from './ts/utilitiesPublic'
 import { stringifyIndented } from './ts/utilities'
 import { nullTypingsInstaller } from './ts/typingsCache'
+import { resolve } from 'path'
 
 interface LogOptions {
   file?: string
