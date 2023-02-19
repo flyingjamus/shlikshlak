@@ -1,5 +1,5 @@
-import { Logger, LogLevel, ServerCancellationToken, Session, SessionOptions } from './_namespaces/ts.server'
-import { LanguageServiceMode } from './_namespaces/ts'
+import { LogLevel } from "typescript"
+import { SessionOptions } from "./session"
 
 /** @internal */
 export function getLogLevel(level: string | undefined) {
@@ -16,13 +16,12 @@ export function getLogLevel(level: string | undefined) {
 
 /** @internal */
 export interface StartSessionOptions {
-  globalPlugins: SessionOptions['globalPlugins']
-  pluginProbeLocations: SessionOptions['pluginProbeLocations']
-  allowLocalPluginLoads: SessionOptions['allowLocalPluginLoads']
-  useSingleInferredProject: SessionOptions['useSingleInferredProject']
-  useInferredProjectPerProjectRoot: SessionOptions['useInferredProjectPerProjectRoot']
-  suppressDiagnosticEvents: SessionOptions['suppressDiagnosticEvents']
-  noGetErrOnBackgroundUpdate: SessionOptions['noGetErrOnBackgroundUpdate']
-  syntaxOnly: SessionOptions['syntaxOnly']
-  serverMode: SessionOptions['serverMode']
+  globalPlugins: SessionOptions["globalPlugins"];
+  pluginProbeLocations: SessionOptions["pluginProbeLocations"];
+  allowLocalPluginLoads: SessionOptions["allowLocalPluginLoads"];
+  useSingleInferredProject: SessionOptions["useSingleInferredProject"];
+  useInferredProjectPerProjectRoot: SessionOptions["useInferredProjectPerProjectRoot"];
+  suppressDiagnosticEvents: SessionOptions["suppressDiagnosticEvents"];
+  noGetErrOnBackgroundUpdate: SessionOptions["noGetErrOnBackgroundUpdate"];
+  serverMode: SessionOptions["serverMode"];
 }

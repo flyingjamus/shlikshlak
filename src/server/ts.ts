@@ -52,13 +52,11 @@ const ioSession = startSession(
   cancellationToken
 )
 
-ioSession.projectService.openClientFile(path.resolve(FILE))
-debugger
-// ({
-//   options: { ...COMPILER_OPTIONS, rootFiles: [] },
-//   projectFileName: 'project',
-//   rootFiles: [{ fileName: path.resolve(FILE) }],
-// })
+ioSession.projectService.openExternalProject({
+  options: { ...COMPILER_OPTIONS, rootFiles: [] },
+  projectFileName: 'project',
+  rootFiles: [{ fileName: path.resolve(FILE) }],
+})
 const project = ioSession.projectService.externalProjects[0]
 
 function getTokenAtFilename(fileName: string, position: number) {

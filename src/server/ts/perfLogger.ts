@@ -1,4 +1,4 @@
-import { noop } from "./_namespaces/ts";
+import { noop } from "typescript";
 
 /** @internal */
 export interface PerfLogger {

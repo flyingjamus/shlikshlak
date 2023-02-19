@@ -1,27 +1,4 @@
-import * as ts from './_namespaces/ts'
-import {
-  asNormalizedPath,
-  createModuleSpecifierCache,
-  emptyArray,
-  Errors,
-  FileStats,
-  forEachResolvedProjectReferenceProject,
-  LogLevel,
-  ModuleImportResult,
-  Msg,
-  NormalizedPath,
-  projectContainsInfoDirectly,
-  ProjectOptions,
-  ProjectReferenceProjectLoadKind,
-  ProjectService,
-  protocol,
-  ScriptInfo,
-  ServerHost,
-  Session,
-  toNormalizedPath,
-  TypingsCache,
-  updateProjectIfDirty,
-} from './_namespaces/ts.server'
+import * as ts from 'typescript'
 import {
   addRange,
   append,
@@ -109,7 +86,6 @@ import {
   ParsedCommandLine,
   parsePackageName,
   Path,
-  perfLogger,
   PerformanceEvent,
   PluginImport,
   PollingInterval,
@@ -147,8 +123,32 @@ import {
   WatchDirectoryFlags,
   WatchOptions,
   WatchType,
-} from './_namespaces/ts'
-import path from 'path'
+} from 'typescript'
+import {
+  FileStats,
+  forEachResolvedProjectReferenceProject,
+  projectContainsInfoDirectly,
+  ProjectReferenceProjectLoadKind,
+  ProjectService,
+  updateProjectIfDirty,
+} from './editorServices'
+import { createModuleSpecifierCache } from './moduleSpecifierCache'
+import { perfLogger } from './perfLogger'
+import * as protocol from './protocol'
+import { ScriptInfo } from './scriptInfo'
+import { Session } from './session'
+import { ModuleImportResult, ServerHost } from './types'
+import { TypingsCache } from './typingsCache'
+import {
+  asNormalizedPath,
+  emptyArray,
+  LogLevel,
+  Errors,
+  Msg,
+  toNormalizedPath,
+  ProjectOptions,
+} from './utilitiesPublic'
+import { NormalizedPath } from './utilitiesPublic'
 
 export enum ProjectKind {
   Inferred,
@@ -296,9 +296,9 @@ export interface EmitResult {
 }
 
 export abstract class Project implements LanguageServiceHost, ModuleResolutionHost {
-  rootFiles: ScriptInfo[] = []
+  private rootFiles: ScriptInfo[] = []
   private rootFilesMap = new Map<string, ProjectRootFile>()
-  program: Program | undefined
+  private program: Program | undefined
   private externalFiles: SortedReadonlyArray<string> | undefined
   private missingFilesMap: Map<Path, FileWatcher> | undefined
   private generatedFilesMap: GeneratedFileWatcherMap | undefined
@@ -472,8 +472,9 @@ export abstract class Project implements LanguageServiceHost, ModuleResolutionHo
   /** @internal */
   protected typeAcquisition: TypeAcquisition | undefined
   /** @internal */
-  createHash(data: string) {
-    return this.projectService.host.createHash?.(data)
+
+  createHash(v: string) {
+    return this.projectService.host.createHash?.(v)
   }
 
   /** @internal */
@@ -583,7 +584,8 @@ export abstract class Project implements LanguageServiceHost, ModuleResolutionHo
     if (this.program && !this.symlinks.hasProcessedResolutions()) {
       this.symlinks.setSymlinksFromResolutions(
         this.program.getSourceFiles(),
-        this.program.getAutomaticTypeDirectiveResolutions()
+        this.program.getResolvedTypeReferenceDirectives()
+        // this.program.getAutomaticTypeDirectiveResolutions()
       )
     }
     return this.symlinks
@@ -678,10 +680,7 @@ export abstract class Project implements LanguageServiceHost, ModuleResolutionHo
 
   getDefaultLibFileName() {
     const nodeModuleBinDir = getDirectoryPath(normalizePath(this.projectService.getExecutingFilePath()))
-    return combinePaths(
-      path.resolve(nodeModuleBinDir, '..', '..', 'node_modules/typescript/lib'),
-      getDefaultLibFileName(this.compilerOptions)
-    ) // TODO!!!!!
+    return combinePaths(nodeModuleBinDir, getDefaultLibFileName(this.compilerOptions))
   }
 
   useCaseSensitiveFileNames() {
@@ -2347,10 +2346,12 @@ function extractUnresolvedImportsFromSourceFile(
   return getOrUpdate(cachedUnresolvedImportsPerFile, file.path, () => {
     if (!file.resolvedModules) return emptyArray
     let unresolvedImports: string[] | undefined
-    file.resolvedModules.forEach((x, name) => {
+    file.resolvedModules.forEach((v, name) => {
       // pick unresolved non-relative names
+      if (!v) return
+      const { resolvedModule } = v
       if (
-        (!x?.resolvedModule || !resolutionExtensionIsTSOrJson(x.resolvedModule.extension)) &&
+        (!resolvedModule || !resolutionExtensionIsTSOrJson(resolvedModule.extension)) &&
         !isExternalModuleNameRelative(name) &&
         !ambientModules.some((m) => m === name)
       ) {
@@ -2375,7 +2376,7 @@ export class InferredProject extends Project {
     }
   }
 
-  setCompilerOptions(options?: CompilerOptions) {
+  override setCompilerOptions(options?: CompilerOptions) {
     // Avoid manipulating the given options directly
     if (!options && !this.getCompilationSettings()) {
       return
@@ -2433,7 +2434,7 @@ export class InferredProject extends Project {
     this.enableGlobalPlugins(this.getCompilerOptions(), pluginConfigOverrides)
   }
 
-  addRoot(info: ScriptInfo) {
+  override addRoot(info: ScriptInfo) {
     Debug.assert(info.isScriptOpen())
     this.projectService.startWatchingConfigFilesForInferredProjectRoot(info)
     if (!this._isJsInferredProject && info.isJavaScript()) {
@@ -2442,7 +2443,7 @@ export class InferredProject extends Project {
     super.addRoot(info)
   }
 
-  removeRoot(info: ScriptInfo) {
+  override removeRoot(info: ScriptInfo) {
     this.projectService.stopWatchingConfigFilesForInferredProjectRoot(info)
     super.removeRoot(info)
     if (this._isJsInferredProject && info.isJavaScript()) {
@@ -2453,7 +2454,7 @@ export class InferredProject extends Project {
   }
 
   /** @internal */
-  isOrphan() {
+  override isOrphan() {
     return !this.hasRoots()
   }
 
@@ -2467,14 +2468,14 @@ export class InferredProject extends Project {
     )
   }
 
-  close() {
+  override close() {
     forEach(this.getRootScriptInfos(), (info) =>
       this.projectService.stopWatchingConfigFilesForInferredProjectRoot(info)
     )
     super.close()
   }
 
-  getTypeAcquisition(): TypeAcquisition {
+  override getTypeAcquisition(): TypeAcquisition {
     return (
       this.typeAcquisition || {
         enable: allRootFilesAreJsOrDts(this),
@@ -2506,12 +2507,12 @@ class AuxiliaryProject extends Project {
     )
   }
 
-  isOrphan(): boolean {
+  override isOrphan(): boolean {
     return true
   }
 
   /** @internal */
-  scheduleInvalidateResolutionsOfFailedLookupLocations(): void {
+  override scheduleInvalidateResolutionsOfFailedLookupLocations(): void {
     // Invalidation will happen on-demand as part of updateGraph
     return
   }
@@ -2750,11 +2751,11 @@ export class AutoImportProviderProject extends Project {
     return !some(this.rootFileNames)
   }
 
-  isOrphan() {
+  override isOrphan() {
     return true
   }
 
-  updateGraph() {
+  override updateGraph() {
     let rootFileNames = this.rootFileNames
     if (!rootFileNames) {
       rootFileNames = AutoImportProviderProject.getRootFileNames(
@@ -2776,66 +2777,66 @@ export class AutoImportProviderProject extends Project {
   }
 
   /** @internal */
-  scheduleInvalidateResolutionsOfFailedLookupLocations(): void {
+  override scheduleInvalidateResolutionsOfFailedLookupLocations(): void {
     // Invalidation will happen on-demand as part of updateGraph
     return
   }
 
-  hasRoots() {
+  override hasRoots() {
     return !!this.rootFileNames?.length
   }
 
-  markAsDirty() {
+  override markAsDirty() {
     this.rootFileNames = undefined
     super.markAsDirty()
   }
 
-  getScriptFileNames() {
+  override getScriptFileNames() {
     return this.rootFileNames || ts.emptyArray
   }
 
-  getLanguageService(): never {
+  override getLanguageService(): never {
     throw new Error(
       'AutoImportProviderProject language service should never be used. To get the program, use `project.getCurrentProgram()`.'
     )
   }
 
   /** @internal */
-  onAutoImportProviderSettingsChanged(): never {
+  override onAutoImportProviderSettingsChanged(): never {
     throw new Error('AutoImportProviderProject is an auto import provider; use `markAsDirty()` instead.')
   }
 
   /** @internal */
-  onPackageJsonChange(): never {
+  override onPackageJsonChange(): never {
     throw new Error("package.json changes should be notified on an AutoImportProvider's host project")
   }
 
-  getModuleResolutionHostForAutoImportProvider(): never {
+  override getModuleResolutionHostForAutoImportProvider(): never {
     throw new Error(
       'AutoImportProviderProject cannot provide its own host; use `hostProject.getModuleResolutionHostForAutomImportProvider()` instead.'
     )
   }
 
-  getProjectReferences() {
+  override getProjectReferences() {
     return this.hostProject.getProjectReferences()
   }
 
   /** @internal */
-  includePackageJsonAutoImports() {
+  override includePackageJsonAutoImports() {
     return PackageJsonAutoImportPreference.Off
   }
 
-  getTypeAcquisition(): TypeAcquisition {
+  override getTypeAcquisition(): TypeAcquisition {
     return { enable: false }
   }
 
   /** @internal */
-  getSymlinkCache() {
+  override getSymlinkCache() {
     return this.hostProject.getSymlinkCache()
   }
 
   /** @internal */
-  getModuleResolutionCache() {
+  override getModuleResolutionCache() {
     return this.hostProject.getCurrentProgram()?.getModuleResolutionCache()
   }
 }
@@ -2867,13 +2868,13 @@ export class ConfiguredProject extends Project {
    *
    * @internal
    */
-  potentialProjectReferences: Set<string> | undefined
+  potentialProjectReferences: Set<NormalizedPath> | undefined
 
   /** @internal */
   projectOptions?: ProjectOptions | true
 
   /** @internal */
-  isInitialLoadPending: () => boolean = returnTrue
+  override isInitialLoadPending: () => boolean = returnTrue
 
   /** @internal */
   sendLoadingProjectFinish = false
@@ -2915,12 +2916,12 @@ export class ConfiguredProject extends Project {
   }
 
   /** @internal */
-  useSourceOfProjectReferenceRedirect() {
+  override useSourceOfProjectReferenceRedirect() {
     return this.languageServiceEnabled
   }
 
   /** @internal */
-  getParsedCommandLine(fileName: string) {
+  override getParsedCommandLine(fileName: string) {
     const configFileName = asNormalizedPath(normalizePath(fileName))
     const canonicalConfigFilePath = asNormalizedPath(this.projectService.toCanonicalFileName(configFileName))
     // Ensure the config file existience info is cached
@@ -2963,7 +2964,7 @@ export class ConfiguredProject extends Project {
    * If the project has reload from disk pending, it reloads (and then updates graph as part of that) instead of just updating the graph
    * @returns: true if set of files in the project stays the same and false - otherwise.
    */
-  updateGraph(): boolean {
+  override updateGraph(): boolean {
     const isInitialLoad = this.isInitialLoadPending()
     this.isInitialLoadPending = returnFalse
     const reloadLevel = this.pendingReload
@@ -2991,7 +2992,7 @@ export class ConfiguredProject extends Project {
   }
 
   /** @internal */
-  getCachedDirectoryStructureHost() {
+  override getCachedDirectoryStructureHost() {
     return this.directoryStructureHost as CachedDirectoryStructureHost
   }
 
@@ -2999,7 +3000,7 @@ export class ConfiguredProject extends Project {
     return asNormalizedPath(this.getProjectName())
   }
 
-  getProjectReferences(): readonly ProjectReference[] | undefined {
+  override getProjectReferences(): readonly ProjectReference[] | undefined {
     return this.projectReferences
   }
 
@@ -3017,7 +3018,7 @@ export class ConfiguredProject extends Project {
   }
 
   /** @internal */
-  getResolvedProjectReferenceToRedirect(fileName: string): ResolvedProjectReference | undefined {
+  override getResolvedProjectReferenceToRedirect(fileName: string): ResolvedProjectReference | undefined {
     const program = this.getCurrentProgram()
     return program && program.getResolvedProjectReferenceToRedirect(fileName)
   }
@@ -3064,22 +3065,22 @@ export class ConfiguredProject extends Project {
   /**
    * Get the errors that dont have any file name associated
    */
-  getGlobalProjectErrors(): readonly Diagnostic[] {
+  override getGlobalProjectErrors(): readonly Diagnostic[] {
     return filter(this.projectErrors, (diagnostic) => !diagnostic.file) || emptyArray
   }
 
   /**
    * Get all the project errors
    */
-  getAllProjectErrors(): readonly Diagnostic[] {
+  override getAllProjectErrors(): readonly Diagnostic[] {
     return this.projectErrors || emptyArray
   }
 
-  setProjectErrors(projectErrors: Diagnostic[]) {
+  override setProjectErrors(projectErrors: Diagnostic[]) {
     this.projectErrors = projectErrors
   }
 
-  close() {
+  override close() {
     this.projectService.configFileExistenceInfoCache.forEach(
       (_configFileExistenceInfo, canonicalConfigFilePath) => this.releaseParsedConfig(canonicalConfigFilePath)
     )
@@ -3198,7 +3199,7 @@ export class ExternalProject extends Project {
     documentRegistry: DocumentRegistry,
     compilerOptions: CompilerOptions,
     lastFileExceededProgramSize: string | undefined,
-    public compileOnSaveEnabled: boolean,
+    public override compileOnSaveEnabled: boolean,
     projectFilePath?: string,
     pluginConfigOverrides?: Map<string, any>,
     watchOptions?: WatchOptions
@@ -3219,13 +3220,13 @@ export class ExternalProject extends Project {
     this.enableGlobalPlugins(this.getCompilerOptions(), pluginConfigOverrides)
   }
 
-  updateGraph() {
+  override updateGraph() {
     const result = super.updateGraph()
     this.projectService.sendProjectTelemetry(this)
     return result
   }
 
-  getExcludedFiles() {
+  override getExcludedFiles() {
     return this.excludedFiles
   }
 }

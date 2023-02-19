@@ -11,6 +11,7 @@ import {
   getNodeMajorVersion,
   getRootLength,
   LanguageServiceMode,
+  Logger,
   MapLike,
   noop,
   noopFileWatcher,
@@ -23,23 +24,16 @@ import {
   toFileNameLowerCase,
   tracing,
   WatchOptions,
+  server,
 } from 'typescript'
-import {
-  Logger,
-  LogLevel,
-  ModuleImportResult,
-  Msg,
-  nowString,
-  nullCancellationToken,
-  nullTypingsInstaller,
-  ServerCancellationToken,
-  ServerHost,
-  Session,
-  stringifyIndented,
-} from './ts/_namespaces/ts.server'
 import { getLogLevel, StartSessionOptions } from './ts/common'
+import { nowString } from './ts/jsTyping/shared'
 import { perfLogger } from './ts/perfLogger'
-import { LanguageServiceMode } from './ts/_namespaces/ts'
+import { nullCancellationToken, ServerCancellationToken, Session } from './ts/session'
+import { ModuleImportResult, ServerHost } from './ts/types'
+import { LogLevel, Msg } from './ts/utilitiesPublic'
+import { stringifyIndented } from './ts/utilities'
+import { nullTypingsInstaller } from './ts/typingsCache'
 
 interface LogOptions {
   file?: string

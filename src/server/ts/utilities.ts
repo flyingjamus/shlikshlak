@@ -3,15 +3,11 @@ import {
     Comparer,
     getBaseFileName,
     identity,
-    perfLogger,
     SortedArray,
-} from "./_namespaces/ts";
-import {
-    Logger,
-    LogLevel,
-    NormalizedPath,
-    ServerHost,
-} from "./_namespaces/ts.server";
+} from "typescript";
+import { perfLogger } from "./perfLogger";
+import { ServerHost } from './types'
+import { Logger, LogLevel, NormalizedPath } from './utilitiesPublic'
 
 /** @internal */
 export class ThrottledOperations {
