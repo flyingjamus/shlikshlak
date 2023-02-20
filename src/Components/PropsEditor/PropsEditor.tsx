@@ -12,14 +12,12 @@ import {
 } from '@mui/material'
 import { useIframeStore } from '../store'
 import {
-  ExistingAttribute,
-  ExistingAttributeValue,
   ExistingAttributeValueObject,
   PanelAttribute,
   PanelMatch,
   PanelsResponse,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useEffect, useRef, useState } from 'react'
+import React, { ElementType, useEffect, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
@@ -28,6 +26,8 @@ import { useBridge } from './UseBridge'
 import { useStore } from './UseStore'
 import { inspectElement } from './InspectElement'
 import { Source } from '../ReactDevtools/react-devtools-shared/shared/ReactElementType'
+import { existingAttributeSchema } from '../../Shared/PanelTypesZod'
+import { AppAutocomplete } from '../Common/AppAutocomplete'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -44,13 +44,24 @@ const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
 
 const EnumEditor: BaseEditor<string, { values: string[] }> = ({
   values,
-  value: defaultValue,
+  value: inputValue,
   onChange,
   ...props
 }) => {
-  const [value, setValue] = useState(defaultValue)
+  const isExpression = !inputValue || inputValue.startsWith('{')
+  const stringInput = (isExpression ? inputValue?.slice(2, -2) : inputValue?.slice(1, -1)) || ''
+  const [value, setValue] = useState(stringInput)
   return values.length > 5 ? (
-    <>placeholder</>
+    <AppAutocomplete
+      disablePortal
+      options={values}
+      value={value}
+      onChange={(e, v) => {
+        if (v) {
+          onChange(isExpression ? `{'${v}'}` : `'${v}'`)
+        }
+      }}
+    />
   ) : (
     <ToggleButtonGroup
       value={value}
@@ -94,6 +105,18 @@ const BaseStringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...
   )
 }
 
+const CodeEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
+  return (
+    <BaseStringEditor
+      onChange={(v) => {
+        onChange(`{${v}}`)
+      }}
+      value={inputValue?.slice(1, -1)}
+      {...props}
+    />
+  )
+}
+
 const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
   const isExpression = !inputValue || inputValue.startsWith('{')
   const stringInput = (isExpression ? inputValue?.slice(2, -2) : inputValue?.slice(1, -1)) || ''
@@ -123,11 +146,14 @@ const PropEditor = ({
   panelMatch,
   ...props
 }: {
-  panelMatch: PanelMatch
+  panelMatch?: PanelMatch
   value?: string
   onChange: (value: OnChangeValue) => void
   disabled?: boolean
 }) => {
+  if (!panelMatch) {
+    return <CodeEditor {...props} />
+  }
   switch (panelMatch.name) {
     case 'string':
       return <StringEditor {...props} />
@@ -135,8 +161,8 @@ const PropEditor = ({
       return <EnumEditor {...props} values={panelMatch.parameters.values} />
     case 'boolean':
       return <BooleanEditor {...props} />
-    case 'SxProps':
-      return <SxEditor {...props} />
+    // case 'SxProps':
+    //   return <SxEditor {...props} />
     case 'Children':
       return <ChildrenEditor {...props} />
   }
@@ -244,31 +270,49 @@ export const PropsEditor = React.memo(
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
+    const [added, setAdded] = useState([])
     const [there, notThere] = partition(
       attributes,
       (attr) =>
-        existingAttributes.some((existing) => attr.name === existing.name) || seenPanels.includes(attr.name)
+        existingAttributes.some((existing) => attr.name === existing.name) ||
+        seenPanels.includes(attr.name) ||
+        added.includes(attr.name)
     )
 
-    const panelAttrs = attributes.length < 10 ? attributes : there
-    // const sortedPanels = partition(panels?.attributes, (v) => v.location)
+    const showAll = attributes.length < 10
+    const panelAttrs = showAll ? attributes : there
+
     return (
-      <List sx={{ background: 'white' }} dense onBlur={onBlur}>
-        {panelAttrs.map((attr) => {
-          const existing = existingAttributes.find((v) => v.name === attr.name)
-          const key = [fileName, location, attr.name].join(':')
-          return (
-            <Row
-              key={key}
-              attr={attr}
-              existing={existing}
-              onChange={(newValue) => {
-                onAttributeChange(attr, newValue)
-              }}
-            />
-          )
-        })}
-      </List>
+      <Box height={'100%'} overflow={'auto'}>
+        <List sx={{ background: 'white' }} dense onBlur={onBlur}>
+          {panelAttrs.map((attr) => {
+            const existing = existingAttributes.find((v) => v.name === attr.name)
+            const key = [fileName, location, attr.name].join(':')
+            return (
+              <Row
+                key={key}
+                attr={attr}
+                existing={existing}
+                onChange={(newValue) => {
+                  onAttributeChange(attr, newValue)
+                }}
+              />
+            )
+          })}
+          {showAll ? null : (
+            <ListItem>
+              <AppAutocomplete
+                label={'Add'}
+                sx={{ width: '100%' }}
+                options={notThere.map((v) => v.name)}
+                onChange={(e, v) => {
+                  setAdded((added) => [...added, v])
+                }}
+              />
+            </ListItem>
+          )}
+        </List>
+      </Box>
     )
   }
 )
@@ -279,14 +323,13 @@ const Row = ({
   existing,
 }: {
   attr: PanelAttribute
-  existing?: ExistingAttribute
+  existing?: existingAttributeSchema
   onChange: (value: OnChangeValue) => void
 }) => {
-  const panel = attr.panels?.[0]
+  const panel = existing ? attr.panels.find((v) => existing.panels?.includes(v.name)) : attr.panels?.[0]
 
   const [prevValue, setPrevValue] = useState<OnChangeValue>()
 
-  if (!panel) return null
   return (
     <ListItem>
       <ListItemIcon>

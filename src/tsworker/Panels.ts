@@ -26,21 +26,19 @@ export const PANELS: {
   },
   {
     matcher: (type, { c }) => {
-      if (c.isTypeAssignableTo(c.getBooleanType(), type)) {
-        if (type.isUnionOrIntersection()) {
-          const values = type.types
-            .map((v) => {
-              if (v.isStringLiteral()) {
-                return v.value
-              }
-            })
-            .filter(isDefined)
-          if (values.length) {
-            values.sort()
-            return {
-              name: 'enum',
-              parameters: { values },
+      if (type.isUnionOrIntersection()) {
+        const values = type.types
+          .map((v) => {
+            if (v.isStringLiteral()) {
+              return v.value
             }
+          })
+          .filter(isDefined)
+        if (values.length) {
+          values.sort()
+          return {
+            name: 'enum',
+            parameters: { values },
           }
         }
       }

@@ -14,12 +14,13 @@ import {
   isPropertyAssignment,
   JsxOpeningLikeElement,
   LanguageServiceMode,
-  Node, normalizePath,
+  Node,
+  normalizePath,
   resolveModuleName,
   setParent,
   Symbol,
   SymbolFlags,
-  textChanges
+  textChanges,
 } from 'typescript'
 import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
@@ -54,7 +55,8 @@ const ioSession = startSession(
 )
 
 ioSession.projectService.openClientFile(path.resolve(FILE))
-const project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)
+const project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)!
+if (!project) throw new Error('Project missing')
 // ({
 //   options: { ...COMPILER_OPTIONS, rootFiles: [] },
 //   projectFileName: 'project',
@@ -98,11 +100,13 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
     const typeChecker = program!.getTypeChecker()
     const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
     const jsxTag = parent.parent
+
     const matcherContext: MatcherContext = {
       c: typeChecker!,
       types: {},
     }
     const existingAttributes: ExistingAttribute[] = parent.attributes.properties
+      .filter((v) => v.name?.getText() === 'variant')
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
@@ -123,7 +127,9 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
               ? [{ name: 'Children' } as const]
               : type
               ? PANELS.map((v) => {
-                  return (v.reverseMatch || v.matcher)(type, matcherContext)
+                  return v.reverseMatch
+                    ? v.reverseMatch(type, matcherContext)
+                    : v.matcher(type, matcherContext)?.name
                 }).filter(isDefined)
               : [],
           }
@@ -146,22 +152,24 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
     }
 
     if (typeAtLocation) {
-      const attributes = [...typeAtLocation.getProperties()].map((prop) => {
-        const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
+      const attributes = [...typeAtLocation.getProperties()]
+        // .filter((v) => v.name === 'variant')
+        .map((prop) => {
+          const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
 
-        return {
-          name: prop.name,
-          location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
-          panels:
-            prop.name === 'children'
-              ? [{ name: 'Children' } as const]
-              : type
-              ? PANELS.map((v) => {
-                  return v.matcher(type, matcherContext)
-                }).filter(isDefined)
-              : [],
-        }
-      })
+          return {
+            name: prop.name,
+            location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
+            panels:
+              prop.name === 'children'
+                ? [{ name: 'Children' } as const]
+                : type
+                ? PANELS.map((v) => {
+                    return v.matcher(type, matcherContext)
+                  }).filter(isDefined)
+                : [],
+          }
+        })
 
       return {
         attributes: [...attributes],
@@ -396,4 +404,9 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
   // }
 }
 
+;(async () => {
+  const res = await getPanelsAtLocation('/home/danny/dev/nimbleway/pages/index.tsx', 69, 9)
+
+  console.log(res.attributes.find((v) => v.name === 'variant'))
+})()
 emitFile(FILE)

@@ -94,7 +94,7 @@ export const Preview = () => {
       <Box sx={{ background: 'white', position: 'relative', flex: 1 }}>
         <StyledIframe
           // src={ready ? '/stories/example--story-root' : undefined}
-          src={'http://localhost:3002/login'}
+          src={'http://localhost:3002'}
           // src={ready ? '/stories/example-thin--story-root' : undefined}
           onLoad={() => {}}
           ref={iframeRef}

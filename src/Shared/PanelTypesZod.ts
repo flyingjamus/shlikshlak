@@ -40,7 +40,9 @@ export const existingAttributeSchema = z.object({
   name: z.string(),
   value: existingAttributeValueSchema.optional(),
   location: locationSchema,
+  panels: z.array(z.string()).optional(),
 })
+export type existingAttributeSchema = z.infer<typeof existingAttributeSchema>
 
 export const panelAttributeSchema = z.object({
   name: z.string(),
@@ -48,6 +50,7 @@ export const panelAttributeSchema = z.object({
   required: z.boolean().optional(),
   panels: z.array(panelMatchSchema),
 })
+export type panelAttributeSchema = z.infer<typeof panelAttributeSchema>
 
 export const iRangeSchema = z.object({
   startLineNumber: z.number(),
