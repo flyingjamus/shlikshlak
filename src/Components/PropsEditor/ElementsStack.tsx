@@ -7,9 +7,8 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso'
 import { Element, useStore } from './UseStore'
 import { useBridge } from './UseBridge'
 import { times } from 'lodash-es'
-import { InspectedElement } from 'react-devtools-inline/frontend'
 import { isDefined } from 'ts-is-defined'
-import { inspectElement } from './InspectElement'
+import { useInspectElement } from './InspectElement'
 
 const useElementsStack = () => {
   const selectedId = useDevtoolsStore((v) => v.selectedNode?.id)
@@ -65,11 +64,9 @@ export const ElementsStack = () => {
   return store ? <Tree /> : null
 }
 
-type ElementWithInspected = Element & { inspected?: InspectedElement }
 export const Tree = () => {
   const bridge = useBridge()
   const store = useStore()
-  const stack = useElementsStack()
 
   const initialRevision = useMemo(() => store?.revision, [store])
   const [rerender, setRerender] = useState({})
@@ -94,7 +91,7 @@ export const Tree = () => {
 
     return () => store.removeListener('mutated', handleStoreMutated)
   }, [initialRevision, store])
-  const [flatTree, setFlatTree] = useState<ElementWithInspected[] | undefined>()
+  const [flatTree, setFlatTree] = useState<Element[] | undefined>()
   useEffect(() => {
     if (!store || !bridge) {
       return
@@ -106,12 +103,12 @@ export const Tree = () => {
           .map(async (v) => {
             if (!v) return
 
-            const inspected = await inspectElement({ bridge, store, id: v.id })
-            if (inspected?.type === 'full-data') {
-              return { ...v, inspected: inspected.value }
-            } else {
-              return v
-            }
+            // const inspected = await inspectElement({ bridge, store, id: v.id })
+            // if (inspected?.type === 'full-data') {
+            //   return { ...v, inspected: inspected.value }
+            // } else {
+            return v
+            // }
           })
       )
 
@@ -147,14 +144,14 @@ export const Tree = () => {
         itemContent={(i) => {
           const element = flatTree[i]
           if (!store || !element) return <Box height={'16px'}></Box>
-          return element.inspected?.source ? <Item element={element} /> : <NoItem element={element} />
+          return <Item element={element} />
         }}
       />
     </Box>
   )
 }
 
-const NoItem = ({ element }: { element: ElementWithInspected }) => {
+const NoItem = ({ element }: { element: Element }) => {
   const { depth, displayName, id } = element
   return (
     <Box
@@ -169,22 +166,28 @@ const NoItem = ({ element }: { element: ElementWithInspected }) => {
   )
 }
 
-const Item = ({ element }: { element: ElementWithInspected }) => {
+const Item = ({ element }: { element: Element }) => {
   const bridge = useBridge()
   const store = useStore()
   const selectedFiberId = useIframeStore((v) => v.selectedFiberId)
   const { depth, displayName, id } = element
+  const inspected = useInspectElement(id)
   const { clearHighlightNativeElement, highlightNativeElement } = useHighlightNativeElement()
+  const isSelected = selectedFiberId === id
+  if (isSelected) {
+    console.log(inspected)
+  }
   return (
     <Box
       sx={({ palette }) => ({
         cursor: 'pointer',
         fontWeight: 500,
+        opacity: inspected && !inspected.source ? 0.5 : 1,
         // display: 'inline-flex',
         padding: '4px',
         paddingLeft: `${depth * 4}px`,
         // border: '1px solid',
-        background: selectedFiberId === id ? lighten(palette.secondary.light, 0.7) : 'transparent',
+        background: isSelected ? lighten(palette.secondary.light, 0.7) : 'transparent',
         '&:hover': {
           background: palette.grey[300],
         },

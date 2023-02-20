@@ -996,6 +996,8 @@ export function attach(
         }
     }
 
+    if (!_debugSource) return true
+
     const elementType = getElementTypeForFiber(fiber)
 
     if (hideElementsWithTypes.has(elementType)) {

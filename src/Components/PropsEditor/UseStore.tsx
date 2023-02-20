@@ -1,7 +1,6 @@
 import { useIframeStore } from '../store'
-import { Store as OriginalStore } from 'react-devtools-inline/frontend'
 import { ElementType } from 'react'
-
+import OriginalStore from '../ReactDevtools/react-devtools-shared/src/devtools/store'
 export type Element = {
   id: number
   parentID: number

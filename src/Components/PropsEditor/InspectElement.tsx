@@ -2,7 +2,10 @@ import { useBridge } from './UseBridge'
 import { Store, useStore } from './UseStore'
 import { useEffect, useState } from 'react'
 import { BackendEvents, FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
-import { InspectedElementPayload } from '../ReactDevtools/react-devtools-shared/src/backend/types'
+import {
+  InspectedElement,
+  InspectedElementPayload,
+} from '../ReactDevtools/react-devtools-shared/src/backend/types'
 
 function getPromiseForRequestID<T>(
   requestID: number,
@@ -68,7 +71,7 @@ export const inspectElement = ({
 export const useInspectElement = (id: number) => {
   const bridge = useBridge()
   const store = useStore()
-  const [result, setResult] = useState<InspectedElementPayload | undefined>()
+  const [result, setResult] = useState<InspectedElement | undefined>()
 
   useEffect(() => {
     if (!id || !bridge || !store) {
@@ -77,7 +80,11 @@ export const useInspectElement = (id: number) => {
     }
     const promise = inspectElement({ store, bridge, id })
     promise.then((res) => {
-      setResult(res)
+      if (res.type === 'full-data') {
+        setResult(res.value)
+      } else {
+        console.log('NOT FULL DATA')
+      }
     })
   }, [bridge, id, store])
   return result

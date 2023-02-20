@@ -107,7 +107,6 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
           const type = initializer && typeChecker.getTypeAtLocation(attr)
-          console.log(typeChecker.typeToString(type))
           const value = initializer?.getText()
           const name = attr.name.escapedText.toString()
           return {
@@ -344,7 +343,6 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
           )
           // t.replaceNode(sourceFile, existingToken, updates, options)
           // factory.inlineExpressions()
-          console.log(111, existingToken.initializer?.getText())
           t.replaceNodeWithText(sourceFile, existingToken.initializer, value)
         } else {
           t.deleteNode(sourceFile, existingToken)
