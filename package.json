@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "tmux new-session 'yarn dev:server'\\; split-window -h 'yarn dev:vite' \\; split-window 'yarn dev:devtools'",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "postinstall": "yarn patch-package",
