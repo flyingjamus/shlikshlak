@@ -106,12 +106,14 @@ const BaseStringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...
 }
 
 const CodeEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
+  const isExpression = inputValue?.startsWith('{')
+  const stringInput = (isExpression ? inputValue?.slice(1, -1) : inputValue) || ''
   return (
     <BaseStringEditor
       onChange={(v) => {
-        onChange(`{${v}}`)
+        onChange(isExpression ? `{${v}}` : v)
       }}
-      value={inputValue?.slice(1, -1)}
+      value={stringInput}
       {...props}
     />
   )
