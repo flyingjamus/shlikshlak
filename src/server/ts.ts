@@ -7,32 +7,29 @@ import {
   getTokenAtPosition,
   isJsxAttribute,
   isJsxElement,
-  isJsxExpression,
   isJsxOpeningLikeElement,
   isJsxSpreadAttribute,
-  isObjectLiteralExpression,
-  isPropertyAssignment,
   JsxOpeningLikeElement,
   LanguageServiceMode,
   Node,
-  normalizePath,
   resolveModuleName,
   setParent,
   Symbol,
   SymbolFlags,
   textChanges,
 } from 'typescript'
-import { COMPILER_OPTIONS } from '../Components/Editor/COMPILER_OPTIONS'
 import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from '../tsworker/Panels'
 import path from 'path'
-import { SetAttributesAtPositionRequest, WriteError } from '../common/api'
+import { FileTextChanges, SetAttributesAtPositionRequest } from '../common/api'
 import { initializeNodeSystem } from './nodeServer'
 import prettier from 'prettier'
 import { createLogger } from './logger'
 import { asNormalizedPath } from './ts/utilitiesPublic'
 import { isString } from 'lodash-es'
+import { AppEmitter } from './AppEmitter'
+
 export const logger = createLogger('ts')
 
 // const FILE = 'src/stories/example.stories.tsx'
@@ -48,7 +45,7 @@ const ioSession = startSession(
     useInferredProjectPerProjectRoot: false,
     suppressDiagnosticEvents: undefined,
     noGetErrOnBackgroundUpdate: undefined,
-    syntaxOnly: false,
+    // syntaxOnly: false,
     serverMode: LanguageServiceMode.Semantic,
   },
   ioLogger,
@@ -185,7 +182,6 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
 }
 
 function requireSourceFile(fileName: string) {
-  logger.debug('Require source file ' + fileName)
   const sourceFile = project.getLanguageService().getProgram()!.getSourceFile(fileName)
   if (!sourceFile) throw new Error('Source file not found ' + fileName)
   return sourceFile
@@ -275,7 +271,7 @@ function logErrors(fileName: string) {
   })
 }
 
-export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): WriteError[] | undefined {
+export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): FileTextChanges[] | false {
   logger.debug(`setAttributeAtPosition ${JSON.stringify(args, null, 2)}`)
   const { fileName, position, attrName, value } = args
   const sourceFile = requireSourceFile(fileName)
@@ -334,13 +330,13 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): Wr
       } else if (existingToken && !isJsxSpreadAttribute(existingToken)) {
         const options = { prefix: existingToken.pos === existingToken.end ? ' ' : undefined }
         if (value !== undefined) {
-          const updates = factory.updateJsxAttribute(
-            existingToken,
-            name,
-            factory.createJsxExpression(undefined, value)
-          )
-          // t.replaceNode(sourceFile, existingToken, updates, options)
-          // factory.inlineExpressions()
+          // const updates = factory.updateJsxAttribute(
+          //   existingToken,
+          //   name,
+          //   factory.createJsxExpression(undefined, value)
+          // )
+          // // t.replaceNode(sourceFile, existingToken, updates, options)
+          // // factory.inlineExpressions()
           t.replaceNodeWithText(sourceFile, existingToken.initializer, value)
         } else {
           t.deleteNode(sourceFile, existingToken)
@@ -360,45 +356,88 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): Wr
         t.insertText(sourceFile, jsxAttributesNode.end, ` ${attrName}=${value}`)
       }
     }
-  )
-  for (const change of fileTextChanges) {
-    const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
-    ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
+  ) as FileTextChanges[]
+  const undoChanges = applyChanges(fileTextChanges)
+  if (tryWriteFiles([fileName])) {
+    return undoChanges
+  } else {
+    return false
   }
-  return tryWriteFile(fileName)
 }
 
-const tryWriteFile = (fileName: string): WriteError[] | undefined => {
-  const config = prettier.resolveConfig.sync(fileName)
-  const scriptInfo = ioSession.projectService.getScriptInfo(fileName)!
-  try {
-    const formatted = prettier.format(getSnapshotText(scriptInfo.getSnapshot()), {
-      ...config,
-      filepath: fileName,
-    })
-
-    const diagnostics = project.getLanguageService().getSemanticDiagnostics(fileName)
-
-    if (diagnostics.length) {
-      logger.warn('Diagnostics, not writing')
-      logger.warn(diagnostics)
-      return diagnostics.map(({ messageText, source, start, file }) => ({
-        type: 'TS',
-        fileName: file?.fileName,
-        position: start,
-        text: isString(messageText) ? messageText : messageText.messageText,
-      }))
+export const doChanges = (changes: FileTextChanges[]) => {
+  const undoChanges = applyChanges(changes)
+  const files = undoChanges.map((v) => v.fileName)
+  if (tryWriteFiles(files)) {
+    return undoChanges
+  }
+  return false
+}
+export const applyChanges = (changes: FileTextChanges[]): FileTextChanges[] => {
+  logger.debug(`applyChanges ${JSON.stringify(changes, null, 2)}`)
+  return changes.map((change) => {
+    const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
+    const snapshot = scriptInfo.getSnapshot()
+    const undoChanges: FileTextChanges = {
+      ...change,
+      textChanges: Array.from(change.textChanges.values()).map(({ newText, span }) => ({
+        span: { start: span.start, length: newText.length },
+        newText: snapshot.getText(span.start, span.start + span.length),
+      })),
     }
+    console.dir({ undoChanges, changes }, { depth: Infinity })
 
-    ioSession.projectService.host.writeFile(fileName, formatted)
+    ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
+    return undoChanges
+  })
+}
+
+export const runDiagnosticsAsync = (fileName: string) => {
+  const diagnostics = project.getLanguageService().getSemanticDiagnostics(fileName)
+
+  if (diagnostics.length) {
+    logger.warn(diagnostics)
+  }
+  AppEmitter.emit(
+    'diagnostics',
+    fileName,
+    diagnostics.map(({ messageText, source, start, file }) => ({
+      type: 'TS',
+      fileName: fileName,
+      position: start,
+      text: isString(messageText) ? messageText : messageText.messageText,
+    }))
+  )
+}
+
+export const tryWriteFiles = (fileNames: string[]) => {
+  try {
+    const results = fileNames.map((fileName) => {
+      const config = prettier.resolveConfig.sync(fileName)
+      const scriptInfo = ioSession.projectService.getScriptInfo(fileName)!
+      return prettier.format(scriptInfo.getSnapshot().getText(0, scriptInfo.getSnapshot().getLength()), {
+        ...config,
+        filepath: fileName,
+      })
+    })
+    for (let i = 0; i < fileNames.length; i++) {
+      const fileName = fileNames[i]
+      ioSession.projectService.host.writeFile(fileName, results[i])
+      runDiagnosticsAsync(fileName)
+    }
+    return true
   } catch (e) {
     if (e instanceof SyntaxError) {
       logger.warn('Prettier, not writing')
       logger.warn(e)
     }
-    scriptInfo.reloadFromFile()
-    return false
+    for (const fileName of fileNames) {
+      const scriptInfo = ioSession.projectService.getScriptInfo(fileName)!
+      scriptInfo.reloadFromFile()
+    }
   }
+
+  return false
 }
 
 // ;(async () => {

@@ -59,7 +59,6 @@ export const Preview = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const childConnection = useIframeStore((v) => v.childConnection)
   const refCallBack = useCallback((current) => {
-    console.log(current)
     if (current) {
       const { bridge, store } = initialize(current.contentWindow as Window)
       useIframeStore.setState({ bridge, store })

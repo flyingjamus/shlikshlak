@@ -66,35 +66,38 @@ export type SetAttributesAtPositionRequest = z.infer<typeof SetAttributesAtPosit
 export const WriteError = z.object({
   type: z.enum(['PRETTIER', 'TS']),
   fileName: z.string(),
-  position: z.number(),
+  position: z.number().optional(),
   text: z.string(),
 })
 export type WriteError = z.infer<typeof WriteError>
 
-export const filesApi = apiBuilder({
-  method: 'post',
-  path: '/get_file',
-  alias: 'getFile',
-  parameters: [
-    {
-      type: 'Body',
-      name: 'path',
-      schema: z.object({
-        path: z.string(),
-      }),
-    },
-  ],
-  response: ApiFile,
+export const textSpanSchema = z.object({
+  start: z.number(),
+  length: z.number(),
 })
-  .addEndpoint({
-    method: 'post',
-    path: '/write_file',
-    alias: 'writeFile',
-    response: z.object({}),
-    parameters: [
-      { type: 'Body', name: 'body', schema: z.object({ path: z.string(), contents: z.string() }) },
-    ],
-  })
+
+const textChangeSchema = z.object({
+  span: textSpanSchema,
+  newText: z.string(),
+})
+
+export const FileTextChanges = z.object({
+  fileName: z.string(),
+  textChanges: z.array(textChangeSchema),
+  isNewFile: z.boolean().optional(),
+})
+export type FileTextChanges = z.infer<typeof FileTextChanges>
+
+const ChangesOrError = z.object({ undoChanges: z.array(FileTextChanges).optional(), error: z.boolean() })
+export const filesApi = apiBuilder({
+  method: 'get',
+  path: '/init',
+  alias: 'init',
+  response: z.object({
+    rootPath: z.string(),
+  }),
+  errors: [{ status: 400, schema: z.object({}) }],
+})
   .addEndpoint({
     method: 'post',
     path: '/launch_editor',
@@ -107,15 +110,6 @@ export const filesApi = apiBuilder({
         schema: location,
       },
     ],
-  })
-  .addEndpoint({
-    method: 'get',
-    path: '/init',
-    alias: 'init',
-    response: z.object({
-      rootPath: z.string(),
-    }),
-    errors: [{ status: 400, schema: z.object({}) }],
   })
   .addEndpoint({
     method: 'get',
@@ -139,12 +133,24 @@ export const filesApi = apiBuilder({
   .addEndpoint({
     method: 'post',
     path: '/lang/setAttributeAtPosition',
-    response: z.object({ errors: z.array(WriteError).optional() }),
+    response: ChangesOrError,
     parameters: [
       {
         type: 'Body',
         name: 'body',
         schema: SetAttributesAtPositionRequest,
+      },
+    ],
+  })
+  .addEndpoint({
+    method: 'post',
+    path: '/do_change',
+    response: ChangesOrError,
+    parameters: [
+      {
+        type: 'Body',
+        name: 'body',
+        schema: z.object({ changes: z.array(FileTextChanges) }),
       },
     ],
   })

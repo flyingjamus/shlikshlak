@@ -64,7 +64,7 @@ export class TextStorage {
    * Generated only on demand (based on edits, or information requested)
    * The property text is set to undefined when edits happen on the cache
    */
-  private svc: ScriptVersionCache | undefined
+  public svc: ScriptVersionCache | undefined
 
   /**
    * Stores the text when there are no changes to the script version cache

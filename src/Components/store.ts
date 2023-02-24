@@ -7,10 +7,11 @@ import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import { StateStorage } from 'zustand/middleware/persist'
 import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
-import type { AppNode, DevtoolsMethods } from '../Devtools/Devtools'
+import type { DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
 import { FrontendBridge } from './ReactDevtools/react-devtools-shared/src/bridge'
 import Store from './ReactDevtools/react-devtools-shared/src/devtools/store'
+import { FileTextChanges } from 'typescript'
 
 export type AppFile = {
   path: string
@@ -67,6 +68,8 @@ interface IframeStore {
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile
   selectedFiberId?: number
+  undoStack: { undoChanges: FileTextChanges[] }[]
+  redoStack: { undoChanges: FileTextChanges[] }[]
 }
 export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<IframeStore>()(
   persist<IframeStore>(
@@ -80,11 +83,20 @@ export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<Ifram
         return editor
       },
       renderers: {},
+      undoStack: [],
+      redoStack: [],
     }),
     {
       name: 'iframestore',
       getStorage: () => localStorage,
-      partialize: ({ openFile, selectedComponent }) => ({ openFile, selectedComponent } as IframeStore),
+      partialize: ({ openFile, selectedComponent, undoStack }) =>
+        ({ openFile, selectedComponent, undoStack } as IframeStore),
     }
   )
 )
+
+window.__shlikshlack__ = Object.assign(window.__shlikshlack__ || {}, {
+  clearUndoHistory: () => {
+    useIframeStore.setState({ undoStack: [], redoStack: [] })
+  },
+})

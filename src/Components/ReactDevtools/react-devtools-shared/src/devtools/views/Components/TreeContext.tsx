@@ -793,7 +793,6 @@ function TreeContextController({
             state = reduceSuspenseState(store, state, action)
 
             if (state.selectedElementID && type.startsWith('SELECT')) {
-              console.log(type)
               useIframeStore.setState({ selectedFiberId: state.selectedElementID })
             }
 

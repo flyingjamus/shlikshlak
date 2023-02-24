@@ -7,8 +7,8 @@ import '../../workers'
 // import { Inspector } from '../Inspector/Inspector'
 import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { Box } from '@mui/material'
-import { ElementsStack } from '../PropsEditor/ElementsStack'
 import { TreeWrapper } from '../PropsEditor/TreeWrapper'
+import { Errors } from '../Errors/Errors'
 
 const ELEMENT_MAP = {
   files: <Files />,
@@ -18,7 +18,8 @@ const ELEMENT_MAP = {
   // inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
   // elements: <ElementsStack />,
-  elements: <TreeWrapper />
+  elements: <TreeWrapper />,
+  errors: <Errors />,
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
@@ -31,7 +32,12 @@ export const Screen = () => {
       renderTile={(id, path) => ELEMENT_MAP[id]}
       initialValue={{
         direction: 'row',
-        first: 'elements',
+        first: {
+          first: 'elements',
+          second: 'errors',
+          direction: 'column',
+          splitPercentage: 70,
+        },
         second: {
           first: 'props',
           second: 'preview',
