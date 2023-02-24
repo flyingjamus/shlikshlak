@@ -1,6 +1,5 @@
 import { apiBuilder } from '@zodios/core'
 import { z } from 'zod'
-import { StoryEntry } from '../stories/ParseStories/types'
 import { panelsResponseSchema } from '../Shared/PanelTypesZod'
 
 export type ApiFile = z.infer<typeof ApiFile>
@@ -63,6 +62,14 @@ export const SetAttributesAtPositionRequest = z.object({
   value: z.union([z.string(), z.undefined()]),
 })
 export type SetAttributesAtPositionRequest = z.infer<typeof SetAttributesAtPositionRequest>
+
+export const WriteError = z.object({
+  type: z.enum(['PRETTIER', 'TS']),
+  fileName: z.string(),
+  position: z.number(),
+  text: z.string(),
+})
+export type WriteError = z.infer<typeof WriteError>
 
 export const filesApi = apiBuilder({
   method: 'post',
@@ -132,7 +139,7 @@ export const filesApi = apiBuilder({
   .addEndpoint({
     method: 'post',
     path: '/lang/setAttributeAtPosition',
-    response: z.object({}),
+    response: z.object({ errors: z.array(WriteError).optional() }),
     parameters: [
       {
         type: 'Body',

@@ -7,7 +7,7 @@ import Icon from '../Icon'
 import { BridgeContext, OptionsContext, StoreContext } from '../context'
 import Element from './Element'
 import InspectHostNodesToggle from './InspectHostNodesToggle'
-import OwnersStack from './OwnersStack'
+// import OwnersStack from './OwnersStack'
 import ComponentSearchInput from './ComponentSearchInput'
 import SelectedTreeHighlight from './SelectedTreeHighlight'
 import TreeFocusedContext from './TreeFocusedContext'
@@ -336,7 +336,8 @@ export default function Tree(props: Props) {
             </Fragment>
           )}
           <Suspense fallback={<Loading />}>
-            {ownerID !== null ? <OwnersStack /> : <ComponentSearchInput />}
+            {/*{ownerID !== null ? <OwnersStack /> : <ComponentSearchInput />}*/}
+            <ComponentSearchInput />
           </Suspense>
           {showInlineWarningsAndErrors && ownerID === null && (errors > 0 || warnings > 0) && (
             <React.Fragment>

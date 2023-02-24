@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Fragment, useContext, useMemo, useState } from 'react'
+import { Fragment, MouseEventHandler, ReactNode, useContext, useMemo, useState } from 'react'
 import Store from '../../../../src/devtools/store'
 import Badge from './Badge'
 import ButtonIcon from '../ButtonIcon'
@@ -28,6 +28,7 @@ export default function Element({ data, index, style }: Props) {
   const { isNavigatingWithKeyboard, onElementMouseEnter, treeFocused } = data
   const id = element === null ? null : element.id
   const isSelected = selectedElementID === id
+
   const errorsAndWarningsSubscription = useMemo(
     () => ({
       getCurrentValue: () =>
@@ -51,14 +52,14 @@ export default function Element({ data, index, style }: Props) {
 
   const handleDoubleClick = () => {
     if (id !== null) {
-      dispatch({
-        type: 'SELECT_OWNER',
-        payload: id,
-      })
+      // dispatch({
+      //   type: 'SELECT_OWNER',
+      //   payload: id,
+      // })
     }
   }
 
-  const handleClick = ({ metaKey }) => {
+  const handleClick: MouseEventHandler = ({ metaKey }) => {
     if (id !== null) {
       logEvent({
         event_name: 'select-element',
@@ -85,7 +86,7 @@ export default function Element({ data, index, style }: Props) {
     setIsHovered(false)
   }
 
-  const handleKeyDoubleClick = (event) => {
+  const handleKeyDoubleClick: MouseEventHandler = (event) => {
     // Double clicks on key value are used for text selection (if the text has been truncated).
     // They should not enter the owners tree view.
     event.stopPropagation()
@@ -139,7 +140,7 @@ export default function Element({ data, index, style }: Props) {
         {key && (
           <Fragment>
             &nbsp;<span className={styles.KeyName}>key</span>="
-            <span className={styles.KeyValue} title={key} onDoubleClick={handleKeyDoubleClick}>
+            <span className={styles.KeyValue} title={key?.toString()} onDoubleClick={handleKeyDoubleClick}>
               {key}
             </span>
             "
@@ -227,13 +228,13 @@ function DisplayName({ displayName, id }: DisplayNameProps) {
   const isCurrentResult = searchIndex !== null && id === searchResults[searchIndex]
 
   if (!isSearchResult || displayName === null) {
-    return displayName
+    return <>{displayName}</>
   }
 
   const match = createRegExp(searchText).exec(displayName)
 
   if (match === null) {
-    return displayName
+    return <>{displayName}</>
   }
 
   const startIndex = match.index
@@ -254,5 +255,5 @@ function DisplayName({ displayName, id }: DisplayNameProps) {
     children.push(<span key="end">{displayName.slice(stopIndex)}</span>)
   }
 
-  return children
+  return <>{children}</>
 }

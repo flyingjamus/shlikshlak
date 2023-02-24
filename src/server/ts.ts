@@ -27,11 +27,12 @@ import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from '../tsworker/Panels'
 import path from 'path'
-import { SetAttributesAtPositionRequest } from '../common/api'
+import { SetAttributesAtPositionRequest, WriteError } from '../common/api'
 import { initializeNodeSystem } from './nodeServer'
 import prettier from 'prettier'
 import { createLogger } from './logger'
 import { asNormalizedPath } from './ts/utilitiesPublic'
+import { isString } from 'lodash-es'
 export const logger = createLogger('ts')
 
 // const FILE = 'src/stories/example.stories.tsx'
@@ -106,7 +107,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
       types: {},
     }
     const existingAttributes: ExistingAttribute[] = parent.attributes.properties
-      .filter((v) => v.name?.getText() === 'variant')
+      // .filter((v) => v.name?.getText() === 'variant')
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
@@ -274,7 +275,7 @@ function logErrors(fileName: string) {
   })
 }
 
-export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): boolean {
+export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): WriteError[] | undefined {
   logger.debug(`setAttributeAtPosition ${JSON.stringify(args, null, 2)}`)
   const { fileName, position, attrName, value } = args
   const sourceFile = requireSourceFile(fileName)
@@ -288,17 +289,6 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
       formatContext: formatting.getFormatContext({}, { getNewLine: () => '\n' }),
     },
     (t) => {
-      // const initializerExpression =
-      //   value !== undefined
-      //     ? factory.createJsxExpression(
-      //         /*dotDotDotToken*/ undefined,
-      //         factory.inlineExpressions(
-      //           value || '',
-      //           // /* isSingleQuote */ quotePreference === QuotePreference.Single TODO!!
-      //           false
-      //         )
-      //       )
-      //     : undefined
       const tokenWithAttr = token?.parent.parent.parent
       if (!tokenWithAttr) {
         console.error('tokenWithAttr not found')
@@ -375,38 +365,48 @@ export function setAttributeAtPosition(args: SetAttributesAtPositionRequest): bo
     const scriptInfo = ioSession.projectService.getScriptInfo(change.fileName)!
     ioSession.projectService.applyChangesToFile(scriptInfo, change.textChanges.values())
   }
+  return tryWriteFile(fileName)
+}
 
-  const languageService = project.getLanguageService()
-  const program = languageService.getProgram()
-  const typeChecker = program!.getTypeChecker()
-
-  const config = prettier.resolveConfig.sync(sourceFile.fileName)
-  const scriptInfo = ioSession.projectService.getScriptInfo(sourceFile.fileName)!
+const tryWriteFile = (fileName: string): WriteError[] | undefined => {
+  const config = prettier.resolveConfig.sync(fileName)
+  const scriptInfo = ioSession.projectService.getScriptInfo(fileName)!
   try {
     const formatted = prettier.format(getSnapshotText(scriptInfo.getSnapshot()), {
       ...config,
-      filepath: sourceFile.fileName,
+      filepath: fileName,
     })
-    ioSession.projectService.host.writeFile(sourceFile.fileName, formatted)
-    return true
+
+    const diagnostics = project.getLanguageService().getSemanticDiagnostics(fileName)
+
+    if (diagnostics.length) {
+      logger.warn('Diagnostics, not writing')
+      logger.warn(diagnostics)
+      return diagnostics.map(({ messageText, source, start, file }) => ({
+        type: 'TS',
+        fileName: file?.fileName,
+        position: start,
+        text: isString(messageText) ? messageText : messageText.messageText,
+      }))
+    }
+
+    ioSession.projectService.host.writeFile(fileName, formatted)
   } catch (e) {
-    logger.warn('Prettier, not writing')
-    logger.warn(e)
+    if (e instanceof SyntaxError) {
+      logger.warn('Prettier, not writing')
+      logger.warn(e)
+    }
     scriptInfo.reloadFromFile()
     return false
   }
-  // const diagnostics = typeChecker.getDiagnostics(sourceFile)
-  // if (diagnostics.length) {
-  //   return false
-  // } else {
-  //   ioSession.projectService.host.writeFile(sourceFile.fileName, getSnapshotText(scriptInfo.getSnapshot()))
-  //   return true
-  // }
 }
 
-;(async () => {
-  const res = await getPanelsAtLocation('/home/danny/dev/nimbleway/pages/index.tsx', 69, 9)
-
-  console.log(res.attributes.find((v) => v.name === 'variant'))
-})()
+// ;(async () => {
+//   const res = await getPanelsAtLocation(
+//     '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx',
+//     135,
+//     13
+//   )
+//   console.log(res.existingAttributes)
+// })()
 emitFile(FILE)

@@ -1,5 +1,5 @@
 import { Box, styled } from '@mui/material'
-import { useEffect, useRef } from 'react'
+import { ForwardedRef, forwardRef, IframeHTMLAttributes, useCallback, useEffect, useRef } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
@@ -7,15 +7,11 @@ import { InspectHostNodesToggle } from './InspectHostNodesToggle'
 import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
 import Store from '../ReactDevtools/react-devtools-shared/src/devtools/store'
 import { FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
+import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
 
 const StyledIframe = styled('iframe')({
   border: '0',
   outline: '0',
-  width: '100%',
-  height: '100%',
-  minHeight: '160px',
-  maxHeight: '2000px',
-  flex: 1,
 })
 
 export const parentMethods = {}
@@ -62,11 +58,11 @@ export function initialize(
 export const Preview = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const childConnection = useIframeStore((v) => v.childConnection)
-
-  useEffect(() => {
-    const current = iframeRef.current
-    if (current && !childConnection) {
+  const refCallBack = useCallback((current) => {
+    console.log(current)
+    if (current) {
       const { bridge, store } = initialize(current.contentWindow as Window)
+      useIframeStore.setState({ bridge, store })
       console.debug('Connecting to child', bridge, store)
       const connection = connectToChild<DevtoolsMethods>({
         iframe: current,
@@ -78,13 +74,10 @@ export const Preview = () => {
         await childConnection.init()
         useIframeStore.setState({
           childConnection: childConnection,
-          bridge,
-          store,
         })
       })
-      return () => {}
     }
-  }, [childConnection])
+  }, [])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -92,14 +85,47 @@ export const Preview = () => {
         <InspectHostNodesToggle />
       </Box>
       <Box sx={{ background: 'white', position: 'relative', flex: 1 }}>
-        <StyledIframe
-          // src={ready ? '/stories/example--story-root' : undefined}
-          src={'http://localhost:3002'}
-          // src={ready ? '/stories/example-thin--story-root' : undefined}
-          onLoad={() => {}}
-          ref={iframeRef}
-        />
+        <AutoSizer style={{ width: '100%', height: '100%' }}>
+          {(size) => (
+            <ZoomedIframe
+              key={'iframe'}
+              // src={ready ? '/stories/example--story-root' : undefined}
+              src={'http://localhost:3002'}
+              // src={ready ? '/stories/example-thin--story-root' : undefined}
+              onLoad={() => {}}
+              ref={refCallBack}
+              {...size}
+            />
+          )}
+        </AutoSizer>
       </Box>
     </Box>
   )
 }
+
+const VIEWPORT_WIDTH = 1600
+const VIEWPORT_HEIGHT = 1000
+
+const ZoomedIframe = forwardRef(
+  (
+    { width, height, ...props }: Size & IframeHTMLAttributes<HTMLIFrameElement>,
+    ref: ForwardedRef<HTMLIFrameElement>
+  ) => {
+    const scaleX = width / VIEWPORT_WIDTH
+    const scaleY = height / VIEWPORT_HEIGHT
+    return (
+      <StyledIframe
+        key={'iframe'}
+        sx={{
+          height: `${VIEWPORT_HEIGHT}px`,
+          width: `${VIEWPORT_WIDTH}px`,
+          transform: `scale(${scaleX})`,
+          // transform: `scale()`,
+          transformOrigin: 'top left',
+        }}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)

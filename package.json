@@ -109,6 +109,8 @@
     "@types/react-dev-utils": "^9.0.11",
     "@types/react-dom": "^18.0.9",
     "@types/react-reconciler": "^0.28.2",
+    "@types/react-virtualized-auto-sizer": "^1.0.1",
+    "@types/react-window": "^1.8.5",
     "@types/serve-index": "^1.9.1",
     "@types/wicg-file-system-access": "^2020.9.5",
     "@types/ws": "^8.5.4",

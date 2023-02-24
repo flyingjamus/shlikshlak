@@ -8,6 +8,7 @@ import '../../workers'
 import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { Box } from '@mui/material'
 import { ElementsStack } from '../PropsEditor/ElementsStack'
+import { TreeWrapper } from '../PropsEditor/TreeWrapper'
 
 const ELEMENT_MAP = {
   files: <Files />,
@@ -16,7 +17,8 @@ const ELEMENT_MAP = {
   // inspector: <Inspector />,
   // inspector: <InspectorTree />,
   props: <PropsEditorWrapper />,
-  elements: <ElementsStack />,
+  // elements: <ElementsStack />,
+  elements: <TreeWrapper />
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
