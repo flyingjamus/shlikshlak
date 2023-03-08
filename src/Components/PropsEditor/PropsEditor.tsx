@@ -142,7 +142,7 @@ const ChildrenEditor: BaseEditor<string> = ({ ...props }) => {
 }
 
 export type OnChangeValue = string | true | undefined
-type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
+export type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
 
 const PropEditor = ({
   panelMatch,

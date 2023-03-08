@@ -4,6 +4,9 @@ import { apiHooks } from '../client/apiClient'
 import { ComponentType, Suspense, useEffect, useState } from 'react'
 import { CircularProgress } from '@mui/material'
 
+import Buffer from 'buffer/'
+window.Buffer = Buffer as any
+
 export const SingleStory = () => {
   const { data } = apiHooks.useQuery('/stories')
   const { id } = useParams<{ id: string }>()

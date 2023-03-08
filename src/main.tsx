@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Box, CircularProgress, LinearProgress } from '@mui/material'
+import { Box, CircularProgress, CssBaseline, LinearProgress, ThemeProvider } from '@mui/material'
+import theme from './theme'
 const queryClient = new QueryClient()
 
 const App = React.lazy(() => import('./App'))
@@ -35,7 +36,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         </Box>
       }
     >
-      <RouterProvider router={router} />
+      <CssBaseline />
+      <ThemeProvider theme={theme}>
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </Suspense>
   </QueryClientProvider>
 

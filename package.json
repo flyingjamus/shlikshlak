@@ -14,6 +14,11 @@
     "build:devtools": "yarn vite build -c src/Devtools/vite.config.ts"
   },
   "dependencies": {
+    "@babel/generator": "^7.21.1",
+    "@babel/parser": "^7.21.2",
+    "@babel/plugin-syntax-typescript": "^7.20.0",
+    "@babel/template": "^7.20.7",
+    "@babel/traverse": "^7.21.2",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
@@ -26,6 +31,7 @@
     "@zodios/react": "^10.4.0",
     "axios": "^1.2.1",
     "babel-plugin-import": "^1.13.5",
+    "buffer": "^6.0.3",
     "chalk": "^5.2.0",
     "clipboard-js": "^0.3.6",
     "comlink": "^4.3.1",
@@ -65,6 +71,7 @@
     "react-mosaic-component": "^5.3.0",
     "react-penpal": "^1.0.4",
     "react-router-dom": "^6.5.0",
+    "react-use": "^17.4.0",
     "react-virtualized-auto-sizer": "^1.0.7",
     "react-virtuoso": "^4.1.0",
     "react-window": "^1.8.8",
