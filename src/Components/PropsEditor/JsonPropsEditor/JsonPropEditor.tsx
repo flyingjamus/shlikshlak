@@ -1,19 +1,13 @@
 import { BaseEditor } from '../PropsEditor'
-import { Box, BoxProps, ClickAwayListener } from '@mui/material'
+import { Box, BoxProps } from '@mui/material'
 import { useMergeRefs } from 'rooks'
-import { parse, parseExpression } from '@babel/parser'
-import template from '@babel/template'
+import { parseExpression } from '@babel/parser'
 import {
-  Expression,
-  isAssignmentExpression,
-  isExpressionStatement,
   isObjectExpression,
   isObjectProperty,
-  objectProperty,
-  emptyStatement,
-  isStringLiteral,
   Node,
   ObjectExpression,
+  objectProperty,
   ObjectProperty,
   stringLiteral,
 } from '@babel/types'
@@ -33,10 +27,8 @@ import {
   useState,
 } from 'react'
 import { createStore, useStore } from 'zustand'
-import { set as objectSet, get as objectGet } from 'lodash-es'
-import { ArrowDownward } from '@mui/icons-material'
+import { get as objectGet, set as objectSet } from 'lodash-es'
 import { isDefined } from 'ts-is-defined'
-import traverse from '@babel/traverse'
 import assert from 'assert'
 
 const getSourceValue = (source: string, node: Node) => {
@@ -53,7 +45,7 @@ const autoSizeInput = (el?: HTMLInputElement | null) => {
 
 type EditableTextProps = {
   value: string | number
-  onChange: (v: string) => void
+  onChange: (v: string | number) => void
   className?: string
   inputProps?: InputHTMLAttributes<HTMLInputElement>
 }
@@ -111,7 +103,7 @@ const NodeEditor = forwardRef(
         return <EditableText ref={ref} onChange={(v) => onChange(JSON.stringify(v))} value={node.value} />
       }
       case 'NumericLiteral': {
-        return <EditableText ref={ref} onChange={(v) => onChange(v)} value={node.value} />
+        return <EditableText ref={ref} onChange={(v) => onChange(v.toString())} value={node.value} />
       }
       case 'Identifier': {
         return <EditableText ref={ref} onChange={(v) => onChange(JSON.stringify(v))} value={node.name} />
@@ -136,10 +128,8 @@ const Item = ({
   onAddBelow: () => void
   onRemove: () => void
 }) => {
-  const source = useJsonEditorStore((v) => v.source)
   const isExpanded = useJsonEditorStore((v) => objectGet(v.expandedItems, path))
-  const { expandItem, changeSource, updateText } = useJsonEditorStore((v) => v.methods)
-  const [isAdding, setIsAdding] = useState(false)
+  const { expandItem, updateText } = useJsonEditorStore((v) => v.methods)
   const firstInputRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -157,7 +147,7 @@ const Item = ({
       <Box
         ref={containerRef}
         sx={{ position: 'relative' }}
-        onBlur={(e) => {
+        onBlur={() => {
           setTimeout(() => {
             const focusStillInside =
               document.activeElement && containerRef.current?.contains(document.activeElement)
@@ -241,20 +231,17 @@ const KeyValue = forwardRef(
 
 const ObjectItems = ({ obj, path }: { obj: ObjectExpression; path: string[] }) => {
   const source = useJsonEditorStore((v) => v.source)
-  const version = useJsonEditorStore((v) => v.version)
-  const { changeSource, updateText, updateSource } = useJsonEditorStore((v) => v.methods)
+  const { updateSource } = useJsonEditorStore((v) => v.methods)
 
   return (
     <Box sx={{}}>
       <Box sx={{ paddingLeft: '16px' }}>
-        {obj.properties.map((v, i) => {
-          const childPath = [...path, getSourceValue(source, v.key)]
-          console.log(2133131,v)
-          return isObjectProperty(v) ? (
+        {obj.properties.map((v, i) =>
+          isObjectProperty(v) ? (
             <Item
               key={i}
               prop={v}
-              path={childPath}
+              path={[...path, getSourceValue(source, v.key)]}
               onAddBelow={() => {
                 obj.properties.splice(i + 1, 0, objectProperty(stringLiteral(''), stringLiteral('')))
                 updateSource()
@@ -265,7 +252,7 @@ const ObjectItems = ({ obj, path }: { obj: ObjectExpression; path: string[] }) =
               }}
             />
           ) : null
-        })}
+        )}
       </Box>
     </Box>
   )
@@ -341,7 +328,6 @@ const createJsonEditorStore = ({ source: inputSource }: JsonStoreProps) => {
         set({ expandedItems: objectSet({ ...expandedItems }, path, !objectGet(expandedItems, path)) })
       },
       changeSource: (newSource, changeVersion = false) => {
-        console.log('NEW', newSource)
         set({
           root: getRoot(newSource),
           source: newSource,
