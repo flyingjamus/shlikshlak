@@ -3,6 +3,7 @@ import { JsonPropsEditor } from './JsonPropEditor'
 const VAL = `
       {
         display: 'flex',
+        // something: 'else',
         justifyContent: 'space-between',
         padding: '12px 16px',
         borderRadius: '8px',

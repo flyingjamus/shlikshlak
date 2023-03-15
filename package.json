@@ -77,6 +77,7 @@
     "react-window": "^1.8.8",
     "request-light": "^0.6.0",
     "rollup-plugin-dts": "^5.0.0",
+    "rooks": "^7.4.4",
     "serve-index": "^1.9.1",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
