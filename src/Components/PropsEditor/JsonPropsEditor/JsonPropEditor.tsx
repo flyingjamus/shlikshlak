@@ -3,6 +3,7 @@ import { Box, BoxProps } from '@mui/material'
 import { useMergeRefs } from 'rooks'
 import { parseExpression } from '@babel/parser'
 import {
+  ArrowFunctionExpression,
   isObjectExpression,
   isObjectProperty,
   Node,
@@ -10,6 +11,7 @@ import {
   objectProperty,
   ObjectProperty,
   stringLiteral,
+  VISITOR_KEYS,
 } from '@babel/types'
 import generate from '@babel/generator'
 import {
@@ -24,12 +26,10 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from 'react'
 import { createStore, useStore } from 'zustand'
 import { get as objectGet, set as objectSet } from 'lodash-es'
 import { isDefined } from 'ts-is-defined'
-import assert from 'assert'
 
 const getSourceValue = (source: string, node: Node) => {
   if (!node.start || !node.end) return ''
@@ -191,8 +191,8 @@ const Item = ({
               ref={firstInputRef}
               node={prop.key}
               onChange={(v) => {
-                assert(prop.key.start)
-                assert(prop.key.end)
+                // assert.(prop.key.start)
+                // assert(prop.key.end)
                 updateText(prop.key.start, prop.key.end, v)
               }}
             />
@@ -202,8 +202,8 @@ const Item = ({
               <NodeEditor
                 node={prop.value}
                 onChange={(v) => {
-                  assert(prop.value.start)
-                  assert(prop.value.end)
+                  // assert(prop.value.start)
+                  // assert(prop.value.end)
                   updateText(prop.value.start, prop.value.end, v)
                 }}
               />
@@ -211,7 +211,9 @@ const Item = ({
           }
         />
       </Box>
-      {isExpanded && isObjectExpression(prop.value) ? <ObjectItems obj={prop.value} path={path} /> : null}
+      {isExpanded && isObjectExpression(prop.value) ? (
+        <ObjectExpressionEditor obj={prop.value} path={path} />
+      ) : null}
     </>
   )
 }
@@ -229,7 +231,37 @@ const KeyValue = forwardRef(
   }
 )
 
-const ObjectItems = ({ obj, path }: { obj: ObjectExpression; path: string[] }) => {
+type JsonPropNodeParams<T extends Node> = { obj: T; path: string[] }
+
+const NodeEditor1 = ({ obj, ...props }: JsonPropNodeParams<Node>) => {
+  const source = useJsonEditorStore((v) => v.source)
+  switch (obj.type) {
+    case 'ObjectExpression': {
+      return <ObjectExpressionEditor obj={obj} {...props} />
+    }
+    case 'ArrowFunctionExpression': {
+      return <ArrowFunctionEditor obj={obj} {...props} />
+    }
+    default: {
+      return <EditableText onChange={(v) => onChange(v)} value={getSourceValue(source, obj)} />
+    }
+  }
+}
+
+const ArrowFunctionEditor = ({ obj, path }: JsonPropNodeParams<ArrowFunctionExpression>) => {
+  const source = useJsonEditorStore((v) => v.source)
+  const { updateSource } = useJsonEditorStore((v) => v.methods)
+  return (
+    <Box>
+      {'() => '}
+      <Box sx={{ paddingLeft: '16px' }}>
+        <NodeEditor1 obj={obj.body} path={path.concat(['body'])} />
+      </Box>
+    </Box>
+  )
+}
+
+const ObjectExpressionEditor = ({ obj, path }: JsonPropNodeParams<ObjectExpression>) => {
   const source = useJsonEditorStore((v) => v.source)
   const { updateSource } = useJsonEditorStore((v) => v.methods)
 
@@ -241,7 +273,7 @@ const ObjectItems = ({ obj, path }: { obj: ObjectExpression; path: string[] }) =
             <Item
               key={i}
               prop={v}
-              path={[...path, getSourceValue(source, v.key)]}
+              path={[...path, 'properties', getSourceValue(source, v.key)]}
               onAddBelow={() => {
                 obj.properties.splice(i + 1, 0, objectProperty(stringLiteral(''), stringLiteral('')))
                 updateSource()
@@ -269,7 +301,7 @@ type JSONEditorStore = {
   version: number
   expandedItems: ExpandedItems
   source: string
-  root: ObjectExpression
+  root?: Node
   methods: JSONEditorStoreMethods
 }
 
@@ -290,7 +322,19 @@ type TreeRep = { [key: string]: TreeRep }
 //     return exp
 //   }
 // }
-const asExpandedItems = (exp: ObjectExpression, source: string): ExpandedItems => {
+const asExpandedItems = (exp: Node | undefined, source: string): ExpandedItems => {
+  if (!exp) return {}
+  const visitorKeys = VISITOR_KEYS[exp.type]
+  if (!visitorKeys?.length) {
+    return {}
+  }
+  return Object.fromEntries(
+    visitorKeys
+      .map((key) => [key, exp[key as unknown as keyof exp]])
+      .filter((v) => v[1])
+      .map(([k, v]) => [k, asExpandedItems(v, source)])
+  )
+  return {}
   const fromEntries = Object.fromEntries(
     exp.properties
       .map((v) =>
@@ -306,17 +350,23 @@ const asExpandedItems = (exp: ObjectExpression, source: string): ExpandedItems =
   return {}
 }
 
-type JsonStoreProps = { source: string }
-const createJsonEditorStore = ({ source: inputSource }: JsonStoreProps) => {
-  const getRoot = (source: string) => {
-    const parsed = parseExpression(source, {
-      plugins: [['typescript', {}]],
-    })
-    if (!isObjectExpression(parsed)) {
-      throw new Error('Something went wrong with parsing')
-    }
+type JsonStoreProps = { source: string; onChange: (v: string) => void }
 
-    return parsed
+const createJsonEditorStore = ({ source: inputSource, onChange }: JsonStoreProps) => {
+  const getRoot = (source: string) => {
+    try {
+      const parsed = parseExpression(source, {
+        plugins: ['typescript', 'jsx'],
+      })
+      // if (!isObjectExpression(parsed) && parsed.type !== 'ArrowFunctionExpression') {
+      //   throw new Error('Something went wrong with parsing')
+      // }
+
+      return parsed
+    } catch (e) {
+      // console.error(e)
+      // console.error(inputSource)
+    }
   }
 
   const obj = getRoot(inputSource)
@@ -333,6 +383,7 @@ const createJsonEditorStore = ({ source: inputSource }: JsonStoreProps) => {
           source: newSource,
           version: get().version + (changeVersion ? 1 : 0),
         })
+        onChange(newSource)
       },
       updateText: (start, end, value) => {
         methods.changeSource(get().source.slice(0, start) + value + get().source.slice(end))
@@ -356,11 +407,11 @@ type JsonEditorStore = ReturnType<typeof createJsonEditorStore>
 const JsonEditorContext = createContext<JsonEditorStore>(null as any)
 
 const JsonEditorContextProvider = ({ children, ...props }: { children: ReactNode } & JsonStoreProps) => {
-  const storeRef = useRef<JsonEditorStore>()
-  if (!storeRef.current) {
-    storeRef.current = createJsonEditorStore(props)
-  }
-  return <JsonEditorContext.Provider value={storeRef.current}>{children}</JsonEditorContext.Provider>
+  const { onChange, source } = props
+  const storeRef = useMemo<JsonEditorStore>(() => {
+    return createJsonEditorStore(props)
+  }, [])
+  return <JsonEditorContext.Provider value={storeRef}>{children}</JsonEditorContext.Provider>
 }
 
 function useJsonEditorStore<T>(
@@ -374,15 +425,17 @@ function useJsonEditorStore<T>(
 
 const Root = () => {
   const obj = useJsonEditorStore((v) => v.root)
+  const source = useJsonEditorStore((v) => v.root)
 
-  return <ObjectItems obj={obj} path={[]} />
+
+  return obj ? <NodeEditor1 obj={obj} path={[]} /> : source
 }
 
-export const JsonPropsEditor: BaseEditor<string> = ({ value: inputValue, ...props }) => {
+export const JsonPropsEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
   const expandedValue = useMemo(() => inputValue || '{}', [inputValue])
 
   return (
-    <JsonEditorContextProvider source={expandedValue}>
+    <JsonEditorContextProvider source={expandedValue} onChange={onChange}>
       <Box sx={{ display: 'inline-block' }}>
         <Root />
       </Box>

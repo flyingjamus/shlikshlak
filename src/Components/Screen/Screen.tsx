@@ -42,10 +42,10 @@ export const Screen = () => {
           first: 'props',
           second: 'preview',
           direction: 'row',
-          splitPercentage: 20,
+          splitPercentage: 40,
         },
 
-        splitPercentage: 40,
+        splitPercentage: 20,
       }}
     />
   )

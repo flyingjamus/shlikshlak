@@ -30,3 +30,14 @@ export const Main = () => {
     />
   )
 }
+
+export const ArrowFunction = () => {
+  return (
+    <JsonPropsEditor
+      value={`() => (${VAL})`}
+      onChange={(v) => {
+        console.log(v)
+      }}
+    />
+  )
+}

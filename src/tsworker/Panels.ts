@@ -19,6 +19,7 @@ export const PANELS: {
 }[] = [
   {
     matcher: (type, { c, types: { SxProps } }) => {
+      debugger
       if (flattenType(type).some((v) => v.aliasSymbol && SxProps && v.aliasSymbol === SxProps.aliasSymbol)) {
         return { name: 'SxProps' }
       }

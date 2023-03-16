@@ -2,7 +2,6 @@ import PQueue from 'p-queue'
 import { apiClient } from '../client/apiClient'
 import { useIframeStore } from '../Components/store'
 import produce from 'immer'
-import { FileTextChanges } from 'typescript'
 import { last } from 'lodash-es'
 
 const attributesQueues: Record<string, PQueue> = {}

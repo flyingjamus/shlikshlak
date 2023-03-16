@@ -147,7 +147,7 @@ export class TypeScriptWorker extends BaseTypeScriptWorker {
     const parent = this.getParentTokenAtPosition(fileName, position)
     if (parent) {
       const existingAttributes: ExistingAttribute[] = parent.attributes.properties
-        .filter((v) => v.name?.getText() === 'sx')
+        // .filter((v) => v.name?.getText() === 'sx')
         .map((attr) => {
           if (isJsxAttribute(attr)) {
             const initializer = attr.initializer

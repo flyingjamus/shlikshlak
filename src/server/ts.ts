@@ -33,7 +33,8 @@ import { AppEmitter } from './AppEmitter'
 export const logger = createLogger('ts')
 
 // const FILE = 'src/stories/example.stories.tsx'
-const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
+// const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
+const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
 
 const { startSession, logger: ioLogger, cancellationToken } = initializeNodeSystem()
 const ioSession = startSession(
@@ -99,12 +100,13 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
     const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
     const jsxTag = parent.parent
 
+    const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
     const matcherContext: MatcherContext = {
       c: typeChecker!,
-      types: {},
+      types: { SxProps: sxPropsType },
     }
     const existingAttributes: ExistingAttribute[] = parent.attributes.properties
-      // .filter((v) => v.name?.getText() === 'variant')
+      // .filter((v) => v.name?.getText() === 'sx')
       .map((attr) => {
         if (isJsxAttribute(attr)) {
           const initializer = attr.initializer
@@ -152,6 +154,7 @@ export async function getPanelsAtPosition(fileName: string, position: number): P
     if (typeAtLocation) {
       const attributes = [...typeAtLocation.getProperties()]
         // .filter((v) => v.name === 'variant')
+        // .filter((v) => v.name === 'sx')
         .map((prop) => {
           const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
 
@@ -439,13 +442,12 @@ export const tryWriteFiles = (fileNames: string[]) => {
 
   return false
 }
-
-// ;(async () => {
-//   const res = await getPanelsAtLocation(
-//     '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx',
-//     135,
-//     13
-//   )
-//   console.log(res.existingAttributes)
-// })()
+;(async () => {
+  const res = await getPanelsAtLocation(
+    '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx',
+    111,
+    9
+  )
+  console.log(res.existingAttributes)
+})()
 emitFile(FILE)

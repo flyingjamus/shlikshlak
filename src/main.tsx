@@ -7,6 +7,9 @@ import { Box, CircularProgress, CssBaseline, LinearProgress, ThemeProvider } fro
 import theme from './theme'
 const queryClient = new QueryClient()
 
+import Buffer from 'buffer/'
+window.Buffer = Buffer as any
+
 const App = React.lazy(() => import('./App'))
 const StoriesIndex = React.lazy(() => import('./stories/StoriesIndex'))
 const SingleStory = React.lazy(() => import('./stories/SingleStory'))

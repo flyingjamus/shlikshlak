@@ -28,6 +28,7 @@ import { inspectElement } from './InspectElement'
 import { Source } from '../ReactDevtools/react-devtools-shared/shared/ReactElementType'
 import { existingAttributeSchema } from '../../Shared/PanelTypesZod'
 import { AppAutocomplete } from '../Common/AppAutocomplete'
+import { JsonPropsEditor } from './JsonPropsEditor/JsonPropEditor'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -109,12 +110,11 @@ const CodeEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props 
   const isExpression = inputValue?.startsWith('{')
   const stringInput = (isExpression ? inputValue?.slice(1, -1) : inputValue) || ''
   return (
-    <BaseStringEditor
+    <JsonPropsEditor
       onChange={(v) => {
         onChange(isExpression ? `{${v}}` : v)
       }}
       value={stringInput}
-      {...props}
     />
   )
 }
