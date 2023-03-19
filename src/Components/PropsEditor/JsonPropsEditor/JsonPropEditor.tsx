@@ -76,8 +76,8 @@ const EditableText = forwardRef(({ value, onChange, className, inputProps }: Edi
     <Box
       ref={ref}
       sx={({ typography }) => ({
-        fontSize: '22px',
-        padding: '4px 2px',
+        fontSize: '12px',
+        padding: '2px 2px',
         border: '0px solid',
         ...typography.mono,
       })}
