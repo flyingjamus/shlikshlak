@@ -35,7 +35,7 @@ export const logger = createLogger('ts')
 // const FILE = 'src/stories/example.stories.tsx'
 // const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
 // const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
-const FILE = 'src/Components/PropsEditor/PropsEditor.stories.tsx'
+const FILE = '/home/danny/dev/shlikshlak/src/Components/PropsEditor/JsonPropsEditor/JsonPropEditor.stories.tsx'
 
 const { startSession, logger: ioLogger, cancellationToken } = initializeNodeSystem()
 const ioSession = startSession(

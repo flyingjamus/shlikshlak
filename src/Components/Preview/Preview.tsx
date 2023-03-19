@@ -99,7 +99,8 @@ export const Preview = () => {
               key={'iframe'}
               // src={ready ? '/stories/example--story-root' : undefined}
               // src={'http://localhost:3002'}
-              src={'http://localhost:3002/stories/props-editor--one'}
+              src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
+              // src={ready ? '/stories/example-thin--story-root' : undefined}
               onLoad={() => {}}
               ref={refCallBack}
               {...size}
