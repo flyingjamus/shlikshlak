@@ -1,10 +1,9 @@
 import type { BrowserTheme } from 'react-devtools-inline'
 
 function installHook(target: any) {
-  console.log(121111111111, target['__REACT_DEVTOOLS_GLOBAL_HOOK__'])
-  if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
-    return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
-  }
+  // if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
+  //   return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
+  // }
 
   let targetConsole: Object = console
   let targetConsoleMethods = {}
@@ -484,18 +483,23 @@ function installHook(target: any) {
     registerInternalModuleStop,
   }
 
-  Object.defineProperty(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__', {
-    configurable: true,
-    enumerable: false,
-    get() {
-      return hook
-    },
-  })
+  if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
+    Object.assign(target.__REACT_DEVTOOLS_GLOBAL_HOOK__, hook)
+  } else {
+    Object.defineProperty(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__', {
+      configurable: true,
+      enumerable: false,
+      get() {
+        return hook
+      },
+    })
+  }
 
   console.log('Loaded hook')
   return hook
 }
 
+console.log('Installing hook on ', window.__REACT_DEVTOOLS_GLOBAL_HOOK__)
 const hook = installHook(window)
 
 type ReactRenderer = { version: string; reconcilerVersion?: string }
