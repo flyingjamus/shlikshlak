@@ -158,6 +158,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
 
     const rendererInterface = agent.getBestMatchingRendererInterface(target)
     const fiber = rendererInterface?.getFiberForNative(target)
+
     if (rendererInterface && fiber) {
       const referenceFiber = getReferenceFiber(fiber)
       if (referenceFiber) {

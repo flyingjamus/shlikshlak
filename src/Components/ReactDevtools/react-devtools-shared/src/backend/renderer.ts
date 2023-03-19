@@ -1000,9 +1000,9 @@ export function attach(
 
     const elementType = getElementTypeForFiber(fiber)
 
-    if (hideElementsWithTypes.has(elementType)) {
-      return true
-    }
+    // if (hideElementsWithTypes.has(elementType)) {
+    //   return true
+    // }
 
     if (hideElementsWithDisplayNames.size > 0) {
       const displayName = getDisplayNameForFiber(fiber)
