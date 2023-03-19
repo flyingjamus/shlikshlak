@@ -75,7 +75,12 @@ const EditableText = forwardRef(({ value, onChange, className, inputProps }: Edi
   return (
     <Box
       ref={ref}
-      sx={({ typography }) => ({ fontSize: '16px', border: '0px solid hotpink', ...typography.mono })}
+      sx={({ typography }) => ({
+        fontSize: '22px',
+        padding: '4px 2px',
+        border: '0px solid',
+        ...typography.mono,
+      })}
       component={AutoSizingInput}
       value={value}
       onFocus={(e) => {
@@ -224,7 +229,16 @@ const KeyValue = forwardRef(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     return (
-      <Box ref={ref} sx={{ position: 'relative', zIndex: 1, display: 'inline-block' }} {...boxProps}>
+      <Box
+        ref={ref}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          color: 'hotpink',
+          display: 'inline-block',
+        }}
+        {...boxProps}
+      >
         {k}: {v}
       </Box>
     )
@@ -426,7 +440,6 @@ function useJsonEditorStore<T>(
 const Root = () => {
   const obj = useJsonEditorStore((v) => v.root)
   const source = useJsonEditorStore((v) => v.root)
-
 
   return obj ? <NodeEditor1 obj={obj} path={[]} /> : source
 }

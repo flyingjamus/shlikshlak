@@ -272,6 +272,7 @@ export const PropsEditor = React.memo(
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
+    // console.log(panels, seenPanels)
     const [added, setAdded] = useState([])
     const [there, notThere] = partition(
       attributes,

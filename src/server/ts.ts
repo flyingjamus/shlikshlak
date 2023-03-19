@@ -34,7 +34,8 @@ export const logger = createLogger('ts')
 
 // const FILE = 'src/stories/example.stories.tsx'
 // const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
-const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
+// const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
+const FILE = 'src/Components/PropsEditor/PropsEditor.stories.tsx'
 
 const { startSession, logger: ioLogger, cancellationToken } = initializeNodeSystem()
 const ioSession = startSession(
@@ -442,12 +443,12 @@ export const tryWriteFiles = (fileNames: string[]) => {
 
   return false
 }
-;(async () => {
-  const res = await getPanelsAtLocation(
-    '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx',
-    111,
-    9
-  )
-  console.log(res.existingAttributes)
-})()
+// ;(async () => {
+//   const res = await getPanelsAtLocation(
+//     '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx',
+//     111,
+//     9
+//   )
+//   console.log(res.existingAttributes)
+// })()
 emitFile(FILE)

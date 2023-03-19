@@ -8,16 +8,14 @@ import { buildSync } from 'esbuild'
 
 export default defineConfig({
   resolve: {
-    alias: {
-      typescript: 'typescript-local',
-    },
+    alias: {},
   },
   optimizeDeps: {
-    include: ['typescript'],
+    include: ['typescript', 'shlikshlak'],
   },
   build: {
     commonjsOptions: {
-      include: [/typescript/g] as any,
+      include: [/typescript/g, /shlikshlak/g] as any,
     },
     rollupOptions: {
       input: {
@@ -66,7 +64,23 @@ export default defineConfig({
     //   // },
     // }),
 
-    react({ jsxImportSource: '@emotion/react',  }),
+    // {
+    //   name: 'shlikshlak-vite-plugin',
+    //   transformIndexHtml: {
+    //     order: 'pre',
+    //     handler: (html) => {
+    //       return [
+    //         {
+    //           tag: 'script',
+    //           attrs: { type: 'module' },
+    //           children: 'console.log(11111)',
+    //           injectTo: 'head-prepend'
+    //         },
+    //       ]
+    //     },
+    //   },
+    // },
+    react({ jsxImportSource: '@emotion/react' }),
     // react({
     //   jsxImportSource: '@emotion/react',
     //   babel: {

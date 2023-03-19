@@ -1,5 +1,13 @@
 import { Box, styled } from '@mui/material'
-import { ForwardedRef, forwardRef, IframeHTMLAttributes, useCallback, useEffect, useRef } from 'react'
+import {
+  ForwardedRef,
+  forwardRef,
+  IframeHTMLAttributes,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
@@ -58,7 +66,7 @@ export function initialize(
 export const Preview = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const childConnection = useIframeStore((v) => v.childConnection)
-  const refCallBack = useCallback((current) => {
+  const refCallBack = useCallback((current?: HTMLIFrameElement | null) => {
     if (current) {
       const { bridge, store } = initialize(current.contentWindow as Window)
       useIframeStore.setState({ bridge, store })
@@ -87,10 +95,11 @@ export const Preview = () => {
         <AutoSizer style={{ width: '100%', height: '100%' }}>
           {(size) => (
             <ZoomedIframe
+              zoom={'NONE'}
               key={'iframe'}
               // src={ready ? '/stories/example--story-root' : undefined}
-              src={'http://localhost:3002'}
-              // src={ready ? '/stories/example-thin--story-root' : undefined}
+              // src={'http://localhost:3002'}
+              src={'http://localhost:3002/stories/props-editor--one'}
               onLoad={() => {}}
               ref={refCallBack}
               {...size}
@@ -107,24 +116,39 @@ const VIEWPORT_HEIGHT = 1000
 
 const ZoomedIframe = forwardRef(
   (
-    { width, height, ...props }: Size & IframeHTMLAttributes<HTMLIFrameElement>,
+    {
+      width,
+      height,
+      zoom,
+      ...props
+    }: { zoom: 'FIT' | 'NONE' } & Size & IframeHTMLAttributes<HTMLIFrameElement>,
     ref: ForwardedRef<HTMLIFrameElement>
   ) => {
     const scaleX = width / VIEWPORT_WIDTH
     const scaleY = height / VIEWPORT_HEIGHT
     return (
-      <StyledIframe
-        key={'iframe'}
-        sx={{
-          height: `${VIEWPORT_HEIGHT}px`,
-          width: `${VIEWPORT_WIDTH}px`,
-          transform: `scale(${scaleX})`,
-          // transform: `scale()`,
-          transformOrigin: 'top left',
-        }}
-        ref={ref}
-        {...props}
-      />
+      <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
+        <StyledIframe
+          key={'iframe'}
+          sx={useMemo(
+            () =>
+              zoom === 'FIT'
+                ? {
+                    height: `${VIEWPORT_HEIGHT}px`,
+                    width: `${VIEWPORT_WIDTH}px`,
+                    transform: `scale(${scaleX})`,
+                    transformOrigin: 'top left',
+                  }
+                : {
+                    height: `${VIEWPORT_HEIGHT}px`,
+                    width: `${VIEWPORT_WIDTH}px`,
+                  },
+            [scaleX, zoom]
+          )}
+          ref={ref}
+          {...props}
+        />
+      </Box>
     )
   }
 )
