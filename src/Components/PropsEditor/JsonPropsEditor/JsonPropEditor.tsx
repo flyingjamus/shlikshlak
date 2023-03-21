@@ -28,7 +28,7 @@ import {
   useRef,
 } from 'react'
 import { createStore, useStore } from 'zustand'
-import { get as objectGet, set as objectSet } from 'lodash-es'
+import { get as objectGet, isNumber, set as objectSet } from 'lodash-es'
 import { isDefined } from 'ts-is-defined'
 
 const getSourceValue = (source: string, node: Node) => {
@@ -77,7 +77,7 @@ const EditableText = forwardRef(({ value, onChange, className, inputProps }: Edi
       ref={ref}
       sx={({ typography }) => ({
         fontSize: '12px',
-        padding: '2px 2px',
+        padding: '2px 5px',
         border: '0px solid',
         ...typography.mono,
       })}
@@ -89,11 +89,36 @@ const EditableText = forwardRef(({ value, onChange, className, inputProps }: Edi
       }}
       className={className}
       onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e) => {
+      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Escape') {
           const el = e.target as HTMLInputElement
           onChange(prevValueRef.current)
           el.blur()
+        }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          const selectionStart = e.target.selectionStart
+          const selectionEnd = e.target.selectionEnd
+          e.preventDefault()
+          const value = e.target.value as string
+          const newValue = value.replaceAll(/-?\d+/g, (substring, offset) => {
+            if (
+              selectionStart >= offset &&
+              selectionStart <= offset + substring.length &&
+              isNumber(+substring)
+            ) {
+              return (+substring + (e.key === 'ArrowDown' ? -1 : 1)).toString()
+            }
+            return substring
+          })
+          if (newValue !== value) {
+            onChange(newValue)
+            setTimeout(() => {
+              e.target.setSelectionRange(
+                selectionStart,
+                selectionStart !== selectionEnd ? selectionEnd + newValue.length - value.length : selectionEnd
+              )
+            })
+          }
         }
       }}
       {...inputProps}
