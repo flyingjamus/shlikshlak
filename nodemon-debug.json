@@ -1,5 +1,5 @@
 {
   "watch": ["src/server"],
-  "exec": "esbuild src/server/index.ts --sourcemap --outdir=out/server --bundle --platform=node --format=cjs && mv out/server/index.js out/server/index.cjs && node --inspect out/server/index.cjs",
+  "exec": "esbuild src/server/test/test.ts --sourcemap=inline --outdir=out/server --bundle --platform=node --format=cjs && mv out/server/test.js out/server/test.cjs && node --inspect out/server/test.cjs",
   "ext": "js ts"
 }

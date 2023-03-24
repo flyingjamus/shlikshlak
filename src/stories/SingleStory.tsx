@@ -15,7 +15,7 @@ export const SingleStory = () => {
         for (const story of file.stories) {
           if (story.storyId !== id) continue
           const importPath = await import.meta.resolve?.('/' + k)
-          const module = importPath && (await import(importPath))
+          const module = importPath && (await import(/* @vite-ignore */ importPath))
           setComp(() => module[story.namedExport])
         }
       }

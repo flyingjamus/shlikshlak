@@ -1,17 +1,14 @@
+import * as dotenv from 'dotenv'
+const env = dotenv.config({ path: resolve('./.env.local') })
 import cors from 'cors'
 import { zodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
 import { Server as SocketIOServer } from 'socket.io'
 import { bindMethods } from './endpoints'
 import { AppEmitter } from './AppEmitter'
-
-export interface RuntimeDirEntry {
-  name: string
-  isFile: boolean
-  isDirectory: boolean
-  isSymlink: boolean
-}
+import { resolve } from 'path'
 const app = zodiosApp(filesApi)
+
 app.use(cors())
 
 bindMethods(app)

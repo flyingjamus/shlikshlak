@@ -1,36 +1,44 @@
 import { ZodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
 import { ZodObject } from 'zod'
-import { promises } from 'fs'
+import fs from 'fs'
 import path from 'path'
 import launchEditor from 'react-dev-utils/launchEditor'
 import globby from 'globby'
 import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
-import getGeneratedList from '../stories/ParseStories/generate/get-generated-list'
-import { doChanges, getPanelsAtLocation, setAttributeAtPosition } from './ts'
+import { getTsMethods, startTs } from './ts'
+import { UniquenessLevel } from 'vscode-languageserver-protocol'
+import project = UniquenessLevel.project
+
+const ROOT_PATH = path.join(__dirname, '..', '..')
+
+function getFilePath(filePath: string) {
+  // TODO!!!!!!!!!!! GUARD!!!!
+  // return path.join(__dirname, '..', '..', '../nimbleway', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
+
+  const normalized = path.normalize(filePath)
+  if (normalized.startsWith('..')) throw new Error('Invalid path')
+
+  return path.join(ROOT_PATH, normalized) // TODO!!!!!!!!!!! GUARD!!!!
+  // TODO!!!!!!!!!!! GUARD!!!!
+}
 
 export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
-  const { readFile, writeFile, stat, readdir } = promises
-  const ROOT_PATH = path.join(__dirname, '..', '..')
-
-  function getFilePath(filePath: string) {
-    // TODO!!!!!!!!!!! GUARD!!!!
-    // return path.join(__dirname, '..', '..', '../nimbleway', filePath?.toString()) // TODO!!!!!!!!!!! GUARD!!!!
-
-    const normalized = path.normalize(filePath)
-    if (normalized.startsWith('..')) throw new Error('Invalid path')
-
-    return path.join(ROOT_PATH, normalized) // TODO!!!!!!!!!!! GUARD!!!!
-    // TODO!!!!!!!!!!! GUARD!!!!
-  }
+  const { doChanges, getPanelsAtLocation, setAttributeAtPosition } = startTs()
 
   app.post('/launch_editor', async (req, res) => {
+    console.log(process.env.REACT_EDITOR)
     const { fileName, lineNumber, colNumber } = req.body
     const filePath = getFilePath(fileName)
     console.log('Launching editor', req.body)
     setTimeout(() => {
-      launchEditor(filePath, lineNumber, colNumber)
+      try {
+        launchEditor(fileName, lineNumber, colNumber)
+        console.log('Launched', filePath, fs.existsSync(fileName))
+      } catch (e) {
+        console.error('Error launching editor', e)
+      }
     })
     res.json({})
   })
@@ -43,7 +51,7 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
     const entries = await globby(['./**/*.stories.ts{,x}'], { gitignore: true })
     const entryData = await getEntryData(entries)
     detectDuplicateStoryNames(entryData)
-    const generatedList = getGeneratedList(entryData, 'configFolder', false)
+    // const generatedList = getGeneratedList(entryData, 'configFolder', false)
     res.json({ stories: entryData })
   })
 

@@ -1,6 +1,7 @@
 import {
   Box,
   Checkbox,
+  IconButton,
   LinearProgress,
   List,
   ListItem,
@@ -9,6 +10,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from '@mui/material'
 import { useIframeStore } from '../store'
 import {
@@ -29,6 +31,8 @@ import { Source } from '../ReactDevtools/react-devtools-shared/shared/ReactEleme
 import { existingAttributeSchema } from '../../Shared/PanelTypesZod'
 import { AppAutocomplete } from '../Common/AppAutocomplete'
 import { JsonPropsEditor } from './JsonPropsEditor/JsonPropEditor'
+import { Launch } from '@mui/icons-material'
+import { DefaultPanelValues } from './DefaultPanelValues'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -133,15 +137,25 @@ const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...prop
   )
 }
 
-const BooleanEditor: BaseEditor<string> = ({ value, onChange, ...props }) => {
-  return <Checkbox onChange={(e, v) => onChange(v)} defaultValue={value} {...props} />
+const BooleanEditor: BaseEditor<boolean | undefined> = ({ value, onChange, ...props }) => {
+  console.log(1111111, value, props.disabled)
+  return (
+    <Checkbox
+      onChange={(e, v) => {
+        console.log(v)
+        onChange(v)
+      }}
+      checked={value !== false}
+      {...props}
+    />
+  )
 }
 
 const ChildrenEditor: BaseEditor<string> = ({ ...props }) => {
   return <BaseStringEditor {...props} />
 }
 
-export type OnChangeValue = string | true | undefined
+export type OnChangeValue = string | true | false | undefined
 export type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
 
 const PropEditor = ({
@@ -220,22 +234,6 @@ export const PropsEditorWrapper = () => {
     })
   })
 
-  useEffect(() => {
-    setSeenPanels([])
-  }, [openFile])
-  useEffect(() => {
-    if (panels) {
-      setSeenPanels((prev) => {
-        const set = new Set(prev)
-        for (const attr of panels.existingAttributes) {
-          set.add(attr.name)
-        }
-        return Array.from(set.values())
-      })
-    }
-  }, [panels])
-  const [seenPanels, setSeenPanels] = useState<string[]>([])
-
   if (!openFile) return null
   if (isLoading)
     return (
@@ -246,34 +244,62 @@ export const PropsEditorWrapper = () => {
   if (!panels) return null
 
   return (
-    <PropsEditor
-      seenPanels={seenPanels}
-      panels={panels}
-      onAttributeChange={async (attr, v) => {
-        if (panels?.location && panels.fileName) {
-          await setAttribute(panels.fileName, panels.location, attr.name, v)
-        }
-      }}
-      onBlur={() => refetch()}
-    />
+    <Box>
+      <Stack sx={{ flexDirection: 'row', justifyContent: 'flex-end', padding: '0 12px' }}>
+        <IconButton
+          onClick={() => {
+            const { columnNumber, lineNumber, fileName } = openFile
+            apiClient.post('/launch_editor', {
+              fileName,
+              lineNumber,
+              colNumber: columnNumber,
+            })
+          }}
+        >
+          <Launch />
+        </IconButton>
+      </Stack>
+      <PropsEditor
+        panels={panels}
+        onAttributeChange={async (attr, v) => {
+          if (panels?.location && panels.fileName) {
+            await setAttribute(panels.fileName, panels.location, attr.name, v)
+          }
+        }}
+        onBlur={() => refetch()}
+      />
+    </Box>
   )
 }
 
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
 export const PropsEditor = React.memo(
   ({
-    seenPanels,
     panels: { attributes, existingAttributes, fileName, location },
     onAttributeChange,
     onBlur,
   }: {
-    seenPanels: string[]
     panels: PanelsResponse
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
-    // console.log(panels, seenPanels)
-    const [added, setAdded] = useState([])
+    useEffect(() => {
+      setSeenPanels([])
+    }, [fileName])
+    useEffect(() => {
+      if (existingAttributes) {
+        setSeenPanels((prev) => {
+          const set = new Set(prev)
+          for (const attr of existingAttributes) {
+            set.add(attr.name)
+          }
+          return Array.from(set.values())
+        })
+      }
+    }, [existingAttributes])
+    const [seenPanels, setSeenPanels] = useState<string[]>([])
+
+    const [added, setAdded] = useState<string[]>([])
     const [there, notThere] = partition(
       attributes,
       (attr) =>
@@ -287,7 +313,7 @@ export const PropsEditor = React.memo(
 
     return (
       <Box height={'100%'} overflow={'auto'}>
-        <List sx={{ background: 'white' }} dense onBlur={onBlur}>
+        <List sx={{ background: 'hotpi' }} dense onBlur={onBlur}>
           {panelAttrs.map((attr) => {
             const existing = existingAttributes.find((v) => v.name === attr.name)
             const key = [fileName, location, attr.name].join(':')
@@ -304,14 +330,21 @@ export const PropsEditor = React.memo(
           })}
           {showAll ? null : (
             <ListItem>
-              <AppAutocomplete
-                label={'Add'}
-                sx={{ width: '100%' }}
-                options={notThere.map((v) => v.name)}
-                onChange={(e, v) => {
-                  setAdded((added) => [...added, v])
-                }}
-              />
+              <Box sx={{ width: '100%' }}>
+                <Box>
+                  <Typography variant={'overline'}>Add</Typography>
+                </Box>
+                <Box sx={{ width: '100%' }}>
+                  <AppAutocomplete
+                    sx={{}}
+                    options={notThere.map((v) => v.name)}
+                    onChange={(e, v) => {
+                      setAdded((added) => [...added, v])
+                    }}
+                    fullWidth
+                  />
+                </Box>
+              </Box>
             </ListItem>
           )}
         </List>
@@ -329,7 +362,10 @@ const Row = ({
   existing?: existingAttributeSchema
   onChange: (value: OnChangeValue) => void
 }) => {
-  const panel = existing ? attr.panels.find((v) => existing.panels?.includes(v.name)) : attr.panels?.[0]
+  // const panel = existing ? attr.panels.find((v) => existing.panels?.includes(v.name)) : attr.panels?.[0]
+  const panel = existing
+    ? existing.panels?.map((v) => attr.panels.find((panel) => panel.name === v)).filter(Boolean)?.[0]
+    : attr.panels?.[0]
 
   const [prevValue, setPrevValue] = useState<OnChangeValue>()
 
@@ -340,7 +376,13 @@ const Row = ({
           defaultChecked={!!existing}
           onChange={(e, checked) => {
             if (checked) {
-              onChange(prevValue)
+              if (prevValue === undefined) {
+                if (panel) {
+                  onChange(DefaultPanelValues[panel.name])
+                }
+              } else {
+                onChange(prevValue)
+              }
               setPrevValue(undefined)
             } else {
               setPrevValue(existing?.value)
@@ -355,7 +397,11 @@ const Row = ({
           <PropEditor
             panelMatch={panel}
             value={existing?.value || prevValue}
-            onChange={onChange}
+            onChange={(value) => {
+              setPrevValue(value)
+              existing.value = value
+              onChange(value)
+            }}
             disabled={!!prevValue}
           />
         </Box>

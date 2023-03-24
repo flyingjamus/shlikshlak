@@ -2979,13 +2979,14 @@ export class ConfiguredProject extends Project {
         this.openFileWatchTriggered.clear()
         result = this.projectService.reloadFileNamesOfConfiguredProject(this)
         break
-      case ConfigFileProgramReloadLevel.Full:
+      case ConfigFileProgramReloadLevel.Full: {
         this.openFileWatchTriggered.clear()
         const reason = Debug.checkDefined(this.pendingReloadReason)
         this.pendingReloadReason = undefined
         this.projectService.reloadConfiguredProject(this, reason, isInitialLoad, /*clearSemanticCache*/ false)
         result = true
         break
+      }
       default:
         result = super.updateGraph()
     }

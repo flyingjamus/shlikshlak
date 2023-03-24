@@ -22,14 +22,7 @@ export const panelMatchSchema = z.union([
   }),
 ])
 
-export const existingAttributeValueObjectSchema = z.array(
-  z.object({
-    value: z.string(),
-    name: z.string(),
-  })
-)
-
-export const existingAttributeValueSchema = z.union([z.string(), existingAttributeValueObjectSchema])
+export const existingAttributeValueSchema = z.union([z.string(), z.boolean()])
 
 const locationSchema = z.object({
   pos: z.number(),
@@ -66,3 +59,5 @@ export const panelsResponseSchema = z.object({
   fileName: z.string().optional(),
   range: iRangeSchema.optional(),
 })
+
+export type panelsResponseSchema = z.infer<typeof panelsResponseSchema>

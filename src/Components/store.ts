@@ -6,7 +6,6 @@ import type { Remote } from 'comlink'
 import { ServiceWorkerAPI } from '../Shared/serviceWorkerAPI'
 import { PanelsResponse } from '../Shared/PanelTypes'
 import { StateStorage } from 'zustand/middleware/persist'
-import { TypeScriptWorker } from '../tsworker/TypeScriptWorker'
 import type { DevtoolsMethods } from '../Devtools/Devtools'
 import type { editor } from 'monaco-editor'
 import { FrontendBridge } from './ReactDevtools/react-devtools-shared/src/bridge'
@@ -63,7 +62,6 @@ interface IframeStore {
   openFile?: OpenFile
   readFile?: (fileName: string) => Promise<string | undefined>
   panels?: PanelsResponse
-  tsWorker?: TypeScriptWorker
   editor?: editor.IStandaloneCodeEditor
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile

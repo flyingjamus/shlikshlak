@@ -131,8 +131,13 @@ import {
   WildcardDirectoryWatcher,
 } from 'typescript'
 import { ActionInvalidate, ActionSet } from './jsTyping/shared'
-import { BeginInstallTypes,
-  EndInstallTypes, InvalidateCachedTypings, PackageInstalledResponse, SetTypings } from './jsTyping/types'
+import {
+  BeginInstallTypes,
+  EndInstallTypes,
+  InvalidateCachedTypings,
+  PackageInstalledResponse,
+  SetTypings,
+} from './jsTyping/types'
 import { createPackageJsonCache, PackageJsonCache } from './packageJsonCache'
 import {
   AutoImportProviderProject,
@@ -2378,6 +2383,7 @@ export class ProjectService {
 
   /** @internal */
   sendProjectTelemetry(project: ExternalProject | ConfiguredProject): void {
+    return
     if (this.seenProjects.has(project.projectName)) {
       setProjectOptionsUsed(project)
       return

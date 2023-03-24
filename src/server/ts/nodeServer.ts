@@ -26,14 +26,14 @@ import {
   WatchOptions,
   server,
 } from 'typescript'
-import { getLogLevel, StartSessionOptions } from './ts/common'
-import { nowString } from './ts/jsTyping/shared'
-import { perfLogger } from './ts/perfLogger'
-import { nullCancellationToken, ServerCancellationToken, Session } from './ts/session'
-import { ModuleImportResult, ServerHost } from './ts/types'
-import { LogLevel, Msg } from './ts/utilitiesPublic'
-import { stringifyIndented } from './ts/utilities'
-import { nullTypingsInstaller } from './ts/typingsCache'
+import { getLogLevel, StartSessionOptions } from './common'
+import { nowString } from './jsTyping/shared'
+import { perfLogger } from './perfLogger'
+import { nullCancellationToken, ServerCancellationToken, Session } from './session'
+import { ModuleImportResult, ServerHost } from './types'
+import { LogLevel, Msg } from './utilitiesPublic'
+import { stringifyIndented } from './utilities'
+import { nullTypingsInstaller } from './typingsCache'
 import { resolve } from 'path'
 
 interface LogOptions {

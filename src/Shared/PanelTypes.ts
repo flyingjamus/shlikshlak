@@ -7,6 +7,8 @@ export type PanelMatch =
   | { name: 'SxProps' }
   | { name: 'Children' }
 
+export type PanelMatchName = PanelMatch['name']
+
 export type ExistingAttributeValueObject = { value: string; name: string }[]
 export type ExistingAttributeValue = string | true
 type Location = {
@@ -18,6 +20,7 @@ export type ExistingAttribute = {
   value?: ExistingAttributeValue
   hasInitializer?: boolean
   location: Location
+  panels: PanelMatch['name'][]
 }
 
 export type PanelAttribute = {

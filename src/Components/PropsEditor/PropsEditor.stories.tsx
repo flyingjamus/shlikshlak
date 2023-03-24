@@ -12,25 +12,14 @@ const value: PanelsResponse = {
       ],
     },
     {
-      name: 'href',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
       name: 'children',
       location: {
-        pos: 5584,
-        end: 5629,
+        pos: 8355,
+        end: 9467,
       },
       panels: [
         {
-          name: 'string',
-        },
-        {
-          name: 'boolean',
+          name: 'Children',
         },
       ],
     },
@@ -46,49 +35,10 @@ const value: PanelsResponse = {
       ],
     },
     {
-      name: 'color',
-      panels: [],
-    },
-    {
-      name: 'disabled',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'disableElevation',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'disableFocusRipple',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'endIcon',
-      panels: [
-        {
-          name: 'string',
-        },
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'fullWidth',
+      name: 'dense',
       location: {
-        pos: 5553,
-        end: 5563,
+        pos: 8332,
+        end: 8338,
       },
       panels: [
         {
@@ -97,11 +47,15 @@ const value: PanelsResponse = {
       ],
     },
     {
-      name: 'size',
-      panels: [],
+      name: 'disablePadding',
+      panels: [
+        {
+          name: 'boolean',
+        },
+      ],
     },
     {
-      name: 'startIcon',
+      name: 'subheader',
       panels: [
         {
           name: 'string',
@@ -113,78 +67,10 @@ const value: PanelsResponse = {
     },
     {
       name: 'sx',
-      panels: [],
-    },
-    {
-      name: 'variant',
       location: {
-        pos: 5563,
-        end: 5583,
+        pos: 8303,
+        end: 8332,
       },
-      panels: [],
-    },
-    {
-      name: 'tabIndex',
-      panels: [],
-    },
-    {
-      name: 'action',
-      panels: [],
-    },
-    {
-      name: 'centerRipple',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'disableRipple',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'disableTouchRipple',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'focusRipple',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'focusVisibleClassName',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'LinkComponent',
-      panels: [],
-    },
-    {
-      name: 'onFocusVisible',
-      panels: [],
-    },
-    {
-      name: 'TouchRippleProps',
-      panels: [],
-    },
-    {
-      name: 'touchRippleRef',
       panels: [],
     },
     {
@@ -197,6 +83,10 @@ const value: PanelsResponse = {
     },
     {
       name: 'style',
+      panels: [],
+    },
+    {
+      name: 'ref',
       panels: [],
     },
     {
@@ -259,13 +149,13 @@ const value: PanelsResponse = {
       name: 'contentEditable',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'inherit', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -289,13 +179,13 @@ const value: PanelsResponse = {
       name: 'draggable',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -343,19 +233,30 @@ const value: PanelsResponse = {
       name: 'spellCheck',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
         },
+        {
+          name: 'boolean',
+        },
       ],
     },
     {
-      name: 'translate',
+      name: 'tabIndex',
       panels: [],
+    },
+    {
+      name: 'translate',
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['no', 'yes'],
+          },
+        },
+      ],
     },
     {
       name: 'radioGroup',
@@ -368,6 +269,82 @@ const value: PanelsResponse = {
     {
       name: 'role',
       panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: [
+              'alert',
+              'alertdialog',
+              'application',
+              'article',
+              'banner',
+              'button',
+              'cell',
+              'checkbox',
+              'columnheader',
+              'combobox',
+              'complementary',
+              'contentinfo',
+              'definition',
+              'dialog',
+              'directory',
+              'document',
+              'feed',
+              'figure',
+              'form',
+              'grid',
+              'gridcell',
+              'group',
+              'heading',
+              'img',
+              'link',
+              'list',
+              'listbox',
+              'listitem',
+              'log',
+              'main',
+              'marquee',
+              'math',
+              'menu',
+              'menubar',
+              'menuitem',
+              'menuitemcheckbox',
+              'menuitemradio',
+              'navigation',
+              'none',
+              'note',
+              'option',
+              'presentation',
+              'progressbar',
+              'radio',
+              'radiogroup',
+              'region',
+              'row',
+              'rowgroup',
+              'rowheader',
+              'scrollbar',
+              'search',
+              'searchbox',
+              'separator',
+              'slider',
+              'spinbutton',
+              'status',
+              'switch',
+              'tab',
+              'table',
+              'tablist',
+              'tabpanel',
+              'term',
+              'textbox',
+              'timer',
+              'toolbar',
+              'tooltip',
+              'tree',
+              'treegrid',
+              'treeitem',
+            ],
+          },
+        },
         {
           name: 'string',
         },
@@ -465,6 +442,14 @@ const value: PanelsResponse = {
       ],
     },
     {
+      name: 'color',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
       name: 'itemProp',
       panels: [
         {
@@ -518,11 +503,25 @@ const value: PanelsResponse = {
     },
     {
       name: 'unselectable',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['off', 'on'],
+          },
+        },
+      ],
     },
     {
       name: 'inputMode',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['decimal', 'email', 'none', 'numeric', 'search', 'tel', 'text', 'url'],
+          },
+        },
+      ],
     },
     {
       name: 'is',
@@ -544,31 +543,38 @@ const value: PanelsResponse = {
       name: 'aria-atomic',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
     {
       name: 'aria-autocomplete',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['both', 'inline', 'list', 'none'],
+          },
+        },
+      ],
     },
     {
       name: 'aria-busy',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -576,13 +582,13 @@ const value: PanelsResponse = {
       name: 'aria-checked',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'mixed', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -610,13 +616,13 @@ const value: PanelsResponse = {
       name: 'aria-current',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['date', 'false', 'location', 'page', 'step', 'time', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -640,19 +646,26 @@ const value: PanelsResponse = {
       name: 'aria-disabled',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
         },
+        {
+          name: 'boolean',
+        },
       ],
     },
     {
       name: 'aria-dropeffect',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['copy', 'execute', 'link', 'move', 'none', 'popup'],
+          },
+        },
+      ],
     },
     {
       name: 'aria-errormessage',
@@ -666,13 +679,13 @@ const value: PanelsResponse = {
       name: 'aria-expanded',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -688,13 +701,13 @@ const value: PanelsResponse = {
       name: 'aria-grabbed',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -702,13 +715,13 @@ const value: PanelsResponse = {
       name: 'aria-haspopup',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['dialog', 'false', 'grid', 'listbox', 'menu', 'tree', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -716,13 +729,13 @@ const value: PanelsResponse = {
       name: 'aria-hidden',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -730,13 +743,13 @@ const value: PanelsResponse = {
       name: 'aria-invalid',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'grammar', 'spelling', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -770,19 +783,26 @@ const value: PanelsResponse = {
     },
     {
       name: 'aria-live',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['assertive', 'off', 'polite'],
+          },
+        },
+      ],
     },
     {
       name: 'aria-modal',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -790,13 +810,13 @@ const value: PanelsResponse = {
       name: 'aria-multiline',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -804,19 +824,26 @@ const value: PanelsResponse = {
       name: 'aria-multiselectable',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
         },
+        {
+          name: 'boolean',
+        },
       ],
     },
     {
       name: 'aria-orientation',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['horizontal', 'vertical'],
+          },
+        },
+      ],
     },
     {
       name: 'aria-owns',
@@ -842,13 +869,13 @@ const value: PanelsResponse = {
       name: 'aria-pressed',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'mixed', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -856,31 +883,49 @@ const value: PanelsResponse = {
       name: 'aria-readonly',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
     {
       name: 'aria-relevant',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: [
+              'additions',
+              'additions removals',
+              'additions text',
+              'all',
+              'removals',
+              'removals additions',
+              'removals text',
+              'text',
+              'text additions',
+              'text removals',
+            ],
+          },
+        },
+      ],
     },
     {
       name: 'aria-required',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -908,13 +953,13 @@ const value: PanelsResponse = {
       name: 'aria-selected',
       panels: [
         {
-          name: 'boolean',
-        },
-        {
           name: 'enum',
           parameters: {
             values: ['false', 'true'],
           },
+        },
+        {
+          name: 'boolean',
         },
       ],
     },
@@ -924,7 +969,14 @@ const value: PanelsResponse = {
     },
     {
       name: 'aria-sort',
-      panels: [],
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['ascending', 'descending', 'none', 'other'],
+          },
+        },
+      ],
     },
     {
       name: 'aria-valuemax',
@@ -1008,6 +1060,10 @@ const value: PanelsResponse = {
     },
     {
       name: 'onBlur',
+      location: {
+        pos: 8338,
+        end: 8354,
+      },
       panels: [],
     },
     {
@@ -1598,130 +1654,55 @@ const value: PanelsResponse = {
       name: 'onTransitionEndCapture',
       panels: [],
     },
-    {
-      name: 'ref',
-      panels: [],
-    },
-    {
-      name: 'download',
-      panels: [
-        {
-          name: 'string',
-        },
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'hrefLang',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'media',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'ping',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'rel',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'target',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'type',
-      location: {
-        pos: 5527,
-        end: 5541,
-      },
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'referrerPolicy',
-      panels: [],
-    },
   ],
   existingAttributes: [
     {
-      name: 'type',
-      value: "{'submit'}",
+      name: 'sx',
+      value: "{{ background: 'hotpi' }}",
       hasInitializer: true,
       location: {
-        pos: 5527,
-        end: 5541,
+        pos: 8303,
+        end: 8332,
       },
+      panels: [],
     },
     {
-      name: 'value',
-      value: '"123"',
-      hasInitializer: true,
-      location: {
-        pos: 5541,
-        end: 5553,
-      },
-    },
-    {
-      name: 'fullWidth',
+      name: 'dense',
       hasInitializer: false,
       location: {
-        pos: 5553,
-        end: 5563,
+        pos: 8332,
+        end: 8338,
       },
+      panels: [],
     },
     {
-      name: 'variant',
-      value: "{'primary'}",
+      name: 'onBlur',
+      value: '{onBlur}',
       hasInitializer: true,
       location: {
-        pos: 5563,
-        end: 5583,
+        pos: 8338,
+        end: 8354,
       },
+      panels: [],
     },
     {
       name: 'children',
       location: {
-        pos: 5584,
-        end: 5629,
+        pos: 8355,
+        end: 9467,
       },
-      value: 'Hello',
+      panels: [],
+      value:
+        "{panelAttrs.map((attr) => {\n            const existing = existingAttributes.find((v) => v.name === attr.name)\n            const key = [fileName, location, attr.name].join(':')\n            return (\n              <Row\n                key={key}\n                attr={attr}\n                existing={existing}\n                onChange={(newValue) => {\n                  onAttributeChange(attr, newValue)\n                }}\n              />\n            )\n          })}\n          {showAll ? null : (\n            <ListItem>\n              <Box sx={{ width: '100%' }}>\n                <Box>\n                  <Typography variant={'overline'}>Add</Typography>\n                </Box>\n                <Box sx={{ width: '100%' }}>\n                  <AppAutocomplete\n                    sx={{}}\n                    options={notThere.map((v) => v.name)}\n                    onChange={(e, v) => {\n                      setAdded((added) => [...added, v])\n                    }}\n                    fullWidth\n                  />\n                </Box>\n              </Box>\n            </ListItem>\n          )}",
     },
   ],
-  location: 5520,
-  fileName: '/home/danny/dev/nimbleway/pages/login.tsx',
+  location: 8298,
+  fileName: '/home/danny/dev/shlikshlak/src/Components/PropsEditor/PropsEditor.tsx',
   range: {
-    startColumn: 20,
-    startLineNumber: 155,
-    endColumn: 83,
-    endLineNumber: 155,
+    startColumn: 10,
+    startLineNumber: 305,
+    endColumn: 66,
+    endLineNumber: 305,
   },
 }
 
@@ -1729,6 +1710,54 @@ export const One = () => {
   return (
     <PropsEditor
       panels={value}
+      onAttributeChange={async (attr, v) => {
+        console.log('onAttributeChange', attr, v)
+      }}
+      onBlur={() => {}}
+    />
+  )
+}
+
+export const Boolean = () => {
+  return (
+    <PropsEditor
+      panels={
+        {
+          attributes: [
+            {
+              name: 'dense',
+              location: {
+                pos: 8332,
+                end: 8338,
+              },
+              panels: [
+                {
+                  name: 'boolean',
+                },
+              ],
+            },
+          ],
+          existingAttributes: [
+            {
+              name: 'dense',
+              hasInitializer: false,
+              location: {
+                pos: 8332,
+                end: 8338,
+              },
+              panels: ['boolean'],
+            },
+          ],
+          location: 8298,
+          fileName: '/home/danny/dev/shlikshlak/src/Components/PropsEditor/PropsEditor.tsx',
+          range: {
+            startColumn: 10,
+            startLineNumber: 305,
+            endColumn: 66,
+            endLineNumber: 305,
+          },
+        } as PanelsResponse
+      }
       onAttributeChange={async (attr, v) => {
         console.log('onAttributeChange', attr, v)
       }}
