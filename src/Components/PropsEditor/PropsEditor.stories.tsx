@@ -1745,6 +1745,7 @@ export const Boolean = () => {
                 pos: 8332,
                 end: 8338,
               },
+              value: true,
               panels: ['boolean'],
             },
           ],
@@ -1755,6 +1756,55 @@ export const Boolean = () => {
             startLineNumber: 305,
             endColumn: 66,
             endLineNumber: 305,
+          },
+        } as PanelsResponse
+      }
+      onAttributeChange={async (attr, v) => {
+        console.log('onAttributeChange', attr, v)
+      }}
+      onBlur={() => {}}
+    />
+  )
+}
+
+export const StringExpression = () => {
+  return (
+    <PropsEditor
+      panels={
+        {
+          attributes: [
+            {
+              name: 'disabled',
+              location: {
+                pos: 11710,
+                end: 11758,
+              },
+              panels: [
+                {
+                  name: 'boolean',
+                },
+              ],
+            },
+          ],
+          existingAttributes: [
+            {
+              name: 'disabled',
+              value: '{innerValue === undefined}',
+              hasInitializer: true,
+              location: {
+                pos: 11710,
+                end: 11758,
+              },
+              panels: [],
+            },
+          ],
+          location: 11642,
+          fileName: '/home/danny/dev/shlikshlak/src/Components/PropsEditor/PropsEditor.tsx',
+          range: {
+            startColumn: 12,
+            startLineNumber: 428,
+            endColumn: 13,
+            endLineNumber: 437,
           },
         } as PanelsResponse
       }

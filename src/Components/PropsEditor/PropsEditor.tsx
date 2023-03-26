@@ -19,7 +19,7 @@ import {
   PanelMatch,
   PanelsResponse,
 } from '../../Shared/PanelTypes'
-import React, { ElementType, useEffect, useState } from 'react'
+import React, { ElementType, useEffect, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
@@ -138,7 +138,6 @@ const StringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...prop
 }
 
 const BooleanEditor: BaseEditor<boolean | undefined> = ({ value, onChange, ...props }) => {
-  console.log(1111111, value, props.disabled)
   return (
     <Checkbox
       onChange={(e, v) => {
@@ -157,6 +156,25 @@ const ChildrenEditor: BaseEditor<string> = ({ ...props }) => {
 
 export type OnChangeValue = string | true | false | undefined
 export type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
+
+const useFocusValue = () => {
+  const [focused, setFocused] = useState(false)
+  const listeners = useMemo(
+    () => ({
+      onFocus: () => {
+        setFocused(true)
+      },
+      onBlur: () => {
+        setFocused(false)
+      },
+    }),
+    []
+  )
+  return {
+    listeners: listeners,
+    focused,
+  }
+}
 
 const PropEditor = ({
   panelMatch,
@@ -182,7 +200,7 @@ const PropEditor = ({
     case 'Children':
       return <ChildrenEditor {...props} />
   }
-  return null
+  return <>Unsupported</>
 }
 
 const useFiberSource = (id: number | undefined) => {
@@ -362,13 +380,21 @@ const Row = ({
   existing?: existingAttributeSchema
   onChange: (value: OnChangeValue) => void
 }) => {
-  // const panel = existing ? attr.panels.find((v) => existing.panels?.includes(v.name)) : attr.panels?.[0]
   const panel = existing
     ? existing.panels?.map((v) => attr.panels.find((panel) => panel.name === v)).filter(Boolean)?.[0]
     : attr.panels?.[0]
 
   const [prevValue, setPrevValue] = useState<OnChangeValue>()
+  const inputValue = existing?.value
+  const [innerValue, setInnerValue] = useState(inputValue)
+  const { focused, listeners } = useFocusValue()
+  useEffect(() => {
+    if (!focused) {
+      setInnerValue(inputValue)
+    }
+  }, [inputValue, focused])
 
+  const value = focused ? innerValue : inputValue
   return (
     <ListItem>
       <ListItemIcon>
@@ -378,14 +404,18 @@ const Row = ({
             if (checked) {
               if (prevValue === undefined) {
                 if (panel) {
-                  onChange(DefaultPanelValues[panel.name])
+                  const defaultPanelValue = DefaultPanelValues[panel.name]
+                  onChange(defaultPanelValue)
+                  setInnerValue(defaultPanelValue)
                 }
               } else {
+                setInnerValue(prevValue)
                 onChange(prevValue)
               }
               setPrevValue(undefined)
             } else {
-              setPrevValue(existing?.value)
+              setPrevValue(value)
+              setInnerValue(undefined)
               onChange(undefined)
             }
           }}
@@ -396,13 +426,13 @@ const Row = ({
         <Box>
           <PropEditor
             panelMatch={panel}
-            value={existing?.value || prevValue}
-            onChange={(value) => {
-              setPrevValue(value)
-              existing.value = value
-              onChange(value)
+            value={value}
+            disabled={innerValue === undefined}
+            onChange={(v) => {
+              setInnerValue(v)
+              onChange(v)
             }}
-            disabled={!!prevValue}
+            {...listeners}
           />
         </Box>
       </Stack>

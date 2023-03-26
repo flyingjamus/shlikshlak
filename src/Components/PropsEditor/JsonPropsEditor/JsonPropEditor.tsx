@@ -32,7 +32,7 @@ import { get as objectGet, isNumber, set as objectSet } from 'lodash-es'
 import { isDefined } from 'ts-is-defined'
 
 const getSourceValue = (source: string, node: Node) => {
-  if (!node.start || !node.end) return ''
+  if (node.start === null || node.end === null) return ''
   return source.slice(node.start, node.end)
 }
 
@@ -45,7 +45,7 @@ const autoSizeInput = (el?: HTMLInputElement | null) => {
 
 type EditableTextProps = {
   value: string | number
-  onChange: (v: string | number) => void
+  onChange: (v: string) => void
   className?: string
   inputProps?: InputHTMLAttributes<HTMLInputElement>
 }
@@ -89,7 +89,7 @@ const EditableText = forwardRef(({ value, onChange, className, inputProps }: Edi
       }}
       className={className}
       onChange={(e) => onChange(e.target.value)}
-      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+      onKeyDown={(e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           const el = e.target as HTMLInputElement
           onChange(prevValueRef.current)
@@ -221,9 +221,7 @@ const Item = ({
               ref={firstInputRef}
               node={prop.key}
               onChange={(v) => {
-                // assert.(prop.key.start)
-                // assert(prop.key.end)
-                updateText(prop.key.start, prop.key.end, v)
+                updateText(prop.key.start!, prop.key.end!, v)
               }}
             />
           }
@@ -232,9 +230,7 @@ const Item = ({
               <NodeEditor
                 node={prop.value}
                 onChange={(v) => {
-                  // assert(prop.value.start)
-                  // assert(prop.value.end)
-                  updateText(prop.value.start, prop.value.end, v)
+                  updateText(prop.value.start!, prop.value.end!, v)
                 }}
               />
             )
@@ -270,11 +266,34 @@ const KeyValue = forwardRef(
   }
 )
 
-type JsonPropNodeParams<T extends Node> = { obj: T; path: string[] }
+type JsonPropNodeParams<T extends Node | undefined> = { obj: T; path: string[] }
+
+const UnknownNodeEditor = ({ obj, ...props }: JsonPropNodeParams<Node | undefined>) => {
+  const source = useJsonEditorStore((v) => v.source)
+  const { replaceNode, changeSource } = useJsonEditorStore((v) => v.methods)
+  return (
+    <EditableText
+      {...props}
+      onChange={(v) => (obj ? replaceNode(obj, v) : changeSource(v))}
+      value={obj ? getSourceValue(source, obj) : source}
+    />
+  )
+}
+
+const FullSourceEditor = () => {
+  const { changeSource } = useJsonEditorStore((v) => v.methods)
+  const source = useJsonEditorStore((v) => v.source)
+
+  return <EditableText onChange={(v) => changeSource(v)} value={source} />
+}
+const Root = () => {
+  const obj = useJsonEditorStore((v) => v.root)
+
+  return <NodeEditor1 obj={obj} path={[]} />
+}
 
 const NodeEditor1 = ({ obj, ...props }: JsonPropNodeParams<Node>) => {
-  const source = useJsonEditorStore((v) => v.source)
-  switch (obj.type) {
+  switch (obj?.type) {
     case 'ObjectExpression': {
       return <ObjectExpressionEditor obj={obj} {...props} />
     }
@@ -282,7 +301,7 @@ const NodeEditor1 = ({ obj, ...props }: JsonPropNodeParams<Node>) => {
       return <ArrowFunctionEditor obj={obj} {...props} />
     }
     default: {
-      return <EditableText onChange={(v) => onChange(v)} value={getSourceValue(source, obj)} />
+      return <UnknownNodeEditor obj={obj} {...props} />
     }
   }
 }
@@ -334,6 +353,7 @@ type JSONEditorStoreMethods = {
   changeSource: (newSource: string, changeVersion?: boolean) => void
   updateText: (start: number, end: number, value: string) => void
   updateSource: () => void
+  replaceNode: (node: Node, value: string) => void
 }
 
 type JSONEditorStore = {
@@ -348,19 +368,6 @@ type ExpandedItems = { [key: string]: ExpandedItems }
 
 type TreeRep = { [key: string]: TreeRep }
 
-// const recurse = (exp: Node, source: string): ExpandedItems => {
-//   if (isObjectExpression(exp)) {
-//     return exp.properties.map((v) => {
-//       if (isObjectProperty(v)) {
-//         return [getSourceValue(source, v.key), recurse(v.value, source)]
-//       } else {
-//         return v
-//       }
-//     })
-//   } else {
-//     return exp
-//   }
-// }
 const asExpandedItems = (exp: Node | undefined, source: string): ExpandedItems => {
   if (!exp) return {}
   const visitorKeys = VISITOR_KEYS[exp.type]
@@ -427,6 +434,9 @@ const createJsonEditorStore = ({ source: inputSource, onChange }: JsonStoreProps
       updateText: (start, end, value) => {
         methods.changeSource(get().source.slice(0, start) + value + get().source.slice(end))
       },
+      replaceNode: (node, value) => {
+        methods.updateText(node.start!, node.end!, value)
+      },
       updateSource: () => {
         methods.changeSource(generate(get().root).code)
       },
@@ -460,13 +470,6 @@ function useJsonEditorStore<T>(
   const store = useContext(JsonEditorContext)
   if (!store) throw new Error('Missing JsonStore Provider in the tree')
   return useStore(store, selector, equalityFn)
-}
-
-const Root = () => {
-  const obj = useJsonEditorStore((v) => v.root)
-  const source = useJsonEditorStore((v) => v.root)
-
-  return obj ? <NodeEditor1 obj={obj} path={[]} /> : source
 }
 
 export const JsonPropsEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
