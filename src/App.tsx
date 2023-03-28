@@ -4,7 +4,8 @@ import Screen from './Components/Screen/Screen'
 import { configure } from 'react-hotkeys'
 import { Hotkeys } from './Components/Hotkeys'
 
-configure({ ignoreTags: [] })
+// configure({ ignoreTags: [] })
+configure({})
 
 window.__DEV__ = false
 

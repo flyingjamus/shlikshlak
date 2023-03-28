@@ -9,8 +9,8 @@ const queryClient = new QueryClient()
 // @ts-ignore
 import hookData from 'shlikshlak/dist/hook.js?raw'
 
-import Buffer from 'buffer/'
-window.Buffer = Buffer as any
+// import Buffer from 'buffer/'
+// window.Buffer = Buffer as any
 
 const App = React.lazy(() => import('./App'))
 const StoriesIndex = React.lazy(() => import('./stories/StoriesIndex'))

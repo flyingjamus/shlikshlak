@@ -100,6 +100,22 @@ export const filesApi = apiBuilder({
 })
   .addEndpoint({
     method: 'post',
+    path: '/get_file',
+    alias: 'getFile',
+    parameters: [{ type: 'Body', name: 'path', schema: z.object({ path: z.string() }) }],
+    response: z.object({ contents: z.string().optional() }),
+  })
+  .addEndpoint({
+    method: 'post',
+    path: '/write_file',
+    alias: 'writeFile',
+    response: z.object({}),
+    parameters: [
+      { type: 'Body', name: 'body', schema: z.object({ path: z.string(), contents: z.string() }) },
+    ],
+  })
+  .addEndpoint({
+    method: 'post',
     path: '/launch_editor',
     alias: 'launchEditor',
     response: z.object({}),

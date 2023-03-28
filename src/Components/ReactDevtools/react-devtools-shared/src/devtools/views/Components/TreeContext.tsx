@@ -30,7 +30,7 @@ import { createRegExp } from '../utils'
 import { BridgeContext, StoreContext } from '../context'
 import Store from '../../store'
 import type { Element } from './types'
-import { useIframeStore } from '../../../../../../store'
+import { useIframeMethods, useIframeStore } from '../../../../../../store'
 export type StateContext = {
   // Tree
   numElements: number
@@ -793,7 +793,7 @@ function TreeContextController({
             state = reduceSuspenseState(store, state, action)
 
             if (state.selectedElementID && type.startsWith('SELECT')) {
-              useIframeStore.setState({ selectedFiberId: state.selectedElementID })
+              useIframeStore.getState().methods.selectFiber(state.selectedElementID)
             }
 
             // If the selected ID is in a collapsed subtree, reset the selected index to null.

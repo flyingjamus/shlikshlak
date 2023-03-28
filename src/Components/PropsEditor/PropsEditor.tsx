@@ -10,29 +10,27 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography,
+  Typography
 } from '@mui/material'
-import { useIframeStore } from '../store'
+import { useIframeMethods, useIframeStore } from '../store'
 import {
   ExistingAttributeValueObject,
   PanelAttribute,
   PanelMatch,
-  PanelsResponse,
+  PanelsResponse
 } from '../../Shared/PanelTypes'
 import React, { ElementType, useEffect, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
-import { useQuery } from '@tanstack/react-query'
 import { useBridge } from './UseBridge'
 import { useStore } from './UseStore'
-import { inspectElement } from './InspectElement'
-import { Source } from '../ReactDevtools/react-devtools-shared/shared/ReactElementType'
 import { existingAttributeSchema } from '../../Shared/PanelTypesZod'
 import { AppAutocomplete } from '../Common/AppAutocomplete'
 import { JsonPropsEditor } from './JsonPropsEditor/JsonPropEditor'
 import { Launch } from '@mui/icons-material'
 import { DefaultPanelValues } from './DefaultPanelValues'
+import { useGetPanelsQuery } from '../Common/UseQueries'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -203,54 +201,22 @@ const PropEditor = ({
   return <>Unsupported</>
 }
 
-const useFiberSource = (id: number | undefined) => {
-  // TODO cache result for different responses
-  const bridge = useBridge()
-  const store = useStore()
-  const [result, setResult] = useState<Source | null>(null)
-  useEffect(() => {
-    ;(async () => {
-      if (!id) {
-        setResult(null)
-        return
-      }
-      const result = await inspectElement({ bridge, id, store })
-      if (result.type === 'full-data') {
-        setResult(result.value.source || null)
-      }
-    })()
-  }, [bridge, store, id])
-
-  return result
-}
-
 export const PropsEditorWrapper = () => {
   const bridge = useBridge()
   const store = useStore()
-  const openFile = useFiberSource(useIframeStore((v) => v.selectedFiberId))
+  const openFile = useIframeStore((v) => v.selectedFiberSource)
+  const { selectFiber } = useIframeMethods()
 
   useEffect(() => {
     if (!bridge) return
     const handleSelectFiber = async (id: number) => {
-      useIframeStore.setState({ selectedFiberId: id })
+      selectFiber(id)
     }
     bridge.addListener('selectFiber', handleSelectFiber)
     return () => bridge.removeListener('selectFiber', handleSelectFiber)
   }, [bridge, store])
 
-  const {
-    data: panels,
-    refetch,
-    isLoading,
-  } = useQuery(['getPanelsAtPosition', openFile], () => {
-    if (!openFile?.fileName) return null
-    const { columnNumber, lineNumber, fileName } = openFile
-    return apiClient.post('/lang/getPanelsAtPosition', {
-      fileName: fileName,
-      lineNumber: +lineNumber,
-      colNumber: +columnNumber,
-    })
-  })
+  const { data: panels, refetch, isLoading } = useGetPanelsQuery(openFile)
 
   if (!openFile) return null
   if (isLoading)

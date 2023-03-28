@@ -82,7 +82,6 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
         // .filter((v) => v.name?.getText() === 'sx')
         .map((attr) => {
           if (isJsxAttribute(attr)) {
-            console.log(attr.initializer)
             const initializer = attr.initializer
             const type = initializer && typeChecker.getTypeAtLocation(attr)
             const value = initializer?.getText()

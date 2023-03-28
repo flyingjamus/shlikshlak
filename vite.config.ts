@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 // import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
-
-import { buildSync } from 'esbuild'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export default defineConfig({
   resolve: {
@@ -26,6 +24,7 @@ export default defineConfig({
   },
   clearScreen: false,
   plugins: [
+    nodePolyfills(),
     // bundleWorker(),
     // {
     //   name: 'watch-node-modules',

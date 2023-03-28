@@ -9,6 +9,7 @@ import { PropsEditorWrapper } from '../PropsEditor/PropsEditor'
 import { Box } from '@mui/material'
 import { TreeWrapper } from '../PropsEditor/TreeWrapper'
 import { Errors } from '../Errors/Errors'
+import { BottomTabs } from '../BottomTabs/BottomTabs'
 
 const ELEMENT_MAP = {
   files: <Files />,
@@ -20,6 +21,7 @@ const ELEMENT_MAP = {
   // elements: <ElementsStack />,
   elements: <TreeWrapper />,
   errors: <Errors />,
+  bottomTabs: <BottomTabs />,
 } as const
 
 export type ViewId = keyof typeof ELEMENT_MAP
@@ -33,19 +35,13 @@ export const Screen = () => {
       initialValue={{
         direction: 'row',
         first: {
-          first: 'elements',
-          second: 'errors',
+          first: { first: 'elements', second: 'props', direction: 'row', splitPercentage: 50 },
+          second: 'bottomTabs',
           direction: 'column',
           splitPercentage: 70,
         },
-        second: {
-          first: 'props',
-          second: 'preview',
-          direction: 'row',
-          splitPercentage: 40,
-        },
-
-        splitPercentage: 20,
+        second: 'preview',
+        splitPercentage: 50,
       }}
     />
   )

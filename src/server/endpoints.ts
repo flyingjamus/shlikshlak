@@ -1,15 +1,13 @@
 import { ZodiosApp } from '@zodios/express'
 import { filesApi } from '../common/api'
 import { ZodObject } from 'zod'
-import fs from 'fs'
 import path from 'path'
 import launchEditor from 'react-dev-utils/launchEditor'
 import globby from 'globby'
 import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
-import { getTsMethods, startTs } from './ts'
-import { UniquenessLevel } from 'vscode-languageserver-protocol'
-import project = UniquenessLevel.project
+import { startTs } from './ts'
+import fs from 'fs/promises'
 
 const ROOT_PATH = path.join(__dirname, '..', '..')
 
@@ -35,7 +33,6 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
     setTimeout(() => {
       try {
         launchEditor(fileName, lineNumber, colNumber)
-        console.log('Launched', filePath, fs.existsSync(fileName))
       } catch (e) {
         console.error('Error launching editor', e)
       }
@@ -45,6 +42,11 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
 
   app.get('/init', async (req, res) => {
     res.json({ rootPath: ROOT_PATH })
+  })
+
+  app.post('/get_file', async (req, res) => {
+    const contents = await fs.readFile(req.body.path, 'utf-8')
+    res.json({ contents })
   })
 
   app.get('/stories', async (req, res) => {
