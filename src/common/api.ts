@@ -76,14 +76,15 @@ export const textSpanSchema = z.object({
   length: z.number(),
 })
 
-const textChangeSchema = z.object({
+export const TextChangeSchema = z.object({
   span: textSpanSchema,
   newText: z.string(),
 })
+export type TextChangeSchema = z.infer<typeof TextChangeSchema>
 
 export const FileTextChanges = z.object({
   fileName: z.string(),
-  textChanges: z.array(textChangeSchema),
+  textChanges: z.array(TextChangeSchema),
   isNewFile: z.boolean().optional(),
 })
 export type FileTextChanges = z.infer<typeof FileTextChanges>

@@ -30,8 +30,15 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
       window.addEventListener('pointerdown', onPointerDown, true)
       window.addEventListener('pointerover', onPointerOver, true)
       window.addEventListener('pointerup', onPointerUp, true)
+      window.document.addEventListener('mouseleave', onMouseLeave, true)
     } else {
       agent.emit('startInspectingNative')
+    }
+  }
+
+  function onMouseLeave(event: MouseEvent) {
+    if (event.target === window.document) {
+      clearNativeElementHighlight()
     }
   }
 
@@ -60,6 +67,7 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
       window.removeEventListener('pointerdown', onPointerDown, true)
       window.removeEventListener('pointerover', onPointerOver, true)
       window.removeEventListener('pointerup', onPointerUp, true)
+      window.document.removeEventListener('mouseleave', onMouseLeave, true)
     } else {
       agent.emit('stopInspectingNative')
     }
@@ -121,9 +129,9 @@ export default function setupHighlighter(bridge: BackendBridge, agent: Agent): v
     event.preventDefault()
     event.stopPropagation()
 
-    stopInspectingNative()
+    // stopInspectingNative()
 
-    bridge.send('stopInspectingNative', true)
+    // bridge.send('stopInspectingNative', true)
   }
 
   function onMouseEvent(event: MouseEvent) {

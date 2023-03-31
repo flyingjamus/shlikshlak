@@ -10,14 +10,14 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Typography
+  Typography,
 } from '@mui/material'
 import { useIframeMethods, useIframeStore } from '../store'
 import {
   ExistingAttributeValueObject,
   PanelAttribute,
   PanelMatch,
-  PanelsResponse
+  PanelsResponse,
 } from '../../Shared/PanelTypes'
 import React, { ElementType, useEffect, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
@@ -320,7 +320,6 @@ export const PropsEditor = React.memo(
                 </Box>
                 <Box sx={{ width: '100%' }}>
                   <AppAutocomplete
-                    sx={{}}
                     options={notThere.map((v) => v.name)}
                     onChange={(e, v) => {
                       setAdded((added) => [...added, v])
@@ -388,7 +387,9 @@ const Row = ({
         />
       </ListItemIcon>
       <Stack width={'100%'}>
-        <Box>{attr.name}</Box>
+        <Box>
+          {attr.name}
+        </Box>
         <Box>
           <PropEditor
             panelMatch={panel}

@@ -100,6 +100,11 @@ export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<Ifram
           if (id) {
             const { bridge, store } = getState()
             const result = await inspectElement({ id, bridge, store })
+
+            bridge.send('getFiberIdForSourceLocation', {
+              rootIDToRendererID: store.rootIDToRendererID,
+            })
+
             if (result.type === 'full-data') {
               setState({ selectedFiberSource: result.value.source || null })
             }

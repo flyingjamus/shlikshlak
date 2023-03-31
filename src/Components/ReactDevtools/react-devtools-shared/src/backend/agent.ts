@@ -4,12 +4,12 @@ import {
   __DEBUG__,
   SESSION_STORAGE_LAST_SELECTION_KEY,
   SESSION_STORAGE_RECORD_CHANGE_DESCRIPTIONS_KEY,
-  SESSION_STORAGE_RELOAD_AND_PROFILE_KEY
+  SESSION_STORAGE_RELOAD_AND_PROFILE_KEY,
 } from '../constants'
 import { sessionStorageGetItem, sessionStorageRemoveItem, sessionStorageSetItem } from '../storage'
 import {
   initialize as setupTraceUpdates,
-  toggleEnabled as setTraceUpdatesEnabled
+  toggleEnabled as setTraceUpdatesEnabled,
 } from './views/TraceUpdates'
 import { patch as patchConsole } from './console'
 import type { BackendBridge } from '../bridge'
@@ -21,12 +21,13 @@ import type {
   PathFrame,
   PathMatch,
   RendererID,
-  RendererInterface
+  RendererInterface,
 } from './types'
 import type { ComponentFilter } from '../types'
 import { isSynchronousXHRSupported } from './utils'
 import type { BrowserTheme } from '../devtools/views/DevTools'
 import setupHighlighter from './views/Highlighter'
+import { Source } from '../../shared/ReactElementType'
 
 const debug = (methodName, ...args) => {
   if (__DEBUG__) {
@@ -154,6 +155,7 @@ export default class Agent extends EventEmitter<{
     bridge.addListener('getProfilingStatus', this.getProfilingStatus)
     bridge.addListener('getOwnersList', this.getOwnersList)
     bridge.addListener('inspectElement', this.inspectElement)
+    bridge.addListener('getFiberIdForSourceLocation', this.getFiberIdForSourceLocation)
     bridge.addListener('logElementToConsole', this.logElementToConsole)
     bridge.addListener('overrideError', this.overrideError)
     bridge.addListener('overrideSuspense', this.overrideSuspense)
@@ -339,6 +341,15 @@ export default class Agent extends EventEmitter<{
         owners,
       } as OwnersList)
     }
+  }
+  getFiberIdForSourceLocation = ({ rootIDToRendererID }: { rootIDToRendererID: Map<number, number> }) => {
+    for (const [rootId, rendererId] of rootIDToRendererID.entries()) {
+      // const renderer = this.rendererInterfaces[rendererId]
+      // renderer.a(rootId)
+
+    }
+    // console.log(this._rendererInterfaces, source)
+    // console.log(idToArbitraryFiberMap)
   }
   inspectElement = ({ forceFullData, id, path, rendererID, requestID }: InspectElementParams) => {
     const renderer = this._rendererInterfaces[rendererID]

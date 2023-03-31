@@ -4495,5 +4495,23 @@ export function attach(
     storeAsGlobal,
     unpatchConsoleForStrictMode,
     updateComponentFilters,
+    // a: (id: number) => {
+    //   const a = []
+    //   traverseReactFiberChildren(findCurrentFiberUsingSlowPathById(id), (fiber) => a.push(fiber._debugSource))
+    //   console.log(22222, a)
+    // },
   }
+}
+
+function traverseReactFiberChildren(fiberNode: Fiber | null, callback: (fiber: Fiber) => void): void {
+  if (!fiberNode) {
+    return
+  }
+
+  if (fiberNode) {
+    callback(fiberNode)
+  }
+
+  traverseReactFiberChildren(fiberNode.child, callback)
+  traverseReactFiberChildren(fiberNode.sibling, callback)
 }

@@ -3,6 +3,7 @@ import { apiClient } from '../client/apiClient'
 import { useIframeStore } from '../Components/store'
 import produce from 'immer'
 import { last } from 'lodash-es'
+import { FileTextChanges } from '../common/api'
 
 const attributesQueues: Record<string, PQueue> = {}
 
@@ -30,6 +31,42 @@ export async function setAttribute(fileName: string, location: number, prop: str
 }
 
 const changesQueue = new PQueue({ concurrency: 1 })
+const queue: FileTextChanges[] = []
+let queuePromise: Promise<void> | undefined =  undefined
+
+const runChanges = async () => {
+  queue.splice(0, queue.length)
+  queuePromise = undefined
+  const { error, undoChanges } = await apiClient.post('/do_change', { changes: queue })
+  if (undoChanges) {
+    useIframeStore.setState({
+      undoStack: produce(useIframeStore.getState().undoStack, (v) => {
+        v.push({ undoChanges })
+      }),
+    })
+  }
+}
+
+export const doChange = async (changes: FileTextChanges[]) => {
+  if (queuePromise) {
+
+  } else {
+    queuePromise=
+  }
+
+
+
+  return changesQueue.add(async ({}) => {
+    const { error, undoChanges } = await apiClient.post('/do_change', { changes: changes })
+    if (undoChanges) {
+      useIframeStore.setState({
+        undoStack: produce(useIframeStore.getState().undoStack, (v) => {
+          v.push({ undoChanges })
+        }),
+      })
+    }
+  })
+}
 
 export async function undoChange() {
   return changesQueue.add(async ({}) => {

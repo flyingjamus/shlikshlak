@@ -1,10 +1,11 @@
 import MonacoEditor from '../Editor/MonacoEditor'
-import { Box } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 import { io, Socket } from 'socket.io-client'
 import { IWebSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
 import { CloseAction, ErrorAction, MessageTransports, MonacoLanguageClient } from 'monaco-languageclient'
 import { WrappedMonacoEditor } from '../Editor/WrappedMonacoEditor'
+import { useIframeStore } from '../store'
 
 const socket: Socket = io('http://localhost:3001')
 function toSocket(webSocket: WebSocket): IWebSocket {
@@ -83,7 +84,7 @@ function createLanguageClient(transports: MessageTransports): MonacoLanguageClie
 export const CodeTab = () => {
   return (
     <Box sx={{ height: '100%' }}>
-      <WrappedMonacoEditor />
+      <WrappedMonacoEditor key={'editor'} />
     </Box>
   )
 }

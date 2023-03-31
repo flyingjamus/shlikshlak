@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useIframeStore } from '../store'
 import MonacoEditor from './MonacoEditor'
 import { useGetPanelsQuery } from '../Common/UseQueries'
+import { TextChangeSchema } from '../../common/api'
+import { doChange } from '../../tsworker/workerAdapter'
 
 function getOrCreateModel(path: string, contents = ''): editor.ITextModel {
   const uri = monaco.Uri.file(path)
@@ -62,12 +64,27 @@ export const WrappedMonacoEditor = ({}: {}) => {
       decorations.current = []
     }
   }, [model, panels, editor])
+
   useEffect(() => {
     if (editor) {
-      editor.onDidChangeCursorPosition((e) => {
-        //TODO
-      })
+      const onDidChangeModelContent = async (e: editor.IModelContentChangedEvent) => {
+        if (!fileName) return
+        const changes = e.changes.map(
+          ({ range, rangeLength, rangeOffset, text }) =>
+            ({ span: { start: rangeOffset, length: rangeLength }, newText: text } as TextChangeSchema)
+        )
+        await doChange([{ fileName, textChanges: changes }])
+      }
+      const disposables = [editor.onDidChangeModelContent(onDidChangeModelContent)]
+
+      // editor.onDidChangeCursorPosition((e) => {
+      //   // console.log(e)
+      //   //TODO
+      // })
+      return () => {
+        disposables.forEach((d) => d.dispose())
+      }
     }
-  }, [editor])
+  }, [editor, fileName])
   return <MonacoEditor ref={ref} />
 }

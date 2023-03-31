@@ -18,7 +18,6 @@ export function initTsWorker(tsWorker: Worker) {
 
 self.MonacoEnvironment = {
   getWorker(v, label) {
-    console.log(v, label)
     // if (label === 'json') {
     //   return new jsonWorker()
     // }

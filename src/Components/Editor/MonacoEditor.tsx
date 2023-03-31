@@ -38,7 +38,7 @@ export const MonacoEditor = forwardRef<editor.IStandaloneCodeEditor | null, {
 
   return (
     <Box sx={{ position: 'relative', height: '100%' }}>
-      <Box ref={elRef} sx={{ height: '100%', '.Highlighted': { background: 'lightblue' } }} />
+      <Box ref={elRef} sx={{ height: '100%', '.Highlighted': { background: 'rgba(2,2,2,0.05)' } }} />
       <Box ref={statusBarRef} />
     </Box>
   )

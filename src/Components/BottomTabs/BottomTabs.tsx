@@ -1,6 +1,7 @@
 import { SyntheticEvent, useState } from 'react'
-import { Box, Paper, Tab, Tabs } from '@mui/material'
+import { Box, Paper, Tab, Tabs, Typography } from '@mui/material'
 import { CodeTab } from './CodeTab'
+import { useIframeStore } from '../store'
 
 export function BottomTabs() {
   const [tabValue, setTabValue] = useState<number>(0)
@@ -40,7 +41,17 @@ export function BottomTabs() {
       >
         <Tab label="Code" />
       </Tabs>
-      <Paper sx={{ borderRadius: '0 4px 4px 0', padding: 2, flex: 1 }}>{tabValue === 0 && <CodeTab />}</Paper>
+      <Paper sx={{ borderRadius: '0 4px 4px 0', padding: 2, flex: 1, overflow: 'hidden' }}>
+        {tabValue === 0 && <CodeTab key={'codetab'} />}
+      </Paper>
+    </Box>
+  )
+}
+export const A = () => {
+  const fileName = useIframeStore((v) => v.selectedFiberSource?.fileName)
+  return (
+    <Box>
+      <Typography variant={'caption'}>{fileName}</Typography>
     </Box>
   )
 }

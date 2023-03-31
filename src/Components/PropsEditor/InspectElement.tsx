@@ -40,6 +40,7 @@ function getPromiseForRequestID<T>(
 
 const TIMEOUT_DELAY = 5000
 let nextId = 0
+
 export const inspectElement = ({
   bridge,
   id,
