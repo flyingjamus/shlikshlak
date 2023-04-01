@@ -1,15 +1,14 @@
-import { io } from 'socket.io-client'
 import { useEffect } from 'react'
 
 export const Errors = () => {
   useEffect(() => {
-    const socket = io('localhost:3001')
-    socket.on('diagnostics', (fileName, errors) => {
-      console.log(errors)
-    })
-    return () => {
-      socket.disconnect()
-    }
+    // const socket = io('localhost:3001')
+    // socket.on('diagnostics', (fileName, errors) => {
+    //   console.log(errors)
+    // })
+    // return () => {
+    //   socket.disconnect()
+    // }
   }, [])
   return null
 }

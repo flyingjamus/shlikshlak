@@ -1,4 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import { HocuspocusProvider } from '@hocuspocus/provider'
+import { MonacoBinding } from 'y-monaco'
 import { apiClient } from '../../client/apiClient'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
@@ -13,7 +17,9 @@ function getOrCreateModel(path: string, contents = ''): editor.ITextModel {
   const uri = monaco.Uri.file(path)
   const model = monaco.editor.getModel(uri)
   if (model) {
-    model.setValue(contents)
+    if (contents) {
+      model.setValue(contents)
+    }
     return model
   }
   return monaco.editor.createModel(contents, undefined, uri)
@@ -31,13 +37,11 @@ export const WrappedMonacoEditor = ({}: {}) => {
   const ref = useRef<editor.IStandaloneCodeEditor | null>(null)
   const source = useIframeStore((v) => v.selectedFiberSource)
   const fileName = source?.fileName
-  const { data } = useGetFileQuery(fileName)
-  const contents = data?.contents
   const model = useMemo(() => {
-    if (contents && fileName) {
-      return getOrCreateModel(fileName, contents)
+    if (fileName) {
+      return getOrCreateModel(fileName)
     }
-  }, [fileName, contents])
+  }, [fileName])
 
   const editor = ref.current
   const { data: panels } = useGetPanelsQuery(source)
@@ -45,46 +49,75 @@ export const WrappedMonacoEditor = ({}: {}) => {
   useEffect(() => {
     if (!editor || !model) return
     editor.setModel(model)
-    if (panels?.range) {
-      editor.removeDecorations(decorations.current)
-
-      if (editor?.getModel() !== model) {
-        editor.setModel(model)
-      }
-      editor.revealRangeInCenterIfOutsideViewport(panels.range)
-      decorations.current = editor.deltaDecorations(decorations.current, [
-        {
-          range: panels.range,
-          options: {
-            className: 'Highlighted',
-          },
-        },
-      ])
-    } else {
-      decorations.current = []
-    }
+    // if (panels?.range) {
+    //   editor.removeDecorations(decorations.current)
+    //
+    //   if (editor?.getModel() !== model) {
+    //     editor.setModel(model)
+    //   }
+    //   editor.revealRangeInCenterIfOutsideViewport(panels.range)
+    //   decorations.current = editor.deltaDecorations(decorations.current, [
+    //     {
+    //       range: panels.range,
+    //       options: {
+    //         className: 'Highlighted',
+    //       },
+    //     },
+    //   ])
+    // } else {
+    //   decorations.current = []
+    // }
   }, [model, panels, editor])
 
   useEffect(() => {
-    if (editor) {
-      const onDidChangeModelContent = async (e: editor.IModelContentChangedEvent) => {
-        if (!fileName) return
-        const changes = e.changes.map(
-          ({ range, rangeLength, rangeOffset, text }) =>
-            ({ span: { start: rangeOffset, length: rangeLength }, newText: text } as TextChangeSchema)
-        )
-        await doChange([{ fileName, textChanges: changes }])
-      }
-      const disposables = [editor.onDidChangeModelContent(onDidChangeModelContent)]
+    if (editor && model) {
+      console.log('binding')
+      const provider = new HocuspocusProvider({
+        name: model.uri.path,
+        url: 'ws://localhost:3001/docs',
+        quiet: false,
+        onStatus: (data) => {
+          console.log(31232132, data)
+        },
+      })
 
-      // editor.onDidChangeCursorPosition((e) => {
-      //   // console.log(e)
-      //   //TODO
-      // })
+      const type = provider.document.getText()
+
+      let monacoBinding: MonacoBinding | undefined = undefined
+
+      provider.on('sync', () => {
+        monacoBinding = new MonacoBinding(type, model, new Set([editor]), provider.awareness)
+        editor.setModel(model)
+      })
       return () => {
-        disposables.forEach((d) => d.dispose())
+        provider.destroy()
+        monacoBinding?.destroy()
       }
     }
-  }, [editor, fileName])
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model, editor])
+
+  // useEffect(() => {
+  //   if (editor) {
+  //     const onDidChangeModelContent = async (e: editor.IModelContentChangedEvent) => {
+  //       // if (!fileName) return
+  //       // const changes = e.changes.map(
+  //       //   ({ range, rangeLength, rangeOffset, text }) =>
+  //       //     ({ span: { start: rangeOffset, length: rangeLength }, newText: text } as TextChangeSchema)
+  //       // )
+  //       // await doChange([{ fileName, textChanges: changes }])
+  //     }
+  //     const disposables = [editor.onDidChangeModelContent(onDidChangeModelContent)]
+  //
+  //     // editor.onDidChangeCursorPosition((e) => {
+  //     //   // console.log(e)
+  //     //   //TODO
+  //     // })
+  //     return () => {
+  //       disposables.forEach((d) => d.dispose())
+  //     }
+  //   }
+  // }, [editor, fileName])
   return <MonacoEditor ref={ref} />
 }

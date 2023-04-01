@@ -50,7 +50,7 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
   })
 
   app.get('/stories', async (req, res) => {
-    const entries = await globby(['./**/*.stories.ts{,x}'], { gitignore: true })
+    const entries = await globby(['./**/*.stories.ts{,x}'], { gitignore: true, ignore: ['node_modules'] })
     const entryData = await getEntryData(entries)
     detectDuplicateStoryNames(entryData)
     // const generatedList = getGeneratedList(entryData, 'configFolder', false)

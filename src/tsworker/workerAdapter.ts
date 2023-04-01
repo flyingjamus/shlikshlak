@@ -32,27 +32,12 @@ export async function setAttribute(fileName: string, location: number, prop: str
 
 const changesQueue = new PQueue({ concurrency: 1 })
 const queue: FileTextChanges[] = []
-let queuePromise: Promise<void> | undefined =  undefined
-
-const runChanges = async () => {
-  queue.splice(0, queue.length)
-  queuePromise = undefined
-  const { error, undoChanges } = await apiClient.post('/do_change', { changes: queue })
-  if (undoChanges) {
-    useIframeStore.setState({
-      undoStack: produce(useIframeStore.getState().undoStack, (v) => {
-        v.push({ undoChanges })
-      }),
-    })
-  }
-}
+let queuePromise: Promise | undefined =  undefined
 
 export const doChange = async (changes: FileTextChanges[]) => {
   if (queuePromise) {
 
-  } else {
-    queuePromise=
-  }
+  } else {}
 
 
 
