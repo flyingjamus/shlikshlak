@@ -1,3 +1,4 @@
+import * as Y from 'yjs'
 import * as dotenv from 'dotenv'
 import cors from 'cors'
 import { zodiosApp } from '@zodios/express'
@@ -13,22 +14,38 @@ import { Logger } from '@hocuspocus/extension-logger'
 const PORT = 3001
 
 const server = new Hocuspocus({
-  extensions: [new Logger({ onConnect: true, onStoreDocument: true })],
+  extensions: [
+    new Logger({
+      onConnect: true,
+      onStoreDocument: true,
+      onDestroy: true,
+      onDisconnect: true,
+      onRequest: true,
+    }),
+  ],
   port: PORT,
+  async onDestroy(data): Promise<any> {
+    console.log(1233312321312, data)
+  },
   async onConnect(data) {},
   async onLoadDocument(data) {
     // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11 check path
     const fileContent = await fs.readFile(data.documentName, 'utf-8')
-    data.document.getText().insert(0, fileContent)
+    const text = data.document.getText()
+
+    if (text.toString() !== fileContent) {
+      text.delete(0, text.length)
+      text.insert(0, fileContent)
+    }
 
     return data.document
   },
   async onStoreDocument(data) {
-    console.log(231321231, 'store')
     // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11 check path
     await fs.writeFile(data.documentName, data.document.getText().toString())
     return data.document
   },
+  // on
 })
 
 const env = dotenv.config({ path: resolve('./.env.local') })

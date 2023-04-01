@@ -20,4 +20,4 @@ const baseLogger = pino(
     }
   })
 )
-export const createLogger = (name: string) => baseLogger.child({ file: name }, { level: 'debug' })
+export const createLogger = (name: string) => baseLogger.child({ file: name }, { level: 'error' })

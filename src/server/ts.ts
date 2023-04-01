@@ -33,7 +33,7 @@ import { Project } from './ts/project'
 import { asNormalizedPath } from './ts/utilitiesPublic'
 import { existingAttributeSchema, panelsResponseSchema } from '../Shared/PanelTypesZod'
 
-export const logger = createLogger('ts')
+export const logger = createLogger('ts', )
 
 export const getTsMethods = (ioSession: Session, project: Project) => {
   function getTokenAtFilename(fileName: string, position: number) {
