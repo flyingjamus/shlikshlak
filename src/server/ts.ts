@@ -32,8 +32,11 @@ import path from 'path'
 import { Project } from './ts/project'
 import { asNormalizedPath } from './ts/utilitiesPublic'
 import { existingAttributeSchema, panelsResponseSchema } from '../Shared/PanelTypesZod'
+import Comlink from 'comlink'
+import nodeEndpoint from 'comlink/src/node-adapter'
+import { parentPort } from 'worker_threads'
 
-export const logger = createLogger('ts', )
+export const logger = createLogger('ts')
 
 export const getTsMethods = (ioSession: Session, project: Project) => {
   function getTokenAtFilename(fileName: string, position: number) {
@@ -427,19 +430,17 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 }
 
-export const startTs = () => {
-  const ioSession = startIoSession()
-  console.log('Started IO session')
+const ioSession = startIoSession()
+console.log('Started IO session')
 
-  // const FILE = 'src/stories/example.stories.tsx'
-  // const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
-  // const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
-  const FILE = 'src/Components/PropsEditor/PropsEditor.stories.tsx'
+// const FILE = 'src/stories/example.stories.tsx'
+// const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
+// const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
+const FILE = 'src/Components/PropsEditor/PropsEditor.stories.tsx'
 
-  ioSession.projectService.openClientFile(path.resolve(FILE))
-  const project: Project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)!
+ioSession.projectService.openClientFile(path.resolve(FILE))
+const project: Project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)!
 
-  if (!project) throw new Error('Project missing')
+if (!project) throw new Error('Project missing')
 
-  return getTsMethods(ioSession, project)
-}
+Comlink.expose(getTsMethods(ioSession, project), nodeEndpoint(parentPort))

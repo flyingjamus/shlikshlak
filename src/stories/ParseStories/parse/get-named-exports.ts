@@ -1,4 +1,4 @@
-import { getEncodedStoryName, storyDelimiter, titleToFileId, kebabCase } from '../naming-utils.js'
+import { getEncodedStoryName, storyDelimiter, titleToFileId, kebabCase } from '../naming-utils'
 import { ParsedStoriesResult } from '../types'
 import { cloneDeep, merge } from 'lodash-es'
 import { NodePath } from '@babel/traverse'

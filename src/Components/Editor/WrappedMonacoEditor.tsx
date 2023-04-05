@@ -77,7 +77,7 @@ export const WrappedMonacoEditor = ({}: {}) => {
         url: 'ws://localhost:3001/docs',
         quiet: false,
         onStatus: (data) => {
-          console.log(31232132, data)
+          console.debug('Monaco status', data)
         },
       })
 

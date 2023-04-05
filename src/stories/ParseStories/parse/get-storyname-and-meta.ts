@@ -1,4 +1,4 @@
-import { converter } from "../ast-to-obj.js";
+import { converter } from "../ast-to-obj";
 
 /**
  * @param {import('../../../shared/types').ParsedStoriesResult} result

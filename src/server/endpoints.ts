@@ -6,10 +6,18 @@ import launchEditor from 'react-dev-utils/launchEditor'
 import globby from 'globby'
 import { getEntryData } from '../stories/ParseStories/parse/get-entry-data'
 import { detectDuplicateStoryNames } from '../stories/ParseStories/utils'
-import { startTs } from './ts'
 import fs from 'fs/promises'
+import { Worker } from 'worker_threads'
+import Comlink from 'comlink'
+import nodeEndpoint from 'comlink/src/node-adapter'
+import { getTsMethods } from './ts'
 
-const ROOT_PATH = path.join(__dirname, '..', '..')
+const startTs = () => {
+  const worker = new Worker(new URL('./ts', import.meta.url))
+  return Comlink.wrap<Awaited<ReturnType<typeof getTsMethods>>>(nodeEndpoint(worker))
+}
+
+const ROOT_PATH = path.join(process.cwd(), '..', '..')
 
 function getFilePath(filePath: string) {
   // TODO!!!!!!!!!!! GUARD!!!!
@@ -79,7 +87,7 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
 
   app.post('/do_change', async ({ body }, res) => {
     try {
-      const changes = doChanges(body.changes)
+      const changes = await doChanges(body.changes)
       res.json({
         error: !!changes,
         undoChanges: changes ? changes : undefined,

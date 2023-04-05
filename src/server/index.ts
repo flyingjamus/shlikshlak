@@ -8,10 +8,15 @@ import { resolve } from 'path'
 import expressWebsockets from 'express-ws'
 import { Hocuspocus } from '@hocuspocus/server'
 import fs from 'fs/promises'
-
 import { Logger } from '@hocuspocus/extension-logger'
+import chokidar from 'chokidar'
+import writeFileAtomic from 'write-file-atomic'
 
 const PORT = 3001
+
+const watcher = chokidar.watch([], {
+  persistent: true,
+})
 
 const server = new Hocuspocus({
   extensions: [
@@ -27,6 +32,16 @@ const server = new Hocuspocus({
   async onDestroy(data): Promise<any> {
     console.log(1233312321312, data)
   },
+  onAwarenessUpdate({ clientsCount, documentName, removed }): Promise<any> {
+    // if (clientsCount === 0) {
+    //   watcher.unwatch(documentName)
+    // } else {
+    //
+    //   watcher.on(documentName)
+    // }
+    // console.log(1233312321312, clientsCount, documentName)
+    return Promise.resolve()
+  },
   async onConnect(data) {},
   async onLoadDocument(data) {
     // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11 check path
@@ -34,15 +49,18 @@ const server = new Hocuspocus({
     const text = data.document.getText()
 
     if (text.toString() !== fileContent) {
-      text.delete(0, text.length)
-      text.insert(0, fileContent)
+      data.document.transact(() => {
+        text.delete(0, text.length)
+        text.insert(0, fileContent)
+      })
     }
 
     return data.document
   },
   async onStoreDocument(data) {
     // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11 check path
-    await fs.writeFile(data.documentName, data.document.getText().toString())
+    console.log('CLIENTSCOUNT', data.clientsCount)
+    await writeFileAtomic(data.documentName, data.document.getText().toString())
     return data.document
   },
   // on

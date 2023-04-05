@@ -1,4 +1,4 @@
-import { storyIdToMeta } from "../naming-utils.js";
+import { storyIdToMeta } from "../naming-utils";
 
 /**
  * @param entryData {import('../../../shared/types').EntryData}

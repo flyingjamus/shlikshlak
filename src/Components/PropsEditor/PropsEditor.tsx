@@ -297,7 +297,7 @@ export const PropsEditor = React.memo(
 
     return (
       <Box height={'100%'} overflow={'auto'}>
-        <List sx={{ background: 'hotpink' }} dense onBlur={onBlur}>
+        <List sx={{}} dense onBlur={onBlur}>
           {panelAttrs.map((attr) => {
             const existing = existingAttributes.find((v) => v.name === attr.name)
             const key = [fileName, location, attr.name].join(':')
@@ -387,9 +387,7 @@ const Row = ({
         />
       </ListItemIcon>
       <Stack width={'100%'}>
-        <Box>
-          {attr.name}
-        </Box>
+        <Box>{attr.name}</Box>
         <Box>
           <PropEditor
             panelMatch={panel}

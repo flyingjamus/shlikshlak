@@ -1,6 +1,6 @@
 import t from "@babel/types";
-import { template, generate } from "../babel.js";
-import { storyDelimiter, storyEncodeDelimiter } from "../naming-utils.js";
+import { template, generate } from "../babel";
+import { storyDelimiter, storyEncodeDelimiter } from "../naming-utils";
 
 /**
  * @param entryData {import('../../../shared/types').EntryData}

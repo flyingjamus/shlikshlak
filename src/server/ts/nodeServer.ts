@@ -36,6 +36,10 @@ import { stringifyIndented } from './utilities'
 import { nullTypingsInstaller } from './typingsCache'
 import { resolve } from 'path'
 
+import childProcess from 'child_process'
+
+import fs from 'fs'
+
 interface LogOptions {
   file?: string
   detailLevel?: LogLevel
@@ -126,13 +130,6 @@ export function initializeNodeSystem(): {
   ) => Session
 } {
   const sys = Debug.checkDefined(ts.sys) as ServerHost
-  const childProcess: {
-    execFileSync(
-      file: string,
-      args: string[],
-      options: { stdio: 'ignore'; env: MapLike<string> }
-    ): string | Buffer
-  } = require('child_process')
 
   interface Stats {
     isFile(): boolean
@@ -157,14 +154,6 @@ export function initializeNodeSystem(): {
     ctime: Date
     birthtime: Date
   }
-
-  const fs: {
-    openSync(path: string, options: string): number
-    close(fd: number, callback: (err: NodeJS.ErrnoException) => void): void
-    writeSync(fd: number, buffer: Buffer, offset: number, length: number, position?: number): number
-    statSync(path: string): Stats
-    stat(path: string, callback?: (err: NodeJS.ErrnoException, stats: Stats) => any): void
-  } = require('fs')
 
   class Logger implements Logger {
     private seq = 0

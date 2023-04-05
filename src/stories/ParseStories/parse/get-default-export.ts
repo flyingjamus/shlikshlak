@@ -1,4 +1,4 @@
-import { converter } from '../ast-to-obj.js'
+import { converter } from '../ast-to-obj'
 import { ParsedStoriesResult } from '../types'
 import { NodePath } from '@babel/traverse'
 import { ExportDefaultDeclaration } from '@babel/types'
