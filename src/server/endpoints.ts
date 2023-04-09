@@ -10,7 +10,7 @@ import fs from 'fs/promises'
 import { Worker } from 'worker_threads'
 import Comlink from 'comlink'
 import nodeEndpoint from 'comlink/src/node-adapter'
-import { getTsMethods } from './ts'
+import type { getTsMethods } from './ts'
 
 const startTs = () => {
   const worker = new Worker(new URL('./ts', import.meta.url))
@@ -34,7 +34,6 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
   const { doChanges, getPanelsAtLocation, setAttributeAtPosition } = startTs()
 
   app.post('/launch_editor', async (req, res) => {
-    console.log(process.env.REACT_EDITOR)
     const { fileName, lineNumber, colNumber } = req.body
     const filePath = getFilePath(fileName)
     console.log('Launching editor', req.body)

@@ -2,8 +2,6 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 import { Box } from '@mui/material'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
-import { useFileStore } from '../store'
-import { getFileText } from '../../tsworker/fileGetter'
 import { MONACO_OPTIONS } from './MONACO_OPTIONS'
 // @ts-ignore
 import { initVimMode } from 'monaco-vim'

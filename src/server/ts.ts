@@ -36,6 +36,10 @@ import Comlink from 'comlink'
 import nodeEndpoint from 'comlink/src/node-adapter'
 import { parentPort } from 'worker_threads'
 
+// import inspector from 'node:inspector'
+// inspector.open()
+// inspector.waitForDebugger();
+
 export const logger = createLogger('ts')
 
 export const getTsMethods = (ioSession: Session, project: Project) => {
@@ -443,4 +447,4 @@ const project: Project = ioSession.projectService.getDefaultProjectForFile(asNor
 
 if (!project) throw new Error('Project missing')
 
-Comlink.expose(getTsMethods(ioSession, project), nodeEndpoint(parentPort))
+Comlink.expose(getTsMethods(ioSession, project), nodeEndpoint(parentPort!))

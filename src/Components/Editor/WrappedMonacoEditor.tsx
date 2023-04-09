@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { HocuspocusProvider } from '@hocuspocus/provider'
-import { MonacoBinding } from 'y-monaco'
 import { apiClient } from '../../client/apiClient'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
@@ -12,6 +11,7 @@ import MonacoEditor from './MonacoEditor'
 import { useGetPanelsQuery } from '../Common/UseQueries'
 import { TextChangeSchema } from '../../common/api'
 import { doChange } from '../../tsworker/workerAdapter'
+import { MonacoBinding } from './y-monaco'
 
 function getOrCreateModel(path: string, contents = ''): editor.ITextModel {
   const uri = monaco.Uri.file(path)
@@ -70,28 +70,30 @@ export const WrappedMonacoEditor = ({}: {}) => {
   }, [model, panels, editor])
 
   useEffect(() => {
-    if (editor && model) {
+    if (editor && model && fileName) {
       console.log('binding')
-      const provider = new HocuspocusProvider({
-        name: model.uri.path,
-        url: 'ws://localhost:3001/docs',
-        quiet: false,
-        onStatus: (data) => {
-          console.debug('Monaco status', data)
-        },
+
+      const doc = new Y.Doc()
+      const wsProvider = new WebsocketProvider('ws://localhost:3001/docs', fileName, doc)
+
+      wsProvider.on('status', (v) => {
+        console.log(12331312, v)
       })
 
-      const type = provider.document.getText()
-
-      let monacoBinding: MonacoBinding | undefined = undefined
-
-      provider.on('sync', () => {
-        monacoBinding = new MonacoBinding(type, model, new Set([editor]), provider.awareness)
-        editor.setModel(model)
+      doc.on('beforeAllTransactions', (args) => {
+        console.log('BEFORE', args)
       })
+      doc.getText().observe((e) => {
+        console.log('OBSERVE', e)
+      })
+
+      // let monacoBinding: MonacoBinding | undefined = undefined
+
       return () => {
-        provider.destroy()
-        monacoBinding?.destroy()
+        console.log('unbinding')
+        // model.dispose()
+        wsProvider.destroy()
+        // monacoBinding?.destroy()
       }
     }
 

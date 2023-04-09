@@ -378,7 +378,7 @@ export function initializeNodeSystem(): {
       : undefined
 
     const logVerbosity = cmdLineVerbosity || envLogOptions.detailLevel
-    return new Logger(substitutedLogFileName, true!, envLogOptions.traceToConsole!, logVerbosity!) // TODO: GH#18217
+    return new Logger(substitutedLogFileName, false, envLogOptions.traceToConsole!, logVerbosity!) // TODO: GH#18217
   }
 
   function writeMessage(buf: Buffer) {
@@ -463,7 +463,7 @@ function startNodeSession(
         byteLength: Buffer.byteLength,
         hrtime: process.hrtime,
         logger,
-        canUseEvents: true,
+        canUseEvents: false,
         typesMapLocation,
       })
     }
