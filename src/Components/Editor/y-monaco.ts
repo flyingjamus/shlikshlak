@@ -69,7 +69,7 @@ const createMonacoSelectionFromRelativeSelection = (
 export class MonacoBinding {
   private doc: Y.Doc
   private mux: mutex
-  private _savedSelections: Map<any, any>
+  private _savedSelections: Map<monaco.editor.IStandaloneCodeEditor, RelativeSelection>
   private _beforeTransaction: () => void
   private _decorations: Map<any, any>
   private _rerenderDecorations: () => void
@@ -157,7 +157,6 @@ export class MonacoBinding {
      * @param {Y.YTextEvent} event
      */
     this._ytextObserver = (event) => {
-      console.log(1111, event)
       this.mux(() => {
         let index = 0
         event.delta.forEach((op: any) => {
@@ -195,7 +194,6 @@ export class MonacoBinding {
       }
     }
     this._monacoChangeHandler = monacoModel.onDidChangeContent((event) => {
-      console.log(2222, event)
       // apply changes from right to left
       this.mux(() => {
         this.doc.transact(() => {

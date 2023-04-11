@@ -109,7 +109,10 @@ const BaseStringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...
 }
 
 const CodeEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
-  const isExpression = inputValue?.startsWith('{')
+  const isExpression = inputValue?.startsWith && inputValue?.startsWith('{')
+  if (inputValue && !inputValue.startsWith) {
+    console.error('WRONG TYPE FOR INPUTVALUE', inputValue)
+  }
   const stringInput = (isExpression ? inputValue?.slice(1, -1) : inputValue) || ''
   return (
     <JsonPropsEditor
