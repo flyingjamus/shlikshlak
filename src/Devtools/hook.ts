@@ -1,6 +1,7 @@
 import type { BrowserTheme } from 'react-devtools-inline'
 
 function installHook(target: any) {
+  console.log(121111111111, target['__REACT_DEVTOOLS_GLOBAL_HOOK__'])
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
     return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
   }
