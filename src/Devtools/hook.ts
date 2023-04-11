@@ -1,4 +1,4 @@
-import { BrowserTheme } from 'react-devtools-inline'
+import type { BrowserTheme } from 'react-devtools-inline'
 
 function installHook(target: any) {
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {

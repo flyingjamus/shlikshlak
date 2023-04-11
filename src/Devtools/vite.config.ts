@@ -12,13 +12,13 @@ export default defineConfig({
       external: ['react', 'react-devtools-inline/backend'],
     },
     lib: {
-      entry: [resolve(__dirname, 'Devtools.tsx'), resolve(__dirname, 'hook.ts')],
+      entry: [
+        resolve(__dirname, 'Devtools.tsx'),
+        resolve(__dirname, 'hook.ts'),
+        resolve(__dirname, 'NextjsHook.ts'),
+      ],
       name: 'Devtools',
-      // fileName: 'Devtools',
-      // fileName: (format, entryName) => {
-      //   return `${entryName}.${format === 'cjs' ? 'cjs' : 'js'}`
-      // },
-      formats: ['es', 'cjs']
+      formats: ['es', 'cjs'],
     },
   },
   clearScreen: false,
