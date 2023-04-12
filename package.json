@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "exports": ["./dist/hook.js"],
+  "exports": ["./dist/hook.js", "./dist/Devtools.js"],
   "scripts": {
     "dev": "tmux new-session 'yarn dev:server'\\; split-window -h 'yarn dev:vite' \\; split-window 'yarn dev:devtools'",
     "build": "tsc && vite build",

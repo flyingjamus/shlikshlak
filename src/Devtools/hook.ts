@@ -1,9 +1,10 @@
 import type { BrowserTheme } from 'react-devtools-inline'
 
 function installHook(target: any) {
-  // if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
-  //   return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
-  // }
+  if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
+    console.log('React DevTools is already installed.', target.__REACT_DEVTOOLS_GLOBAL_HOOK__)
+    return target.__REACT_DEVTOOLS_GLOBAL_HOOK__
+  }
 
   let targetConsole: Object = console
   let targetConsoleMethods = {}
@@ -483,6 +484,7 @@ function installHook(target: any) {
     registerInternalModuleStop,
   }
 
+  console.log('NEW HOOK', hook)
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
     Object.assign(target.__REACT_DEVTOOLS_GLOBAL_HOOK__, hook)
   } else {

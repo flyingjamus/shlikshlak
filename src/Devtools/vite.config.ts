@@ -13,7 +13,7 @@ export default defineConfig({
     },
     lib: {
       entry: [
-        resolve(__dirname, 'Devtools.tsx'),
+        resolve(__dirname, 'Devtools.ts'),
         resolve(__dirname, 'hook.ts'),
         resolve(__dirname, 'NextjsHook.ts'),
       ],
