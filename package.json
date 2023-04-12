@@ -3,7 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "exports": ["./dist/hook.js", "./dist/Devtools.js"],
+  "exports": {
+    "./NextjsHook": {
+      "require": "./dist/NextjsHook.cjs",
+      "import": "./dist/NextjsHook.cjs"
+    }
+  },
   "scripts": {
     "dev": "tmux new-session 'yarn dev:server'\\; split-window -h 'yarn dev:vite' \\; split-window 'yarn dev:devtools'",
     "build": "tsc && vite build",
