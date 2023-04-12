@@ -486,7 +486,8 @@ function installHook(target: any) {
 
   console.log('NEW HOOK', hook)
   if (target.hasOwnProperty('__REACT_DEVTOOLS_GLOBAL_HOOK__')) {
-    Object.assign(target.__REACT_DEVTOOLS_GLOBAL_HOOK__, hook)
+    const oldHook = target.__REACT_DEVTOOLS_GLOBAL_HOOK__
+    Object.assign(oldHook, hook)
   } else {
     Object.defineProperty(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__', {
       configurable: true,
