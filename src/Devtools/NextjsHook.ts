@@ -47,12 +47,18 @@ class PrependTextWebpackPlugin {
         },
         async () => {
           const targetFile = compilation.namedChunks.get('react-refresh')?.files.values().next().value
-          const targetText = await fs.readFile(resolve(__dirname, 'hook.cjs'), 'utf-8')
 
-          if (compilation.assets[targetFile]) {
-            const originalContent = compilation.assets[targetFile].source()
-            const newContent = targetText.replaceAll(/"use strict"/g, '') + '\n' + originalContent
-            compilation.updateAsset(targetFile, new RawSource(newContent))
+          const filename = resolve(__dirname, 'hook.cjs')
+          try {
+            const targetText = await fs.readFile(filename, 'utf-8')
+
+            if (compilation.assets[targetFile]) {
+              const originalContent = compilation.assets[targetFile].source()
+              const newContent = targetText.replaceAll(/"use strict"/g, '') + '\n' + originalContent
+              compilation.updateAsset(targetFile, new RawSource(newContent))
+            }
+          } catch (e) {
+            console.error('Hook not found')
           }
         }
       )

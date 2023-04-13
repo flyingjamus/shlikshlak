@@ -6,6 +6,7 @@ import { redoChange, undoChange } from '../tsworker/workerAdapter'
 const keyMap = {
   UNDO: 'ctrl+z',
   REDO: 'ctrl+shift+z',
+  JUMP: 'ctrl+alt+a',
 }
 export const Hotkeys = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient()
@@ -22,6 +23,13 @@ export const Hotkeys = ({ children }: { children: ReactNode }) => {
           e?.preventDefault()
           await redoChange()
           await queryClient.invalidateQueries(['getPanelsAtPosition'])
+        },
+        JUMP: (e) => {
+          const listener = (e: MouseEvent) => {
+            console.log(e.target)
+            window.removeEventListener('click', listener)
+          }
+          window.addEventListener('click', listener)
         },
       }}
     >

@@ -24,21 +24,14 @@ function finishActivation(contentWindow: Window, bridge: BackendBridge) {
   }
 }
 
-export function activate(
-  contentWindow: window,
-  {
-    bridge,
-  }: {
-    bridge?: BackendBridge
-  } = {}
-): void {
+export function activate(contentWindow: typeof window, bridge?: BackendBridge): void {
   if (bridge == null) {
     bridge = createBridge(contentWindow)
   }
 
   startActivation(contentWindow, bridge)
 }
-export function createBridge(contentWindow: window, wall?: Wall): BackendBridge {
+export function createBridge(contentWindow: typeof window, wall?: Wall): BackendBridge {
   const { parent } = contentWindow
 
   if (wall == null) {

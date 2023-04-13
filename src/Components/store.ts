@@ -71,6 +71,7 @@ interface IframeStore {
   selectedFiberSource?: Source | null
   undoStack: { undoChanges: FileTextChanges[] }[]
   redoStack: { undoChanges: FileTextChanges[] }[]
+  ctrlPressed: boolean
   methods: {
     selectFiber: (id: number) => Promise<void>
   }
@@ -86,6 +87,7 @@ export const useIframeStore: UseBoundStore<StoreApi<IframeStore>> = create<Ifram
         if (!editor) throw new Error('Editor not found')
         return editor
       },
+      ctrlPressed: false,
       renderers: {},
       undoStack: [],
       redoStack: [],

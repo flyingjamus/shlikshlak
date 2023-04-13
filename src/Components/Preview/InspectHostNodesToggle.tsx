@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useBridge } from '../PropsEditor/UseBridge'
-import { ToggleButton } from '@mui/material'
+import { alpha, ToggleButton } from '@mui/material'
 import Search from '@mui/icons-material/Search'
 
 export function InspectHostNodesToggle() {
@@ -28,7 +28,13 @@ export function InspectHostNodesToggle() {
   }, [bridge])
 
   return (
-    <ToggleButton value={isInspecting} onChange={(event, value) => handleChange(!isInspecting)}>
+    <ToggleButton
+      value={isInspecting}
+      onChange={(event, value) => handleChange(!isInspecting)}
+      sx={({ palette }) => ({
+        background: isInspecting ? alpha(palette.primary.main, 0.2) : undefined,
+      })}
+    >
       <Search />
     </ToggleButton>
   )

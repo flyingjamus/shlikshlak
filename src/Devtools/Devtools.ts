@@ -6,7 +6,7 @@ import { uniqueId } from 'lodash-es'
 import { getElementFiber } from './ReactDevInspectorUtils/fiber'
 import type { Fiber } from 'react-reconciler'
 import { isDefined } from 'ts-is-defined'
-import { activate } from '../Components/ReactDevtools/react-devtools-inline/backend'
+import { activate, createBridge } from '../Components/ReactDevtools/react-devtools-inline/backend'
 
 const s = window.__shlikshlak__
 
@@ -107,7 +107,19 @@ const connection = connectToParent<ParentMethods>({
 connection.promise.then((parentMethods) => {
   console.log('Connected to parent')
   const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
-  activate(window)
+  const bridge = createBridge(window)
+  activate(window, bridge)
 
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Control' || e.key === 'Meta') {
+      bridge.send('ctrlPressed', true)
+    }
+  })
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'Control' || e.key === 'Meta') {
+      bridge.send('ctrlPressed', false)
+    }
+  })
   connectionMethods = parentMethods
 })
+
