@@ -1,15 +1,12 @@
 import { Box, styled } from '@mui/material'
-import {
+import React, {
   ForwardedRef,
   forwardRef,
   IframeHTMLAttributes,
-  RefObject,
+  ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
-  useState,
-  WheelEvent,
 } from 'react'
 import { connectToChild } from 'penpal'
 import { useIframeStore } from '../store'
@@ -19,8 +16,13 @@ import { createBridge, createStore } from '../ReactDevtools/react-devtools-inlin
 import Store from '../ReactDevtools/react-devtools-shared/src/devtools/store'
 import { FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
 import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
-import { useEventListenerRef, useMergeRefs } from 'rooks'
-import { throttle } from 'lodash-es'
+import { useMergeRefs } from 'rooks'
+import { animated, useSpring } from '@react-spring/web'
+import { createUseGesture, dragAction, pinchAction } from '@use-gesture/react'
+
+import styles from './styles.module.css'
+import { clamp } from 'lodash-es'
+import { useMeasure } from 'react-use'
 
 const StyledIframe = styled('iframe')({
   border: '0',
@@ -69,7 +71,7 @@ export function initialize(
 }
 
 export const Preview = () => {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>()
   const childConnection = useIframeStore((v) => v.childConnection)
   const refCallBack = useCallback((current?: HTMLIFrameElement | null) => {
     if (iframeRef.current == current) return
@@ -93,33 +95,37 @@ export const Preview = () => {
         bridge.addListener('ctrlPressed', (pressed) => {
           useIframeStore.setState({ ctrlPressed: pressed })
         })
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Control' || e.key === 'Meta') {
+            useIframeStore.setState({ ctrlPressed: true })
+          }
+        })
+        window.addEventListener('keyup', (e) => {
+          if (e.key === 'Control' || e.key === 'Meta') {
+            useIframeStore.setState({ ctrlPressed: false })
+          }
+        })
       })
     }
   }, [])
 
-  const element = useCallback(
-    (size) => (
-      <ZoomedIframe
-        zoom={'NONE'}
-        key={'iframe'}
-        // src={ready ? '/stories/example--story-root' : undefined}
-        src={'http://localhost:3002'}
-        // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
-        // src={ready ? '/stories/example-thin--story-root' : undefined}
-        onLoad={() => {}}
-        ref={refCallBack}
-        {...size}
-      />
-    ),
-    [refCallBack]
-  )
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ flexShrink: 0 }}>
         <InspectHostNodesToggle />
       </Box>
-      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'auto' }}>
-        <AutoSizer style={{ width: '100%', height: '100%' }}>{element}</AutoSizer>
+      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'hidden' }}>
+        <ZoomedIframe
+          zoom={'NONE'}
+          key={'iframe'}
+          // src={ready ? '/stories/example--story-root' : undefined}
+          src={'http://localhost:3002'}
+          // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
+          // src={ready ? '/stories/example-thin--story-root' : undefined}
+          onLoad={() => {}}
+          ref={refCallBack}
+        />
       </Box>
     </Box>
   )
@@ -128,88 +134,18 @@ export const Preview = () => {
 const VIEWPORT_WIDTH = 1600
 const VIEWPORT_HEIGHT = 1000
 
-const ZoomedIframe = forwardRef(
-  (
-    {
-      width,
-      height,
-      zoom,
-      ...props
-    }: { zoom: 'FIT' | 'NONE' } & Size & IframeHTMLAttributes<HTMLIFrameElement>,
-    inputRef: ForwardedRef<HTMLIFrameElement>
-  ) => {
-    const scaleX = width / VIEWPORT_WIDTH
-    const scaleY = height / VIEWPORT_HEIGHT
-    const [scale, setScale] = useState<{ x: number; y: number; scale: number }>({
-      x: 0,
-      y: 0,
-      scale: width / VIEWPORT_WIDTH,
-    })
-
-    const handleWheel = useMemo(() => {
-      const debouncedFunc = throttle((e: WheelEvent<HTMLDivElement>) => {
-        if (!useIframeStore.getState().ctrlPressed) return
-        const scaleAmount = e.deltaY > 0 ? 0.9 : 1.1
-
-        setScale(({ scale, x, y }) => {
-          const touchOrigin: [touchOriginX: number, touchOriginY: number] = [e.clientX, e.clientY]
-
-          const currentScale = scale
-          const newScale = currentScale * scaleAmount
-          const [newX, newY] = getTranslateOffsetsFromScale({
-            scale: newScale,
-            currentTranslate: [x, y],
-            imageRef: ref,
-            pinchDelta: newScale - currentScale,
-            touchOrigin,
-            currentScale,
-            translateX: x,
-            translateY: y,
-          })
-
-          return {
-            scale: newScale,
-            x: newX,
-            y: newY,
-          }
-        })
-      }, 10)
-      return (e: WheelEvent<HTMLDivElement>) => {
-        console.log(111111)
-        e.preventDefault()
-        debouncedFunc(e)
-      }
-    }, [])
-    useEffect(() => {
-      const container = ref.current
-      if (container) {
-        container.style.transform = `translate(${scale.x}px, ${scale.y}px) scale(${scale.scale})`
-      }
-    }, [scale])
-    const ref = useRef<HTMLDivElement>(null)
-    const scrollRef = useEventListenerRef('wheel', handleWheel as any)
-
-    const ctrlPressed = useIframeStore((v) => v.ctrlPressed)
-    return (
-      <Box sx={{ width: '100%', height: '100%', position: 'relative', overflow: 'auto' }}>
+const ZoomedIframe = forwardRef((props, inputRef: ForwardedRef<HTMLIFrameElement>) => {
+  const ctrlPressed = useIframeStore((v) => v.ctrlPressed)
+  return (
+    <Box sx={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <ZoomableBox>
         <StyledIframe
           key={'iframe'}
-          sx={useMemo(
-            () =>
-              zoom === 'FIT'
-                ? {
-                    height: `${VIEWPORT_HEIGHT}px`,
-                    width: `${VIEWPORT_WIDTH}px`,
-                    transform: `scale(${scaleX})`,
-                    transformOrigin: 'top left',
-                  }
-                : {
-                    height: `${VIEWPORT_HEIGHT}px`,
-                    width: `${VIEWPORT_WIDTH}px`,
-                  },
-            [scaleX, zoom]
-          )}
-          ref={useMergeRefs(ref, inputRef)}
+          sx={{
+            height: `${VIEWPORT_HEIGHT}px`,
+            width: `${VIEWPORT_WIDTH}px`,
+          }}
+          ref={inputRef}
           {...props}
         />
 
@@ -223,13 +159,83 @@ const ZoomedIframe = forwardRef(
               left: 0,
               zIndex: 100,
             }}
-            ref={scrollRef}
           ></Box>
         ) : null}
+      </ZoomableBox>
+    </Box>
+  )
+})
+
+const useGesture = createUseGesture([dragAction, pinchAction])
+
+const ZoomableBox = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    const handler = (e: Event) => e.preventDefault()
+    document.addEventListener('gesturestart', handler)
+    document.addEventListener('gesturechange', handler)
+    document.addEventListener('gestureend', handler)
+    return () => {
+      document.removeEventListener('gesturestart', handler)
+      document.removeEventListener('gesturechange', handler)
+      document.removeEventListener('gestureend', handler)
+    }
+  }, [])
+
+  const [style, api] = useSpring(() => ({
+    x: 0,
+    y: 0,
+    scale: 1,
+    rotateZ: 0,
+    config: {
+      friction: 10,
+      clamp: true,
+      duration: 50,
+    },
+  }))
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [measureRef, { height, width }] = useMeasure()
+
+  useGesture(
+    {
+      onDrag: ({ pinching, cancel, offset: [x, y], ...rest }) => {
+        if (pinching) return cancel()
+        api.start({ x: clamp(x, -width, width / 4), y: clamp(y, -height / 2, height / 2) })
+      },
+      onPinch: ({ origin: [ox, oy], first, movement: [ms], offset: [s, a], memo }) => {
+        if (first) {
+          const { width, height, x, y } = ref.current!.getBoundingClientRect()
+          const tx = ox - (x + width / 2)
+          const ty = oy - (y + height / 2)
+          memo = [style.x.get(), style.y.get(), tx, ty]
+        }
+
+        const x = memo[0] - (ms - 1) * memo[2]
+        const y = memo[1] - (ms - 1) * memo[3]
+        api.start({ scale: s, rotateZ: a, x, y })
+        return memo
+      },
+    },
+    {
+      target: ref,
+      drag: {
+        from: () => [style.x.get(), style.y.get()],
+      },
+      pinch: { scaleBounds: { min: 0.2, max: 5 }, rubberband: false },
+    }
+  )
+
+  return (
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <Box sx={{ display: 'flex', width: '100%', height: '100%' }} ref={useMergeRefs(ref, measureRef)}>
+        <AnimatedBox sx={{}} style={style}>
+          {children}
+        </AnimatedBox>
       </Box>
-    )
-  }
-)
+    </Box>
+  )
+}
+
+const AnimatedBox = animated(Box)
 
 function throttleWithRequestAnimationFrame<T extends Event>(listener: EventListener) {
   let running = false
@@ -243,39 +249,4 @@ function throttleWithRequestAnimationFrame<T extends Event>(listener: EventListe
       running = false
     })
   }
-}
-const getTranslateOffsetsFromScale = ({
-  imageRef,
-  scale,
-  pinchDelta,
-  touchOrigin: [touchOriginX, touchOriginY],
-  currentTranslate: [translateX, translateY],
-}: {
-  /** The current [x,y] translate values of image */
-  currentTranslate: [translateX: number, translateY: number]
-  imageRef: RefObject<HTMLElement>
-  pinchDelta: number
-  scale: number
-  touchOrigin: [touchOriginX: number, touchOriginY: number]
-}): [translateX: number, translateY: number] => {
-  if (!imageRef?.current) {
-    return [0, 0]
-  }
-
-  const {
-    height: imageHeight,
-    left: imageTopLeftX,
-    top: imageTopLeftY,
-    width: imageWidth,
-  } = imageRef.current.getBoundingClientRect()
-
-  // Get the (x,y) touch position relative to image origin at the current scale
-  const imageCoordX = (touchOriginX - imageTopLeftX - imageWidth / 2) / scale
-  const imageCoordY = (touchOriginY - imageTopLeftY - imageHeight / 2) / scale
-
-  // Calculate translateX/Y offset at the next scale to zoom to touch position
-  const newTranslateX = -imageCoordX * pinchDelta + translateX
-  const newTranslateY = -imageCoordY * pinchDelta + translateY
-
-  return [newTranslateX, newTranslateY]
 }
