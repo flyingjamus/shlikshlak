@@ -5,7 +5,6 @@ import {
   formatting,
   getTokenAtPosition,
   isJsxAttribute,
-  isStringLiteral,
   isJsxElement,
   isJsxOpeningLikeElement,
   isJsxSpreadAttribute,
@@ -17,7 +16,6 @@ import {
   SymbolFlags,
   textChanges,
 } from 'typescript'
-import { ExistingAttribute, PanelsResponse } from '../Shared/PanelTypes'
 import { isDefined } from 'ts-is-defined'
 import { MatcherContext, PANELS } from './ts/Panels'
 import { FileTextChanges, SetAttributesAtPositionRequest } from '../common/api'
@@ -42,8 +40,20 @@ import { parentPort } from 'worker_threads'
 
 export const logger = createLogger('ts')
 
-export const getTsMethods = (ioSession: Session, project: Project) => {
+export const getTsMethods = (ioSession: Session) => {
+  function getProject(fileName: string) {
+    ioSession.projectService.openClientFile(path.resolve(fileName))
+    const project: Project = ioSession.projectService.getDefaultProjectForFile(
+      asNormalizedPath(fileName),
+      true
+    )!
+    if (!project) throw new Error('Project missing')
+
+    return project
+  }
+
   function getTokenAtFilename(fileName: string, position: number) {
+    const project = getProject(fileName)
     const program = project.getLanguageService().getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) {
@@ -72,6 +82,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   async function getPanelsAtPosition(fileName: string, position: number): Promise<panelsResponseSchema> {
+    const project = getProject(fileName)
     const parent = getParentTokenAtPosition(fileName, position)
     if (parent) {
       const languageService = project.getLanguageService()
@@ -80,7 +91,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
       const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
       const jsxTag = parent.parent
 
-      const sxPropsType = getExport('@mui/system', 'SystemCssProperties')
+      const sxPropsType = getExport(fileName, '@mui/system', 'SystemCssProperties')
       const matcherContext: MatcherContext = {
         c: typeChecker!,
         types: { SxProps: sxPropsType },
@@ -159,6 +170,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   function getSourceFile(fileName: string) {
+    const project = getProject(fileName)
     return project.getLanguageService().getProgram()!.getSourceFile(fileName)
   }
 
@@ -168,7 +180,8 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
     return sourceFile
   }
 
-  function getExport(moduleName: string, name: string) {
+  function getExport(fileName: string, moduleName: string, name: string) {
+    const project = getProject(fileName)
     const rootFileName = project.getLanguageService().getProgram()!.getRootFileNames()[0]
     const resolved = resolveModuleName(
       moduleName,
@@ -189,9 +202,9 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
       .getLanguageService()
       .getProgram()!
       .getTypeChecker()!
-      .getExportsOfModule(getAliasedSymbolIfNecessary(symbolAtLocation))
+      .getExportsOfModule(getAliasedSymbolIfNecessary(fileName, symbolAtLocation))
     const moduleExport = exportsOfModule.find((v) => v.name === name)!
-    if (!moduleExport) throw new Error('Not found')
+    if (!moduleExport) return
 
     const declaredTypeOfSymbol = project
       .getLanguageService()
@@ -206,7 +219,8 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
       .getNonNullableType(declaredTypeOfSymbol)
   }
 
-  function getAliasedSymbolIfNecessary(symbol: Symbol) {
+  function getAliasedSymbolIfNecessary(fileName: string, symbol: Symbol) {
+    const project = getProject(fileName)
     if ((symbol.flags & SymbolFlags.Alias) !== 0)
       return project.getLanguageService().getProgram()!.getTypeChecker()!.getAliasedSymbol(symbol)
     return symbol
@@ -227,6 +241,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   function emitFile(fileName: string) {
+    const project = getProject(fileName)
     const output = project.getLanguageService().getEmitOutput(fileName)
 
     if (!output.emitSkipped) {
@@ -242,6 +257,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   function logErrors(fileName: string) {
+    const project = getProject(fileName)
     const allDiagnostics = project
       .getLanguageService()
       .getCompilerOptionsDiagnostics()
@@ -260,9 +276,9 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   function setAttributeAtPosition(args: SetAttributesAtPositionRequest): FileTextChanges[] | false {
-    console.log(32113312, args)
     logger.debug(`setAttributeAtPosition ${JSON.stringify(args, null, 2)}`)
     const { fileName, position, attrName, value } = args
+    const project = getProject(fileName)
     const sourceFile = requireSourceFile(fileName)
     const token = getTokenAtFilename(fileName, position)
     const name = factory.createIdentifier(attrName)
@@ -379,6 +395,7 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
   }
 
   const runDiagnosticsAsync = (fileName: string) => {
+    const project = getProject(fileName)
     const diagnostics = project.getLanguageService().getSemanticDiagnostics(fileName)
 
     if (diagnostics.length) {
@@ -437,14 +454,34 @@ export const getTsMethods = (ioSession: Session, project: Project) => {
 const ioSession = startIoSession()
 console.log('Started IO session')
 
-// const FILE = 'src/stories/example.stories.tsx'
-// const FILE = '/home/danny/dev/nimbleway/pages/login.tsx'
-// const FILE = '/home/danny/dev/nimbleway/src/components/Layout/SideNav/SideNav.tsx'
-const FILE = '/home/danny/dev/shlikshlak/src/Components/PropsEditor/JsonPropsEditor/JsonPropEditor.stories.tsx'
+type WrappedFunction<T extends (...args: any[]) => any> = (
+  ...args: Parameters<T>
+) => ReturnType<T> | undefined
 
-ioSession.projectService.openClientFile(path.resolve(FILE))
-const project: Project = ioSession.projectService.getDefaultProjectForFile(asNormalizedPath(FILE), true)!
+type WrappedObject<T extends object> = {
+  [K in keyof T]: T[K] extends (...args: any[]) => any ? WrappedFunction<T[K]> : T[K]
+}
 
-if (!project) throw new Error('Project missing')
+function wrapObjectWithTryCatch<T extends object>(obj: T): T {
+  return new Proxy(obj, {
+    get(target, property, receiver) {
+      const originalValue = Reflect.get(target, property, receiver)
 
-Comlink.expose(getTsMethods(ioSession, project), nodeEndpoint(parentPort!))
+      if (typeof originalValue === 'function') {
+        return function (this: T, ...args: any[]) {
+          try {
+            return originalValue.apply(this, args)
+          } catch (error) {
+            console.error(`Error occurred in ${String(property)} function:`, error)
+            console.error('Called with arguments:', args)
+            throw error
+          }
+        }
+      }
+
+      return originalValue
+    },
+  }) as T
+}
+
+Comlink.expose(wrapObjectWithTryCatch(getTsMethods(ioSession)), nodeEndpoint(parentPort!))
