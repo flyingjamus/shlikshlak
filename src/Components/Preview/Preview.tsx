@@ -110,22 +110,27 @@ export const Preview = () => {
     }
   }, [])
 
+  const element = useCallback(
+    (size) => (
+      <ZoomedIframe
+        key={'iframe'}
+        // src={ready ? '/stories/example--story-root' : undefined}
+        src={'http://localhost:3002'}
+        // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
+        // src={ready ? '/stories/example-thin--story-root' : undefined}
+        onLoad={() => {}}
+        ref={refCallBack}
+      />
+    ),
+    [refCallBack]
+  )
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ flexShrink: 0 }}>
         <InspectHostNodesToggle />
       </Box>
-      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'hidden' }}>
-        <ZoomedIframe
-          zoom={'NONE'}
-          key={'iframe'}
-          // src={ready ? '/stories/example--story-root' : undefined}
-          src={'http://localhost:3002'}
-          // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
-          // src={ready ? '/stories/example-thin--story-root' : undefined}
-          onLoad={() => {}}
-          ref={refCallBack}
-        />
+      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'auto' }}>
+        <AutoSizer style={{ width: '100%', height: '100%' }}>{element}</AutoSizer>
       </Box>
     </Box>
   )
@@ -199,7 +204,8 @@ const ZoomableBox = ({ children }: { children: ReactNode }) => {
     {
       onDrag: ({ pinching, cancel, offset: [x, y], ...rest }) => {
         if (pinching) return cancel()
-        api.start({ x: clamp(x, -width, width / 4), y: clamp(y, -height / 2, height / 2) })
+        // api.start({ x: clamp(x, -width, width / 4), y: clamp(y, -height / 2, height / 2) })
+        api.start({ x, y })
       },
       onPinch: ({ origin: [ox, oy], first, movement: [ms], offset: [s, a], memo }) => {
         if (first) {
@@ -225,12 +231,13 @@ const ZoomableBox = ({ children }: { children: ReactNode }) => {
   )
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
-      <Box sx={{ display: 'flex', width: '100%', height: '100%' }} ref={useMergeRefs(ref, measureRef)}>
-        <AnimatedBox sx={{}} style={style}>
-          {children}
-        </AnimatedBox>
-      </Box>
+    <Box
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
+      ref={useMergeRefs(ref, measureRef)}
+    >
+      <AnimatedBox sx={{}} style={style}>
+        {children}
+      </AnimatedBox>
     </Box>
   )
 }

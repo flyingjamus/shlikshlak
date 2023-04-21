@@ -247,7 +247,7 @@ export function initializeNodeSystem(): {
 
   const libDirectory = getDirectoryPath(normalizePath(sys.getExecutingFilePath()))
 
-  const nodeVersion = getNodeMajorVersion()
+  const nodeVersion = parseInt(process.version.split('.')[0].slice(1))
   // use watchGuard process on Windows when node version is 4 or later
   const useWatchGuard = process.platform === 'win32' && nodeVersion! >= 4
   const originalWatchDirectory: ServerHost['watchDirectory'] = sys.watchDirectory.bind(sys)
