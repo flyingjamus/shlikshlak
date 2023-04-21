@@ -13,50 +13,27 @@ import { useIframeStore } from '../store'
 import type { DevtoolsMethods } from '../../Devtools/Devtools'
 import { InspectHostNodesToggle } from './InspectHostNodesToggle'
 import { createBridge, createStore } from '../ReactDevtools/react-devtools-inline/frontend'
-import Store from '../ReactDevtools/react-devtools-shared/src/devtools/store'
-import { FrontendBridge } from '../ReactDevtools/react-devtools-shared/src/bridge'
-import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
-import { useMergeRefs } from 'rooks'
 import { animated, useSpring } from '@react-spring/web'
 import { createUseGesture, dragAction, pinchAction } from '@use-gesture/react'
-
-import styles from './styles.module.css'
-import { clamp } from 'lodash-es'
-import { useMeasure } from 'react-use'
 
 const StyledIframe = styled('iframe')({
   border: '0',
   outline: '0',
 })
 
+
+const AnimatedBox = animated(Box)
 export const parentMethods = {}
 
 export type ParentMethods = typeof parentMethods
 
-export function initialize(
-  contentWindow: Window,
-  {
-    bridge,
-    store,
-  }: {
-    bridge?: FrontendBridge
-    store?: Store
-  } = {}
-) {
-  if (bridge == null) {
-    bridge = createBridge(contentWindow)
-  }
-
-  // Type refinement.
-  const frontendBridge = bridge as any as FrontendBridge
-
-  if (store == null) {
-    store = createStore(frontendBridge)
-  }
+export function initialize(contentWindow: Window) {
+  const bridge = createBridge(contentWindow)
+  const store = createStore(bridge)
 
   const onGetSavedPreferences = () => {
-    frontendBridge.removeListener('getSavedPreferences', onGetSavedPreferences)
-    frontendBridge.send('savedPreferences', {
+    bridge.removeListener('getSavedPreferences', onGetSavedPreferences)
+    bridge.send('savedPreferences', {
       appendComponentStack: false,
       breakOnConsoleErrors: false,
       componentFilters: [],
@@ -65,14 +42,13 @@ export function initialize(
     })
   }
 
-  frontendBridge.addListener('getSavedPreferences', onGetSavedPreferences)
+  bridge.addListener('getSavedPreferences', onGetSavedPreferences)
 
   return { bridge, store }
 }
 
 export const Preview = () => {
   const iframeRef = useRef<HTMLIFrameElement>()
-  const childConnection = useIframeStore((v) => v.childConnection)
   const refCallBack = useCallback((current?: HTMLIFrameElement | null) => {
     if (iframeRef.current == current) return
     if (current) {
@@ -110,27 +86,21 @@ export const Preview = () => {
     }
   }, [])
 
-  const element = useCallback(
-    (size) => (
-      <ZoomedIframe
-        key={'iframe'}
-        // src={ready ? '/stories/example--story-root' : undefined}
-        src={'http://localhost:3002'}
-        // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
-        // src={ready ? '/stories/example-thin--story-root' : undefined}
-        onLoad={() => {}}
-        ref={refCallBack}
-      />
-    ),
-    [refCallBack]
-  )
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ flexShrink: 0 }}>
         <InspectHostNodesToggle />
       </Box>
-      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'auto' }}>
-        <AutoSizer style={{ width: '100%', height: '100%' }}>{element}</AutoSizer>
+      <Box sx={{ background: 'white', position: 'relative', flex: 1, overflow: 'hidden' }}>
+        <ZoomedIframe
+          key={'iframe'}
+          // src={ready ? '/stories/example--story-root' : undefined}
+          src={'http://localhost:3002'}
+          // src={'http://localhost:3002/stories/json-prop-editor--arrow-function'}
+          // src={ready ? '/stories/example-thin--story-root' : undefined}
+          onLoad={() => {}}
+          ref={refCallBack}
+        />
       </Box>
     </Box>
   )
@@ -139,10 +109,10 @@ export const Preview = () => {
 const VIEWPORT_WIDTH = 1600
 const VIEWPORT_HEIGHT = 1000
 
-const ZoomedIframe = forwardRef((props, inputRef: ForwardedRef<HTMLIFrameElement>) => {
-  const ctrlPressed = useIframeStore((v) => v.ctrlPressed)
-  return (
-    <Box sx={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+const ZoomedIframe = forwardRef(
+  (props: IframeHTMLAttributes<HTMLIFrameElement>, inputRef: ForwardedRef<HTMLIFrameElement>) => {
+    const ctrlPressed = useIframeStore((v) => v.ctrlPressed)
+    return (
       <ZoomableBox>
         <StyledIframe
           key={'iframe'}
@@ -167,9 +137,9 @@ const ZoomedIframe = forwardRef((props, inputRef: ForwardedRef<HTMLIFrameElement
           ></Box>
         ) : null}
       </ZoomableBox>
-    </Box>
-  )
-})
+    )
+  }
+)
 
 const useGesture = createUseGesture([dragAction, pinchAction])
 
@@ -198,7 +168,6 @@ const ZoomableBox = ({ children }: { children: ReactNode }) => {
     },
   }))
   const ref = React.useRef<HTMLDivElement>(null)
-  const [measureRef, { height, width }] = useMeasure()
 
   useGesture(
     {
@@ -233,27 +202,10 @@ const ZoomableBox = ({ children }: { children: ReactNode }) => {
   return (
     <Box
       sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}
-      ref={useMergeRefs(ref, measureRef)}
     >
-      <AnimatedBox sx={{}} style={style}>
+      <AnimatedBox sx={{}} style={style} ref={ref}>
         {children}
       </AnimatedBox>
     </Box>
   )
-}
-
-const AnimatedBox = animated(Box)
-
-function throttleWithRequestAnimationFrame<T extends Event>(listener: EventListener) {
-  let running = false
-
-  return (event: T) => {
-    if (running) return
-    running = true
-
-    requestAnimationFrame(() => {
-      listener(event)
-      running = false
-    })
-  }
 }
