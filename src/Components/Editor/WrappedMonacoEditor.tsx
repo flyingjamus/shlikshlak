@@ -13,7 +13,7 @@ export const WrappedMonacoEditor = ({}: {}) => {
 
   const { data: panels } = useGetPanelsQuery(source)
   const decorations = useRef<string[]>([])
-  const [model] = useYjs(fileName)
+  const { model } = useYjs(fileName)
   useEffect(() => {
     if (!editor || !model) return
     editor.setModel(model)

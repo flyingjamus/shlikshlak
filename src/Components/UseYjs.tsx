@@ -1,25 +1,34 @@
 import * as Y from 'yjs'
 import * as monaco from 'monaco-editor'
 import { editor } from 'monaco-editor'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 import { MonacoBinding } from './Editor/y-monaco'
 import { debounce } from 'lodash-es'
 
-function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): [editor.ITextModel, Y.Doc] {
+type ModelAndSubdoc = {
+  model: editor.ITextModel
+  subdoc: Y.Doc
+}
+
+class SharedResourceMap<T> extends Map<string, ResourceWithCounter<T>> {}
+
+function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
   const uri = monaco.Uri.file(path)
   const map = doc.getMap<Y.Doc>()
 
   let model = monaco.editor.getModel(uri)
   if (!model) {
     model = monaco.editor.createModel('', undefined, uri)
-    if (!map.has(path)) {
-      const newDoc = new Y.Doc()
-      map.set(path, newDoc)
-    }
   }
-  return [model, map.get(path)!]
+  if (!map.has(path)) {
+    const newDoc = new Y.Doc()
+    map.set(path, newDoc)
+  }
+  return { model, subdoc: map.get(path)! }
 }
+
+const sharedWebsocketMap = new SharedResourceMap<ReconnectingWebSocket>()
 
 const useMainYjsDoc = () => {
   const [doc] = useState(() => new Y.Doc())
@@ -27,14 +36,13 @@ const useMainYjsDoc = () => {
 }
 export const useYjs = (fileName?: string) => {
   const doc = useMainYjsDoc()
-  const modelAndSubdoc = useMemo(() => {
-    if (fileName) {
-      return getOrCreateModelAndSubdoc(doc, fileName)
-    } else return []
-  }, [fileName, doc])
-  const [model, subdoc] = modelAndSubdoc
-  useEffect(() => {
-    if (subdoc) {
+  useSharedResource<ReconnectingWebSocket | null>(
+    fileName ? `ws://localhost:3001/docs/${fileName}` : undefined,
+    sharedWebsocketMap,
+    () => {
+      if (!fileName) return [null, null]
+      const { subdoc, model } = getOrCreateModelAndSubdoc(doc, fileName)
+
       const client = new ReconnectingWebSocket(`ws://localhost:3001/docs/${fileName}`)
       client.addEventListener('open', () => {
         let wasInitialized = false
@@ -100,18 +108,78 @@ export const useYjs = (fileName?: string) => {
       }
       subdoc.getText().observe(observer)
 
-      return () => {
-        subdoc.off('update', updateListener)
-        subdoc.getText().unobserve(observer)
-        client.close()
-      }
+      return [
+        client,
+        () => {
+          subdoc.off('update', updateListener)
+          subdoc.getText().unobserve(observer)
+          client.close()
+        },
+      ]
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subdoc])
-  return modelAndSubdoc
+  )
+
+  return fileName ? getOrCreateModelAndSubdoc(doc, fileName) : { model: null, subdoc: null }
 }
 
 interface MessageData {
   type: 'FILE_CONTENTS'
   payload: string
+}
+
+export const useYjsText = (fileName?: string) => {
+  const { subdoc } = useYjs(fileName)
+  return useSyncExternalStore(
+    useCallback(
+      (f) => {
+        subdoc?.getText()?.observe(f)
+        return () => {
+          subdoc?.getText()?.unobserve(f)
+        }
+      },
+      [subdoc]
+    ),
+    useCallback(() => subdoc?.getText().toString(), [subdoc])
+  )
+}
+
+type ResourceWithCounter<T> = {
+  resource: T
+  counter: number
+  cleanup: (() => void) | null
+}
+
+function useSharedResource<T>(
+  key: string | undefined,
+  sharedResources: SharedResourceMap<T>,
+  initializer: () => [T, (() => void) | null]
+): T | null {
+  const [resource, setResource] = useState<T | null>(null)
+
+  useEffect(() => {
+    if (!key) return
+
+    const shared =
+      sharedResources.get(key) ||
+      (() => {
+        const [newResource, cleanup] = initializer()
+        const entry: ResourceWithCounter<T> = { resource: newResource, counter: 0, cleanup }
+        sharedResources.set(key, entry)
+        return entry
+      })()
+
+    setResource(shared.resource)
+    shared.counter += 1
+
+    return () => {
+      shared.counter -= 1
+      if (shared.counter === 0) {
+        shared.cleanup?.()
+        sharedResources.delete(key)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, sharedResources])
+
+  return resource
 }

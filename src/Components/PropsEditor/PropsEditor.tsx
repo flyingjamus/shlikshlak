@@ -31,6 +31,11 @@ import { JsonPropsEditor } from './JsonPropsEditor/JsonPropEditor'
 import { Launch } from '@mui/icons-material'
 import { DefaultPanelValues } from './DefaultPanelValues'
 import { useGetPanelsQuery } from '../Common/UseQueries'
+import { useYjs, useYjsText } from '../UseYjs'
+import generate from '@babel/generator'
+import { parseExpression, parse } from '@babel/parser'
+import traverse from '@babel/traverse'
+import { Node } from '@babel/types'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -217,7 +222,7 @@ export const PropsEditorWrapper = () => {
     }
     bridge.addListener('selectFiber', handleSelectFiber)
     return () => bridge.removeListener('selectFiber', handleSelectFiber)
-  }, [bridge, store])
+  }, [bridge, selectFiber, store])
 
   const { data: panels, refetch, isLoading } = useGetPanelsQuery(openFile)
 
@@ -259,10 +264,42 @@ export const PropsEditorWrapper = () => {
   )
 }
 
+function findNodeAtPosition(code: string, lineNumber: number, columnNumber: number): Node | null {
+  console.log(lineNumber, columnNumber)
+  // Parse the TypeScript code using @babel/parser
+  const ast = parse(code, {
+    sourceType: 'module',
+    plugins: ['typescript', 'jsx'],
+  })
+
+  let foundNode: Node | null = null
+
+  // Traverse the AST
+  traverse(ast, {
+    enter(path) {
+      const { loc } = path.node
+
+      if (
+        loc &&
+        loc.start.line <= lineNumber &&
+        lineNumber <= loc.end.line &&
+        loc.start.column <= columnNumber &&
+        columnNumber <= loc.end.column
+      ) {
+        // Found the node that corresponds to the line and character number
+        foundNode = path.node
+        path.stop() // Stop traversing the AST
+      }
+    },
+  })
+
+  return foundNode
+}
+
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
 export const PropsEditor = React.memo(
   ({
-    panels: { attributes, existingAttributes, fileName, location },
+    panels: { attributes, existingAttributes, fileName, location, range },
     onAttributeChange,
     onBlur,
   }: {
@@ -270,6 +307,16 @@ export const PropsEditor = React.memo(
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
+    const { model, subdoc } = useYjs(fileName)
+    console.log(
+      model,
+      useYjsText(fileName),
+      fileName,
+      location,
+      range,
+      findNodeAtPosition(useYjsText(fileName) || '', range?.startLineNumber, range?.startColumn)
+    )
+
     useEffect(() => {
       setSeenPanels([])
     }, [fileName])
