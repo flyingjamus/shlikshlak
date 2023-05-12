@@ -63,7 +63,6 @@ interface IframeStore {
   swProxy?: Remote<ServiceWorkerAPI>
   openFile?: OpenFile
   readFile?: (fileName: string) => Promise<string | undefined>
-  panels?: PanelsResponse
   editor?: editor.IStandaloneCodeEditor
   getEditor: () => editor.IStandaloneCodeEditor
   selectedComponent?: OpenFile

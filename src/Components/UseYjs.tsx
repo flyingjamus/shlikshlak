@@ -15,7 +15,7 @@ class SharedResourceMap<T> extends Map<string, ResourceWithCounter<T>> {}
 
 function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
   const uri = monaco.Uri.file(path)
-  const map = doc.getMap<Y.Doc>()
+  const map = doc.getMap<Y.Doc>('files')
 
   let model = monaco.editor.getModel(uri)
   if (!model) {
@@ -30,9 +30,9 @@ function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
 
 const sharedWebsocketMap = new SharedResourceMap<ReconnectingWebSocket>()
 
+const MAIN_YDOC = new Y.Doc()
 const useMainYjsDoc = () => {
-  const [doc] = useState(() => new Y.Doc())
-  return doc
+  return MAIN_YDOC
 }
 export const useYjs = (fileName?: string) => {
   const doc = useMainYjsDoc()

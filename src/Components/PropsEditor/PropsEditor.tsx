@@ -13,29 +13,24 @@ import {
   Typography,
 } from '@mui/material'
 import { useIframeMethods, useIframeStore } from '../store'
-import {
-  ExistingAttributeValueObject,
-  PanelAttribute,
-  PanelMatch,
-  PanelsResponse,
-} from '../../Shared/PanelTypes'
+import { ExistingAttributeValueObject, PanelAttribute, PanelMatch } from '../../Shared/PanelTypes'
 import React, { ElementType, useEffect, useMemo, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
 import { useBridge } from './UseBridge'
 import { useStore } from './UseStore'
-import { existingAttributeSchema } from '../../Shared/PanelTypesZod'
+import { existingAttributeSchema, panelsResponseSchema } from '../../Shared/PanelTypesZod'
 import { AppAutocomplete } from '../Common/AppAutocomplete'
 import { JsonPropsEditor } from './JsonPropsEditor/JsonPropEditor'
 import { Launch } from '@mui/icons-material'
 import { DefaultPanelValues } from './DefaultPanelValues'
 import { useGetPanelsQuery } from '../Common/UseQueries'
 import { useYjs, useYjsText } from '../UseYjs'
-import generate from '@babel/generator'
-import { parseExpression, parse } from '@babel/parser'
+import { parse, parseExpression } from '@babel/parser'
 import traverse from '@babel/traverse'
-import { Node } from '@babel/types'
+import * as t from '@babel/types'
+import generate from '@babel/generator'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -116,7 +111,7 @@ const BaseStringEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...
 const CodeEditor: BaseEditor<string> = ({ value: inputValue, onChange, ...props }) => {
   const isExpression = inputValue?.startsWith && inputValue?.startsWith('{')
   if (inputValue && !inputValue.startsWith) {
-    console.error('WRONG TYPE FOR INPUTVALUE', inputValue)
+    // console.error('WRONG TYPE FOR INPUTVALUE', inputValue)
   }
   const stringInput = (isExpression ? inputValue?.slice(1, -1) : inputValue) || ''
   return (
@@ -226,6 +221,14 @@ export const PropsEditorWrapper = () => {
 
   const { data: panels, refetch, isLoading } = useGetPanelsQuery(openFile)
 
+  const { subdoc } = useYjs(panels?.fileName)
+  const jsxNode = findJSXElementByPosition(
+    useYjsText(panels?.fileName) || '',
+    panels?.range.startLineNumber,
+    panels?.range?.startColumn
+  )
+  console.log(3213132, jsxNode)
+
   if (!openFile) return null
   if (isLoading)
     return (
@@ -253,9 +256,41 @@ export const PropsEditorWrapper = () => {
       </Stack>
       <PropsEditor
         panels={panels}
-        onAttributeChange={async (attr, v) => {
+        onAttributeChange={async (attr, newValue) => {
           if (panels?.location && panels.fileName) {
-            await setAttribute(panels.fileName, panels.location, attr.name, v)
+            if (!jsxNode) return
+            const text = subdoc.getText()
+            if (attr.name === 'children') {
+              console.log(31123311, jsxNode, jsxNode?.children)
+              const parsed = newValue !== undefined && parseExpression(newValue, PARSE_OPTIONS)
+              console.log(jsxNode, parsed)
+              jsxNode.children = Array.isArray(parsed) ? parsed : [parsed]
+
+              subdoc?.transact(() => {
+                text.delete(jsxNode.start, jsxNode.end - jsxNode.start)
+                text.insert(jsxNode.start, generate(jsxNode).code)
+              })
+              console.log(1323132, generate(jsxNode))
+            } else {
+              console.log(jsxNode, jsxNode?.openingElement)
+              const jsxAttr: t.JSXAttribute = jsxNode?.openingElement.attributes
+                .filter((v) => t.isJSXAttribute(v))
+                .map((v) => v as t.JSXAttribute)
+                .find((v) => v.name.name === attr.name)
+              if (!jsxAttr) {
+                console.error('JSX attr not found')
+                return
+              }
+
+              jsxAttr.value = t.jsxExpressionContainer(t.valueToNode(newValue))
+              // const { code } = generate(jsxAttr, {concise: true})
+              console.log(jsxAttr)
+              if (!jsxAttr.value) return
+              subdoc?.transact(() => {
+                text.delete(jsxAttr.start, jsxAttr.end - jsxAttr.start)
+                text.insert(jsxAttr.start, `${attr.name}=${newValue}`)
+              })
+            }
           }
         }}
         onBlur={() => refetch()}
@@ -263,37 +298,42 @@ export const PropsEditorWrapper = () => {
     </Box>
   )
 }
+const PARSE_OPTIONS = {
+  sourceType: 'module',
+  plugins: ['typescript', 'jsx'],
+} as const
 
-function findNodeAtPosition(code: string, lineNumber: number, columnNumber: number): Node | null {
-  console.log(lineNumber, columnNumber)
-  // Parse the TypeScript code using @babel/parser
-  const ast = parse(code, {
-    sourceType: 'module',
-    plugins: ['typescript', 'jsx'],
-  })
+function findJSXElementByPosition(
+  code: string,
+  lineNumber?: number,
+  columnNumber?: number
+): t.JSXElement | undefined {
+  console.log('findJSXElementByPosition', lineNumber, columnNumber)
+  if (lineNumber === undefined || columnNumber === undefined) return
 
-  let foundNode: Node | null = null
+  try {
+    const ast = parse(code, PARSE_OPTIONS)
 
-  // Traverse the AST
-  traverse(ast, {
-    enter(path) {
-      const { loc } = path.node
+    let foundNode: t.JSXElement | undefined = undefined
 
-      if (
-        loc &&
-        loc.start.line <= lineNumber &&
-        lineNumber <= loc.end.line &&
-        loc.start.column <= columnNumber &&
-        columnNumber <= loc.end.column
-      ) {
-        // Found the node that corresponds to the line and character number
-        foundNode = path.node
-        path.stop() // Stop traversing the AST
-      }
-    },
-  })
+    traverse(ast, {
+      JSXOpeningElement(path) {
+        if (
+          path.node.loc &&
+          path.node.loc.start.line <= lineNumber &&
+          lineNumber <= path.node.loc.end.line &&
+          path.node.loc.start.column <= columnNumber
+        ) {
+          foundNode = path.parent
+          path.stop()
+        }
+      },
+    })
 
-  return foundNode
+    return foundNode
+  } catch (e) {
+    console.log('Error parsing code', e)
+  }
 }
 
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
@@ -303,20 +343,10 @@ export const PropsEditor = React.memo(
     onAttributeChange,
     onBlur,
   }: {
-    panels: PanelsResponse
+    panels: panelsResponseSchema
     onAttributeChange: OnAttributeChange
     onBlur: () => void
   }) => {
-    const { model, subdoc } = useYjs(fileName)
-    console.log(
-      model,
-      useYjsText(fileName),
-      fileName,
-      location,
-      range,
-      findNodeAtPosition(useYjsText(fileName) || '', range?.startLineNumber, range?.startColumn)
-    )
-
     useEffect(() => {
       setSeenPanels([])
     }, [fileName])

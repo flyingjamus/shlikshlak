@@ -357,7 +357,6 @@ type JSONEditorStoreMethods = {
 }
 
 type JSONEditorStore = {
-  version: number
   expandedItems: ExpandedItems
   source: string
   root?: Node
@@ -423,11 +422,10 @@ const createJsonEditorStore = ({ source: inputSource, onChange }: JsonStoreProps
         const expandedItems = get().expandedItems
         set({ expandedItems: objectSet({ ...expandedItems }, path, !objectGet(expandedItems, path)) })
       },
-      changeSource: (newSource, changeVersion = false) => {
+      changeSource: (newSource) => {
         set({
           root: getRoot(newSource),
           source: newSource,
-          version: get().version + (changeVersion ? 1 : 0),
         })
         onChange(newSource)
       },
@@ -442,7 +440,6 @@ const createJsonEditorStore = ({ source: inputSource, onChange }: JsonStoreProps
       },
     }
     return {
-      version: 0,
       expandedItems: asExpandedItems(obj, inputSource),
       root: obj,
       source: inputSource,

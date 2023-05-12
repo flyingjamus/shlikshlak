@@ -57,7 +57,7 @@ export const panelsResponseSchema = z.object({
   existingAttributes: z.array(existingAttributeSchema),
   location: z.number().optional(),
   fileName: z.string().optional(),
-  range: iRangeSchema.optional(),
+  range: iRangeSchema,
 })
 
 export type panelsResponseSchema = z.infer<typeof panelsResponseSchema>

@@ -34,10 +34,6 @@ import Comlink from 'comlink'
 import nodeEndpoint from 'comlink/src/node-adapter'
 import { parentPort } from 'worker_threads'
 
-// import inspector from 'node:inspector'
-// inspector.open()
-// inspector.waitForDebugger();
-
 export const logger = createLogger('ts')
 
 export const getTsMethods = (ioSession: Session) => {
@@ -84,89 +80,96 @@ export const getTsMethods = (ioSession: Session) => {
   async function getPanelsAtPosition(fileName: string, position: number): Promise<panelsResponseSchema> {
     const project = getProject(fileName)
     const parent = getParentTokenAtPosition(fileName, position)
-    if (parent) {
-      const languageService = project.getLanguageService()
-      const program = languageService.getProgram()
-      const typeChecker = program!.getTypeChecker()
-      const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
-      const jsxTag = parent.parent
+    const sourceFile = requireSourceFile(fileName)
+    if (!parent) {
+      const lineAndCharacter = sourceFile.getLineAndCharacterOfPosition(position)
+      throw new Error(
+        `JSX opening element not found at ${lineAndCharacter.line}:${lineAndCharacter.character} in ${fileName}`
+      )
+    }
 
-      const sxPropsType = getExport(fileName, '@mui/system', 'SystemCssProperties')
-      const matcherContext: MatcherContext = {
-        c: typeChecker!,
-        types: { SxProps: sxPropsType },
-      }
-      const existingAttributes: existingAttributeSchema[] = parent.attributes.properties
-        // .filter((v) => v.name?.getText() === 'sx')
-        .map((attr) => {
-          if (isJsxAttribute(attr)) {
-            const initializer = attr.initializer
-            const type = initializer && typeChecker.getTypeAtLocation(attr)
-            const value = initializer?.getText()
-            const name = attr.name.escapedText.toString()
-            return {
-              name: name,
-              value: value === undefined ? true : value,
-              hasInitializer: !!initializer,
-              location: {
-                pos: attr.pos,
-                end: attr.end,
-              },
-              panels: !type
-                ? ([] as string[])
-                : name === 'children'
-                ? ['children']
-                : type
-                ? PANELS.map((v) => v.reverseMatch?.(attr, matcherContext)).filter(isDefined)
-                : ([] as string[]),
-            }
+    const languageService = project.getLanguageService()
+    const program = languageService.getProgram()
+    const typeChecker = program!.getTypeChecker()
+    const typeAtLocation = typeChecker!.getContextualType(parent.attributes)
+    const jsxTag = parent.parent
+
+    const sxPropsType = getExport(fileName, '@mui/system', 'SystemCssProperties')
+    const matcherContext: MatcherContext = {
+      c: typeChecker!,
+      types: { SxProps: sxPropsType },
+    }
+    const existingAttributes: existingAttributeSchema[] = parent.attributes.properties
+      // .filter((v) => v.name?.getText() === 'sx')
+      .map((attr) => {
+        if (isJsxAttribute(attr)) {
+          const initializer = attr.initializer
+          const type = initializer && typeChecker.getTypeAtLocation(attr)
+          const value = initializer?.getText()
+          const name = attr.name.escapedText.toString()
+          return {
+            name: name,
+            value: value === undefined ? true : value,
+            hasInitializer: !!initializer,
+            location: {
+              pos: attr.pos,
+              end: attr.end,
+            },
+            panels: !type
+              ? ([] as string[])
+              : name === 'children'
+              ? ['children']
+              : type
+              ? PANELS.map((v) => v.reverseMatch?.(attr, matcherContext)).filter(isDefined)
+              : ([] as string[]),
           }
-        })
-        .filter(isDefined)
-      const existingIncludingChildren = existingAttributes.filter(isDefined)
-      if (isJsxElement(jsxTag)) {
-        const childrenStart = jsxTag.openingElement.end
-        const childrenEnd = jsxTag.closingElement.pos
+        }
+      })
+      .filter(isDefined)
+    const existingIncludingChildren = existingAttributes.filter(isDefined)
+    if (isJsxElement(jsxTag)) {
+      const childrenStart = jsxTag.openingElement.end
+      const childrenEnd = jsxTag.closingElement.pos
 
-        existingIncludingChildren.push({
-          name: 'children',
-          location: {
-            pos: childrenStart,
-            end: childrenEnd,
-          },
-          value: parent.getSourceFile().getText().slice(childrenStart, childrenEnd).trim(),
-        })
-      }
+      existingIncludingChildren.push({
+        name: 'children',
+        location: {
+          pos: childrenStart,
+          end: childrenEnd,
+        },
+        value: parent.getSourceFile().getText().slice(childrenStart, childrenEnd).trim(),
+      })
+    }
 
-      if (typeAtLocation) {
-        const attributes = [...typeAtLocation.getProperties()]
-          // .filter((v) => v.name === 'variant')
-          // .filter((v) => v.name === 'sx')
-          .map((prop) => {
-            const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
+    if (!typeAtLocation) {
+      throw new Error('Cannot get type at location')
+    }
 
-            return {
-              name: prop.name,
-              location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
-              panels:
-                prop.name === 'children'
-                  ? [{ name: 'Children' } as const]
-                  : type
-                  ? PANELS.map((v) => v.matcher(type, matcherContext)).filter(isDefined)
-                  : [],
-            }
-          })
+    const attributes = [...typeAtLocation.getProperties()]
+      // .filter((v) => v.name === 'variant')
+      // .filter((v) => v.name === 'sx')
+      .map((prop) => {
+        const type = typeChecker!.getNonNullableType(typeChecker!.getTypeOfSymbol(prop))
 
         return {
-          attributes: [...attributes],
-          existingAttributes: existingIncludingChildren,
-          location: parent.pos,
-          fileName,
-          range: getRange(parent),
+          name: prop.name,
+          location: existingIncludingChildren.find((v) => v.name === prop.name)?.location,
+          panels:
+            prop.name === 'children'
+              ? [{ name: 'Children' } as const]
+              : type
+              ? PANELS.map((v) => v.matcher(type, matcherContext)).filter(isDefined)
+              : [],
         }
-      }
+      })
+
+    return {
+      attributes: [...attributes],
+      existingAttributes: existingIncludingChildren,
+      location: parent.pos,
+      fileName,
+      range: getRange(parent),
     }
-    return { attributes: [], existingAttributes: [] }
   }
 
   function getSourceFile(fileName: string) {
@@ -279,6 +282,7 @@ export const getTsMethods = (ioSession: Session) => {
     logger.debug(`setAttributeAtPosition ${JSON.stringify(args, null, 2)}`)
     const { fileName, position, attrName, value } = args
     const project = getProject(fileName)
+    project.updateGraph()
     const sourceFile = requireSourceFile(fileName)
     const token = getTokenAtFilename(fileName, position)
     const name = factory.createIdentifier(attrName)
