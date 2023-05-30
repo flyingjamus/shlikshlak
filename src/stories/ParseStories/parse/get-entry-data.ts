@@ -33,15 +33,19 @@ export const convertSingleEntry = async (entry: string, code: string) => {
     fileId: getFileId(entry),
   }
   const ast = getAst(code, entry)
-  traverse(ast, {
-    Program: getStorynameAndMeta.bind(this, result),
-  })
-  traverse(ast, {
-    ExportDefaultDeclaration: getDefaultExport.bind(this, result),
-  })
-  traverse(ast, {
-    ExportNamedDeclaration: getNamedExports.bind(this, result),
-  })
+  try {
+    traverse(ast, {
+      Program: getStorynameAndMeta.bind(this, result),
+    })
+    traverse(ast, {
+      ExportDefaultDeclaration: getDefaultExport.bind(this, result),
+    })
+    traverse(ast, {
+      ExportNamedDeclaration: getNamedExports.bind(this, result),
+    })
+  } catch (e) {
+    console.error('Error parsing stories', e)
+  }
   debug(`Parsed data for ${entry}:`)
   debug(result)
   return result

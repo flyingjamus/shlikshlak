@@ -339,7 +339,7 @@ function findJSXElementByPosition(
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
 export const PropsEditor = React.memo(
   ({
-    panels: { attributes, existingAttributes, fileName, location, range },
+    panels: { attributes, existingAttributes, fileName, location },
     onAttributeChange,
     onBlur,
   }: {

@@ -7,9 +7,7 @@ import { MONACO_OPTIONS } from './MONACO_OPTIONS'
 import { initVimMode } from 'monaco-vim'
 import '../../workers'
 
-export const MonacoEditor = forwardRef<editor.IStandaloneCodeEditor | null, {
-
-}>((props, ref) => {
+export const MonacoEditor = forwardRef<editor.IStandaloneCodeEditor | null, {}>((props, ref) => {
   const elRef = useRef<HTMLDivElement>()
   const statusBarRef = useRef<HTMLDivElement>()
   const [instance, setInstance] = useState<editor.IStandaloneCodeEditor>()
