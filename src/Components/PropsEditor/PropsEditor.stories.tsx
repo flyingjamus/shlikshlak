@@ -1,5 +1,9 @@
 import { PropsEditor } from './PropsEditor'
 import { PanelsResponse } from '../../Shared/PanelTypes'
+import { getOrCreateModelAndSubdoc } from '../UseYjs'
+import * as Y from 'yjs'
+import { getSubdoc } from '../GetSubdoc'
+import { useMemo } from 'react'
 
 const value: PanelsResponse = {
   attributes: [
@@ -1706,7 +1710,13 @@ const value: PanelsResponse = {
   },
 }
 
+const doc = new Y.Doc()
 export const One = () => {
+  const subDoc = useMemo(() => {
+    const subDoc = getSubdoc(doc, 'document.tsx')
+    subDoc.getText().insert(0, '')
+    return subDoc
+  }, [])
   return (
     <PropsEditor
       panels={value}
@@ -1714,6 +1724,7 @@ export const One = () => {
         console.log('onAttributeChange', attr, v)
       }}
       onBlur={() => {}}
+      doc={subDoc}
     />
   )
 }

@@ -104,7 +104,7 @@ export const filesApi = apiBuilder({
     path: '/get_file',
     alias: 'getFile',
     parameters: [{ type: 'Body', name: 'path', schema: z.object({ path: z.string() }) }],
-    response: z.object({ contents: z.string().optional() }),
+    response: z.object({ contents: z.string().optional(), exists: z.boolean() }),
   })
   .addEndpoint({
     method: 'post',

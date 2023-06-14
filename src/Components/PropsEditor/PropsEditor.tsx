@@ -31,6 +31,8 @@ import { parse, parseExpression } from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 import generate from '@babel/generator'
+import * as Y from 'yjs'
+import { JSXAttribute } from '@babel/types'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -222,7 +224,7 @@ export const PropsEditorWrapper = () => {
   const { data: panels, refetch, isLoading } = useGetPanelsQuery(openFile)
 
   const { subdoc } = useYjs(panels?.fileName)
-  const jsxNode = findJSXElementByPosition(
+  const jsxNode: t.JSXElement | undefined = findJSXElementByPosition(
     useYjsText(panels?.fileName) || '',
     panels?.range.startLineNumber,
     panels?.range?.startColumn
@@ -255,13 +257,14 @@ export const PropsEditorWrapper = () => {
         </IconButton>
       </Stack>
       <PropsEditor
+        element={jsxNode}
+        doc={subdoc}
         panels={panels}
         onAttributeChange={async (attr, newValue) => {
           if (panels?.location && panels.fileName) {
             if (!jsxNode) return
             const text = subdoc.getText()
             if (attr.name === 'children') {
-              console.log(31123311, jsxNode, jsxNode?.children)
               const parsed = newValue !== undefined && parseExpression(newValue, PARSE_OPTIONS)
               console.log(jsxNode, parsed)
               jsxNode.children = Array.isArray(parsed) ? parsed : [parsed]
@@ -341,15 +344,29 @@ export const PropsEditor = React.memo(
   ({
     panels: { attributes, existingAttributes, fileName, location },
     onAttributeChange,
+    doc,
     onBlur,
+    element,
   }: {
     panels: panelsResponseSchema
     onAttributeChange: OnAttributeChange
+    doc: Y.Doc | null
     onBlur: () => void
+    element: t.JSXElement
   }) => {
+    console.log(31312, element, doc)
+
     useEffect(() => {
       setSeenPanels([])
     }, [fileName])
+    const existingParsed: JSXAttribute[] =
+      element?.openingElement.attributes
+        .map((v) => {
+          if (v.type === 'JSXAttribute') {
+            return v
+          }
+        })
+        .filter(Boolean) || []
     useEffect(() => {
       if (existingAttributes) {
         setSeenPanels((prev) => {
@@ -380,6 +397,9 @@ export const PropsEditor = React.memo(
         <List sx={{}} dense onBlur={onBlur}>
           {panelAttrs.map((attr) => {
             const existing = existingAttributes.find((v) => v.name === attr.name)
+            const parsed = existingParsed.find(
+              (v) => v.name.type === 'JSXIdentifier' && v.name.name === attr.name
+            )
             const key = [fileName, location, attr.name].join(':')
             return (
               <Row

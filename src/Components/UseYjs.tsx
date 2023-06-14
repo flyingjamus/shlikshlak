@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 import { MonacoBinding } from './Editor/y-monaco'
 import { debounce } from 'lodash-es'
+import { getSubdoc } from './GetSubdoc'
 
 type ModelAndSubdoc = {
   model: editor.ITextModel
@@ -13,24 +14,21 @@ type ModelAndSubdoc = {
 
 class SharedResourceMap<T> extends Map<string, ResourceWithCounter<T>> {}
 
-function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
-  const uri = monaco.Uri.file(path)
-  const map = doc.getMap<Y.Doc>('files')
 
+export function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
+  const subdoc = getSubdoc(doc, path)
+
+  const uri = monaco.Uri.file(path)
   let model = monaco.editor.getModel(uri)
   if (!model) {
     model = monaco.editor.createModel('', undefined, uri)
   }
-  if (!map.has(path)) {
-    const newDoc = new Y.Doc()
-    map.set(path, newDoc)
-  }
-  return { model, subdoc: map.get(path)! }
+  return { model, subdoc: subdoc }
 }
 
 const sharedWebsocketMap = new SharedResourceMap<ReconnectingWebSocket>()
 
-const MAIN_YDOC = new Y.Doc()
+export const MAIN_YDOC = new Y.Doc()
 const useMainYjsDoc = () => {
   return MAIN_YDOC
 }

@@ -52,8 +52,12 @@ export function bindMethods(app: ZodiosApp<typeof filesApi, ZodObject<any>>) {
   })
 
   app.post('/get_file', async (req, res) => {
-    const contents = await fs.readFile(req.body.path, 'utf-8')
-    res.json({ contents })
+    try {
+      const contents = await fs.readFile(req.body.path, 'utf-8')
+      res.json({ contents, exists: true })
+    } catch (e) {
+      res.json({ exists: false })
+    }
   })
 
   app.get('/stories', async (req, res) => {
