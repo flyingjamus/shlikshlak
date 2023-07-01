@@ -1,5 +1,6 @@
 import { Editor, EditorProps, OnMount } from '@monaco-editor/react'
 import { KeyCode } from 'monaco-editor'
+import '../../workers'
 
 export const SingleLineMonacoEditor = ({ onMount, options, ...props }: EditorProps) => {
   const handleEditorDidMount: OnMount = (getValue, editor) => {
@@ -16,7 +17,7 @@ export const SingleLineMonacoEditor = ({ onMount, options, ...props }: EditorPro
 
   return (
     <Editor
-      height="1em"
+      height="1.2em"
       defaultLanguage="typescript"
       onMount={handleEditorDidMount}
       options={{
@@ -27,6 +28,7 @@ export const SingleLineMonacoEditor = ({ onMount, options, ...props }: EditorPro
         automaticLayout: true,
         minimap: {
           enabled: false,
+          side: 'left'
         },
         scrollbar: {
           vertical: 'hidden',
@@ -39,6 +41,7 @@ export const SingleLineMonacoEditor = ({ onMount, options, ...props }: EditorPro
         glyphMargin: false,
         lineDecorationsWidth: 0,
         lineNumbersMinChars: 0,
+        tabFocusMode: true,
         ...options,
       }}
       {...props}

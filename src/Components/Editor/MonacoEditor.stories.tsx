@@ -1,7 +1,6 @@
 import { Editor, loader, useMonaco } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 
-import '../../workers'
 import { useEffect } from 'react'
 import { SingleLineMonacoEditor } from './SingleLineMonacoEditor'
 

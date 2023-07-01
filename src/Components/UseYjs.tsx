@@ -6,16 +6,26 @@ import ReconnectingWebSocket from 'reconnecting-websocket'
 import { MonacoBinding } from './Editor/y-monaco'
 import { debounce } from 'lodash-es'
 import { getSubdoc } from './GetSubdoc'
+import { useIframeStore } from './store'
 
 type ModelAndSubdoc = {
   model: editor.ITextModel
   subdoc: Y.Doc
+  undoManager: Y.UndoManager
+  text: Y.Text
 }
 
 class SharedResourceMap<T> extends Map<string, ResourceWithCounter<T>> {}
+const undoManagerMap = new Map<string, Y.UndoManager>()
 
+export const YjsOriginType = {
+  MONACO: 'MONACO',
+  PROPS_EDITOR: 'PROPS_EDITOR',
+  SERVER: 'SERVER',
+}
 
-export function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSubdoc {
+export function getOrCreateModelAndSubdoc(path: string): ModelAndSubdoc {
+  const doc = getMainYJSDoc()
   const subdoc = getSubdoc(doc, path)
 
   const uri = monaco.Uri.file(path)
@@ -23,23 +33,35 @@ export function getOrCreateModelAndSubdoc(doc: Y.Doc, path: string): ModelAndSub
   if (!model) {
     model = monaco.editor.createModel('', undefined, uri)
   }
-  return { model, subdoc: subdoc }
+
+  const text = subdoc.getText()
+  if (text && !undoManagerMap.has(path)) {
+    undoManagerMap.set(
+      path,
+      new Y.UndoManager(text, { trackedOrigins: new Set([YjsOriginType.PROPS_EDITOR, YjsOriginType.MONACO]) })
+    )
+  }
+  return { model, subdoc: subdoc, undoManager: undoManagerMap.get(path)!, text }
+}
+
+export const getActiveModelAndSubdoc = () => {
+  const openFile = useIframeStore.getState().selectedFiberSource
+  return openFile && getOrCreateModelAndSubdoc(openFile?.fileName)
 }
 
 const sharedWebsocketMap = new SharedResourceMap<ReconnectingWebSocket>()
 
 export const MAIN_YDOC = new Y.Doc()
-const useMainYjsDoc = () => {
+const getMainYJSDoc = () => {
   return MAIN_YDOC
 }
 export const useYjs = (fileName?: string) => {
-  const doc = useMainYjsDoc()
   useSharedResource<ReconnectingWebSocket | null>(
     fileName ? `ws://localhost:3001/docs/${fileName}` : undefined,
     sharedWebsocketMap,
     () => {
       if (!fileName) return [null, null]
-      const { subdoc, model } = getOrCreateModelAndSubdoc(doc, fileName)
+      const { subdoc, model, text } = getOrCreateModelAndSubdoc(fileName)
 
       const client = new ReconnectingWebSocket(`ws://localhost:3001/docs/${fileName}`)
       client.addEventListener('open', () => {
@@ -49,14 +71,14 @@ export const useYjs = (fileName?: string) => {
 
           switch (type) {
             case 'FILE_CONTENTS': {
-              if (!subdoc || subdoc.getText().toString() == payload) return
+              if (!subdoc || text.toString() == payload) return
 
               subdoc.transact(() => {
-                subdoc.getText().delete(0, subdoc.getText().length)
-                subdoc.getText().insert(0, payload)
-              }, 'SERVER')
+                text.delete(0, text.length)
+                text.insert(0, payload)
+              }, YjsOriginType.SERVER)
               if (!wasInitialized && model) {
-                new MonacoBinding(subdoc.getText(), model) // TODO awareness
+                new MonacoBinding(text, model) // TODO awareness
                 wasInitialized = true
               }
             }
@@ -69,7 +91,7 @@ export const useYjs = (fileName?: string) => {
           client.send(
             JSON.stringify({
               type: 'FILE_UPDATE',
-              payload: { filename: fileName, text: subdoc.getText().toString() },
+              payload: { filename: fileName, text: text.toString() },
             })
           )
         },
@@ -104,20 +126,22 @@ export const useYjs = (fileName?: string) => {
 
         cursorPosition += deltaPosition
       }
-      subdoc.getText().observe(observer)
+      text.observe(observer)
 
       return [
         client,
         () => {
           subdoc.off('update', updateListener)
-          subdoc.getText().unobserve(observer)
+          text.unobserve(observer)
           client.close()
         },
       ]
     }
   )
 
-  return fileName ? getOrCreateModelAndSubdoc(doc, fileName) : { model: null, subdoc: null }
+  return fileName
+    ? getOrCreateModelAndSubdoc(fileName)
+    : { model: null, subdoc: null, undoManager: null, text: null }
 }
 
 interface MessageData {
@@ -126,18 +150,18 @@ interface MessageData {
 }
 
 export const useYjsText = (fileName?: string) => {
-  const { subdoc } = useYjs(fileName)
+  const { text } = useYjs(fileName)
   return useSyncExternalStore(
     useCallback(
       (f) => {
-        subdoc?.getText()?.observe(f)
+        text?.observe(f)
         return () => {
-          subdoc?.getText()?.unobserve(f)
+          text?.unobserve(f)
         }
       },
-      [subdoc]
+      [text]
     ),
-    useCallback(() => subdoc?.getText().toString(), [subdoc])
+    useCallback(() => text?.toString(), [text])
   )
 }
 

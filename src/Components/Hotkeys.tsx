@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlobalHotKeys } from 'react-hotkeys'
-import { redoChange, undoChange } from '../tsworker/workerAdapter'
+import { getActiveModelAndSubdoc } from './UseYjs'
 
 const keyMap = {
   UNDO: 'ctrl+z',
@@ -16,12 +16,18 @@ export const Hotkeys = ({ children }: { children: ReactNode }) => {
       handlers={{
         UNDO: async (e) => {
           e?.preventDefault()
-          await undoChange()
+          const modelAndSubdoc = getActiveModelAndSubdoc()
+          if (!modelAndSubdoc) return
+          const { undoManager } = modelAndSubdoc
+          undoManager?.undo()
           await queryClient.invalidateQueries(['getPanelsAtPosition'])
         },
         REDO: async (e) => {
           e?.preventDefault()
-          await redoChange()
+          const modelAndSubdoc = getActiveModelAndSubdoc()
+          if (!modelAndSubdoc) return
+          const { undoManager } = modelAndSubdoc
+          undoManager?.redo()
           await queryClient.invalidateQueries(['getPanelsAtPosition'])
         },
         JUMP: (e) => {

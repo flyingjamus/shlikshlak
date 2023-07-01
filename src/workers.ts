@@ -5,6 +5,9 @@ import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import TsWorker from '../src/tsworker/tsWorker?worker'
 import { proxy, wrap } from 'comlink'
 
+import { loader } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
+
 export function initTsWorker(tsWorker: Worker) {
   return new Promise<Worker>((resolve) => {
     const obj = wrap<{ init: (cb: () => void) => Promise<unknown> }>(tsWorker)
@@ -33,3 +36,7 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
+
+loader.config({ monaco })
+
+loader.init()

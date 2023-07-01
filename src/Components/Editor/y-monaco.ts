@@ -5,7 +5,8 @@ import { createMutex, mutex } from 'lib0/mutex'
 import { Awareness } from 'y-protocols/awareness'
 import { editor } from 'monaco-editor'
 import ITextModel = editor.ITextModel
-import { IDisposable } from 'monaco-editor-core' // eslint-disable-line
+import { IDisposable } from 'monaco-editor-core'
+import { YjsOriginType } from '../UseYjs' // eslint-disable-line
 
 class RelativeSelection {
   constructor(
@@ -203,7 +204,7 @@ export class MonacoBinding {
               ytext.delete(change.rangeOffset, change.rangeLength)
               ytext.insert(change.rangeOffset, change.text)
             })
-        }, this)
+        }, YjsOriginType.MONACO)
       })
     })
     monacoModel.onWillDispose(() => {

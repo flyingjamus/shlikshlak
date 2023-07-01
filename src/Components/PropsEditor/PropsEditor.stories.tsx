@@ -1,11 +1,13 @@
-import { PropsEditor } from './PropsEditor'
+import { findJSXElementByPosition, PropsEditor } from './PropsEditor'
 import { PanelsResponse } from '../../Shared/PanelTypes'
 import { getOrCreateModelAndSubdoc } from '../UseYjs'
 import * as Y from 'yjs'
 import { getSubdoc } from '../GetSubdoc'
 import { useMemo } from 'react'
+import nextjsIndex from '../../../integration/nextjs/src/pages/index.tsx?raw'
+import { panelsResponseSchema } from '../../Shared/PanelTypesZod'
 
-const value: PanelsResponse = {
+const value: panelsResponseSchema = {
   attributes: [
     {
       name: 'key',
@@ -16,69 +18,50 @@ const value: PanelsResponse = {
       ],
     },
     {
-      name: 'children',
-      location: {
-        pos: 8355,
-        end: 9467,
-      },
+      name: 'crossOrigin',
       panels: [
         {
-          name: 'Children',
+          name: 'enum',
+          parameters: {
+            values: ['', 'anonymous', 'use-credentials'],
+          },
         },
       ],
     },
     {
-      name: 'classes',
+      name: 'decoding',
       panels: [
         {
-          name: 'string',
-        },
-        {
-          name: 'boolean',
+          name: 'enum',
+          parameters: {
+            values: ['async', 'auto', 'sync'],
+          },
         },
       ],
     },
     {
-      name: 'dense',
-      location: {
-        pos: 8332,
-        end: 8338,
-      },
+      name: 'referrerPolicy',
       panels: [
         {
-          name: 'boolean',
+          name: 'enum',
+          parameters: {
+            values: [
+              '',
+              'no-referrer',
+              'no-referrer-when-downgrade',
+              'origin',
+              'origin-when-cross-origin',
+              'same-origin',
+              'strict-origin',
+              'strict-origin-when-cross-origin',
+              'unsafe-url',
+            ],
+          },
         },
       ],
     },
     {
-      name: 'disablePadding',
-      panels: [
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'subheader',
-      panels: [
-        {
-          name: 'string',
-        },
-        {
-          name: 'boolean',
-        },
-      ],
-    },
-    {
-      name: 'sx',
-      location: {
-        pos: 8303,
-        end: 8332,
-      },
-      panels: [],
-    },
-    {
-      name: 'className',
+      name: 'sizes',
       panels: [
         {
           name: 'string',
@@ -86,23 +69,7 @@ const value: PanelsResponse = {
       ],
     },
     {
-      name: 'style',
-      panels: [],
-    },
-    {
-      name: 'ref',
-      panels: [],
-    },
-    {
-      name: 'slot',
-      panels: [
-        {
-          name: 'string',
-        },
-      ],
-    },
-    {
-      name: 'title',
+      name: 'useMap',
       panels: [
         {
           name: 'string',
@@ -143,6 +110,26 @@ const value: PanelsResponse = {
     },
     {
       name: 'accessKey',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'autoFocus',
+      panels: [
+        {
+          name: 'boolean',
+        },
+      ],
+    },
+    {
+      name: 'className',
+      location: {
+        pos: 1321,
+        end: 1357,
+      },
       panels: [
         {
           name: 'string',
@@ -229,6 +216,17 @@ const value: PanelsResponse = {
       name: 'placeholder',
       panels: [
         {
+          name: 'enum',
+          parameters: {
+            values: ['blur', 'empty'],
+          },
+        },
+      ],
+    },
+    {
+      name: 'slot',
+      panels: [
+        {
           name: 'string',
         },
       ],
@@ -248,8 +246,20 @@ const value: PanelsResponse = {
       ],
     },
     {
+      name: 'style',
+      panels: [],
+    },
+    {
       name: 'tabIndex',
       panels: [],
+    },
+    {
+      name: 'title',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
     },
     {
       name: 'translate',
@@ -363,6 +373,14 @@ const value: PanelsResponse = {
       ],
     },
     {
+      name: 'content',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
       name: 'datatype',
       panels: [
         {
@@ -398,7 +416,23 @@ const value: PanelsResponse = {
       ],
     },
     {
+      name: 'rel',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
       name: 'resource',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'rev',
       panels: [
         {
           name: 'string',
@@ -529,6 +563,14 @@ const value: PanelsResponse = {
     },
     {
       name: 'is',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'tw',
       panels: [
         {
           name: 'string',
@@ -1003,6 +1045,18 @@ const value: PanelsResponse = {
       ],
     },
     {
+      name: 'children',
+      location: {
+        pos: 1304,
+        end: 1507,
+      },
+      panels: [
+        {
+          name: 'Children',
+        },
+      ],
+    },
+    {
       name: 'dangerouslySetInnerHTML',
       panels: [],
     },
@@ -1064,10 +1118,6 @@ const value: PanelsResponse = {
     },
     {
       name: 'onBlur',
-      location: {
-        pos: 8338,
-        end: 8354,
-      },
       panels: [],
     },
     {
@@ -1658,55 +1708,229 @@ const value: PanelsResponse = {
       name: 'onTransitionEndCapture',
       panels: [],
     },
+    {
+      name: 'src',
+      location: {
+        pos: 1357,
+        end: 1385,
+      },
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'alt',
+      location: {
+        pos: 1385,
+        end: 1416,
+      },
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'width',
+      location: {
+        pos: 1416,
+        end: 1440,
+      },
+      panels: [],
+    },
+    {
+      name: 'height',
+      location: {
+        pos: 1440,
+        end: 1464,
+      },
+      panels: [],
+    },
+    {
+      name: 'fill',
+      panels: [
+        {
+          name: 'boolean',
+        },
+      ],
+    },
+    {
+      name: 'loader',
+      panels: [],
+    },
+    {
+      name: 'quality',
+      panels: [],
+    },
+    {
+      name: 'priority',
+      location: {
+        pos: 1464,
+        end: 1485,
+      },
+      panels: [
+        {
+          name: 'boolean',
+        },
+      ],
+    },
+    {
+      name: 'loading',
+      panels: [
+        {
+          name: 'enum',
+          parameters: {
+            values: ['eager', 'lazy'],
+          },
+        },
+      ],
+    },
+    {
+      name: 'blurDataURL',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'unoptimized',
+      panels: [
+        {
+          name: 'boolean',
+        },
+      ],
+    },
+    {
+      name: 'onLoadingComplete',
+      panels: [],
+    },
+    {
+      name: 'layout',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'objectFit',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'objectPosition',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'lazyBoundary',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'lazyRoot',
+      panels: [
+        {
+          name: 'string',
+        },
+      ],
+    },
+    {
+      name: 'ref',
+      panels: [],
+    },
   ],
   existingAttributes: [
     {
-      name: 'sx',
-      value: "{{ background: 'hotpi' }}",
+      name: 'className',
+      value: '{styles.logo}',
       hasInitializer: true,
       location: {
-        pos: 8303,
-        end: 8332,
+        pos: 1321,
+        end: 1357,
+      },
+      panels: ['string'],
+    },
+    {
+      name: 'src',
+      value: '"/next.svg"',
+      hasInitializer: true,
+      location: {
+        pos: 1357,
+        end: 1385,
+      },
+      panels: ['string'],
+    },
+    {
+      name: 'alt',
+      value: '"Next.js Logo"',
+      hasInitializer: true,
+      location: {
+        pos: 1385,
+        end: 1416,
+      },
+      panels: ['string'],
+    },
+    {
+      name: 'width',
+      value: '{180}',
+      hasInitializer: true,
+      location: {
+        pos: 1416,
+        end: 1440,
       },
       panels: [],
     },
     {
-      name: 'dense',
+      name: 'height',
+      value: '{37}',
+      hasInitializer: true,
+      location: {
+        pos: 1440,
+        end: 1464,
+      },
+      panels: [],
+    },
+    {
+      name: 'priority',
+      value: true,
       hasInitializer: false,
       location: {
-        pos: 8332,
-        end: 8338,
-      },
-      panels: [],
-    },
-    {
-      name: 'onBlur',
-      value: '{onBlur}',
-      hasInitializer: true,
-      location: {
-        pos: 8338,
-        end: 8354,
+        pos: 1464,
+        end: 1485,
       },
       panels: [],
     },
     {
       name: 'children',
       location: {
-        pos: 8355,
-        end: 9467,
+        pos: 1304,
+        end: 1507,
       },
-      panels: [],
       value:
-        "{panelAttrs.map((attr) => {\n            const existing = existingAttributes.find((v) => v.name === attr.name)\n            const key = [fileName, location, attr.name].join(':')\n            return (\n              <Row\n                key={key}\n                attr={attr}\n                existing={existing}\n                onChange={(newValue) => {\n                  onAttributeChange(attr, newValue)\n                }}\n              />\n            )\n          })}\n          {showAll ? null : (\n            <ListItem>\n              <Box sx={{ width: '100%' }}>\n                <Box>\n                  <Typography variant={'overline'}>Add</Typography>\n                </Box>\n                <Box sx={{ width: '100%' }}>\n                  <AppAutocomplete\n                    sx={{}}\n                    options={notThere.map((v) => v.name)}\n                    onChange={(e, v) => {\n                      setAdded((added) => [...added, v])\n                    }}\n                    fullWidth\n                  />\n                </Box>\n              </Box>\n            </ListItem>\n          )}",
+        '<Image\n            className={styles.logo}\n            src="/next.svg"\n            alt="Next.js Logo"\n            width={180}\n            height={37}\n            priority\n          />',
+      panels: [],
     },
   ],
-  location: 8298,
-  fileName: '/home/danny/dev/shlikshlak/src/Components/PropsEditor/PropsEditor.tsx',
+  location: 1315,
+  fileName: '/home/danny/dev/shlikshlak/integration/nextjs/src/pages/index.tsx',
   range: {
-    startColumn: 10,
-    startLineNumber: 305,
-    endColumn: 66,
-    endLineNumber: 305,
+    startColumn: 12,
+    startLineNumber: 42,
+    endColumn: 13,
+    endLineNumber: 49,
   },
 }
 
@@ -1714,9 +1938,16 @@ const doc = new Y.Doc()
 export const One = () => {
   const subDoc = useMemo(() => {
     const subDoc = getSubdoc(doc, 'document.tsx')
-    subDoc.getText().insert(0, '')
+    subDoc.getText().insert(0, nextjsIndex)
     return subDoc
   }, [])
+  const element = useMemo(() => {
+    return findJSXElementByPosition(
+      subDoc.getText().toString(),
+      value.range.startLineNumber,
+      value.range.startColumn
+    )!
+  }, [subDoc])
   return (
     <PropsEditor
       panels={value}
@@ -1724,6 +1955,7 @@ export const One = () => {
         console.log('onAttributeChange', attr, v)
       }}
       onBlur={() => {}}
+      element={element}
       doc={subDoc}
     />
   )
