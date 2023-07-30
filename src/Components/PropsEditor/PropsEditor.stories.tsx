@@ -1948,6 +1948,7 @@ export const One = () => {
       value.range.startColumn
     )!
   }, [subDoc])
+  console.log(777777 ,element)
   return (
     <PropsEditor
       panels={value}
@@ -1957,6 +1958,7 @@ export const One = () => {
       onBlur={() => {}}
       element={element}
       doc={subDoc}
+      text={subDoc.getText()}
     />
   )
 }

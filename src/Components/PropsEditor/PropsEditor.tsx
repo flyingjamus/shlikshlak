@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import { useIframeMethods, useIframeStore } from '../store'
 import { ExistingAttributeValueObject, PanelAttribute, PanelMatch } from '../../Shared/PanelTypes'
-import React, { ElementType, useContext, createContext, useEffect, useMemo, useState } from 'react'
+import React, { ElementType, useContext, createContext, useEffect, useMemo, useState, useRef } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { setAttribute } from '../../tsworker/workerAdapter'
@@ -35,6 +35,9 @@ import * as Y from 'yjs'
 import { JSXAttribute } from '@babel/types'
 import { isDefined } from 'ts-is-defined'
 import { SingleLineMonacoEditor } from '../Editor/SingleLineMonacoEditor'
+import prettier from 'prettier/standalone'
+import prettierPluginBabel from 'prettier/parser-babel'
+import { diffLines } from 'diff'
 
 const SxEditor: BaseEditor<ExistingAttributeValueObject> = ({ value }) => {
   return (
@@ -339,112 +342,138 @@ export function findJSXElementByPosition(
 }
 
 type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
-export const PropsEditor = React.memo(
-  ({
-    panels: { attributes, existingAttributes, fileName, location, range },
-    onAttributeChange,
-    onBlur,
-    element,
-    text,
-  }: {
-    panels: panelsResponseSchema
-    onAttributeChange: OnAttributeChange
-    onBlur: () => void
-    element: t.JSXElement
-    text: Y.Text
-  }) => {
-    const doc = text.doc
-    useEffect(() => {
-      setSeenPanels([])
-    }, [fileName])
-    const existingParsed: JSXAttribute[] =
-      element?.openingElement.attributes
-        .map((v) => {
-          if (v.type === 'JSXAttribute') {
-            return v
-          }
-        })
-        .filter(isDefined) || []
-    useEffect(() => {
-      if (existingAttributes) {
-        setSeenPanels((prev) => {
-          const set = new Set(prev)
-          for (const attr of existingAttributes) {
-            set.add(attr.name)
-          }
-          return Array.from(set.values())
-        })
-      }
-    }, [existingAttributes])
-    const [seenPanels, setSeenPanels] = useState<string[]>([])
-    const contextValue = useMemo(() => ({ doc, text }), [doc, text])
+export const PropsEditor = ({
+  panels: { attributes, existingAttributes, fileName, location, range },
+  onAttributeChange,
+  onBlur,
+  element: inputElement,
+  text,
+}: {
+  panels: panelsResponseSchema
+  onAttributeChange: OnAttributeChange
+  onBlur: () => void
+  element: t.JSXElement
+  text: Y.Text
+}) => {
+  const elementRef = useRef(inputElement)
+  useEffect(() => {
+    // Element doesnt update in callback for some reason
+    elementRef.current = inputElement
+  }, [inputElement])
+  const element = elementRef.current
+  const doc = text.doc
+  useEffect(() => {
+    setSeenPanels([])
+  }, [fileName])
+  const existingParsed: JSXAttribute[] =
+    element?.openingElement.attributes
+      .map((v) => {
+        if (v.type === 'JSXAttribute') {
+          return v
+        }
+      })
+      .filter(isDefined) || []
+  useEffect(() => {
+    if (existingAttributes) {
+      setSeenPanels((prev) => {
+        const set = new Set(prev)
+        for (const attr of existingAttributes) {
+          set.add(attr.name)
+        }
+        return Array.from(set.values())
+      })
+    }
+  }, [existingAttributes])
+  const [seenPanels, setSeenPanels] = useState<string[]>([])
+  const contextValue = useMemo(() => ({ doc, text }), [doc, text])
 
-    const [added, setAdded] = useState<string[]>([])
-    const [there, notThere] = partition(
-      attributes,
-      (attr) =>
-        existingAttributes.some((existing) => attr.name === existing.name) ||
-        seenPanels.includes(attr.name) ||
-        added.includes(attr.name)
-    )
+  const [added, setAdded] = useState<string[]>([])
+  const [there, notThere] = partition(
+    attributes,
+    (attr) =>
+      existingAttributes.some((existing) => attr.name === existing.name) ||
+      seenPanels.includes(attr.name) ||
+      added.includes(attr.name)
+  )
 
-    const showAll = attributes.length < 10
-    const panelAttrs = showAll ? attributes : there
+  const showAll = attributes.length < 10
+  const panelAttrs = showAll ? attributes : there
 
-    return (
-      <PropsEditorContext.Provider value={contextValue}>
-        <Box height={'100%'} overflow={'auto'}>
-          <List sx={{}} dense onBlur={onBlur}>
-            {panelAttrs.map((attr) => {
-              const existing = existingAttributes.find((v) => v.name === attr.name)
-              const parsed = existingParsed.find(
-                (v) => v.name.type === 'JSXIdentifier' && v.name.name === attr.name
-              )
-              const key = [fileName, location, attr.name].join(':')
-              return (
-                <Row
-                  key={key}
-                  attr={attr}
-                  existing={existing}
-                  onChange={(newValue) => {
-                    if (!parsed) {
+  return (
+    <PropsEditorContext.Provider value={contextValue}>
+      <Box height={'100%'} overflow={'auto'}>
+        <List sx={{}} dense onBlur={onBlur}>
+          {panelAttrs.map((attr) => {
+            const existing = existingAttributes.find((v) => v.name === attr.name)
+            const parsed = existingParsed.find(
+              (v) => v.name.type === 'JSXIdentifier' && v.name.name === attr.name
+            )
+
+            const key = [fileName, location, attr.name].join(':')
+            return (
+              <Row
+                key={key}
+                attr={attr}
+                existing={existing}
+                onChange={(newValue) => {
+                  const element = elementRef.current
+                  doc?.transact(() => {
+                    if (parsed) {
+                      const start = parsed.start!
+                      const end = parsed.end!
+                      text.delete(start, end - start)
+                      text.insert(start, `${attr.name}=${newValue}`)
+                    } else if (element.closingElement && attr.name === 'children') {
+                      const start = element.openingElement.end!
+                      const end = element.closingElement.start!
+                      const oldText = text.toString()
+                      const beforeText = oldText.slice(0, start)
+                      const afterText = oldText.slice(end, oldText.length)
+                      const newText = beforeText + newValue + afterText
+                      const formatted = prettier.format(newText, {
+                        parser: 'babel',
+                        plugins: [prettierPluginBabel],
+                      })
+                      if (formatted) {
+                        text.delete(0, oldText.length)
+                        text.insert(0, formatted)
+                      } else {
+                        console.error('Not formatted')
+                      }
+                    } else {
                       console.error('Missing parsed')
                       return
                     }
-                    doc?.transact(() => {
-                      text.delete(parsed.start, parsed.end - parsed.start)
-                      text.insert(parsed.start, `${attr.name}=${newValue}`)
-                    }, YjsOriginType.PROPS_EDITOR)
-                    // onAttributeChange(attr, newValue)
-                  }}
-                  node={parsed}
-                />
-              )
-            })}
-            {showAll ? null : (
-              <ListItem>
-                <Box sx={{ width: '100%' }}>
-                  <Box>
-                    <Typography variant={'overline'}>Add</Typography>
-                  </Box>
-                  <Box sx={{ width: '100%' }}>
-                    <AppAutocomplete
-                      options={notThere.map((v) => v.name)}
-                      onChange={(e, v) => {
-                        setAdded((added) => [...added, v])
-                      }}
-                      fullWidth
-                    />
-                  </Box>
+                  }, YjsOriginType.PROPS_EDITOR)
+                  // onAttributeChange(attr, newValue)
+                }}
+                node={parsed}
+              />
+            )
+          })}
+          {showAll ? null : (
+            <ListItem>
+              <Box sx={{ width: '100%' }}>
+                <Box>
+                  <Typography variant={'overline'}>Add</Typography>
                 </Box>
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </PropsEditorContext.Provider>
-    )
-  }
-)
+                <Box sx={{ width: '100%' }}>
+                  <AppAutocomplete
+                    options={notThere.map((v) => v.name)}
+                    onChange={(e, v) => {
+                      setAdded((added) => [...added, v])
+                    }}
+                    fullWidth
+                  />
+                </Box>
+              </Box>
+            </ListItem>
+          )}
+        </List>
+      </Box>
+    </PropsEditorContext.Provider>
+  )
+}
 
 const Row = ({
   attr,
