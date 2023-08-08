@@ -149,8 +149,7 @@ interface MessageData {
   payload: string
 }
 
-export const useYjsText = (fileName?: string) => {
-  const { text } = useYjs(fileName)
+export const watchYjsString = (text?: Y.Text | null) => {
   return useSyncExternalStore(
     useCallback(
       (f) => {

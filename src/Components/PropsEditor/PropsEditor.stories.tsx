@@ -1,6 +1,6 @@
 import { findJSXElementByPosition, PropsEditor } from './PropsEditor'
 import { PanelsResponse } from '../../Shared/PanelTypes'
-import { getOrCreateModelAndSubdoc } from '../UseYjs'
+import { getOrCreateModelAndSubdoc, watchYjsString } from '../UseYjs'
 import * as Y from 'yjs'
 import { getSubdoc } from '../GetSubdoc'
 import { useMemo } from 'react'
@@ -1941,14 +1941,10 @@ export const One = () => {
     subDoc.getText().insert(0, nextjsIndex)
     return subDoc
   }, [])
+  const text = watchYjsString(subDoc.getText())
   const element = useMemo(() => {
-    return findJSXElementByPosition(
-      subDoc.getText().toString(),
-      value.range.startLineNumber,
-      value.range.startColumn
-    )!
-  }, [subDoc])
-  console.log(777777 ,element)
+    return findJSXElementByPosition(text, value.range.startLineNumber, value.range.startColumn)!
+  }, [text])
   return (
     <PropsEditor
       panels={value}

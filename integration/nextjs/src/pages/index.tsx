@@ -14,7 +14,6 @@ export default function Home11() {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>1321{"adsadas"}</p>
           <div>
             <a
               href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
@@ -36,7 +35,7 @@ export default function Home11() {
 
         <div className={styles.center}>
           <Image
-            className={styles.logo}
+            className={styles.logo1}
             src="/next.svg"
             alt="Next.js Logo"
             width={180}
@@ -55,9 +54,7 @@ export default function Home11() {
             <h2 className={""}>
               Docs <span>-&gt;</span>
             </h2>
-            <p className={""}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
+            <p className={""}>Hello this is the editor!!!!</p>
           </a>
 
           <a
