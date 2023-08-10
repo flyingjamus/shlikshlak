@@ -1,7 +1,7 @@
-import Head from "next/head";
-import Image from "next/image";
-import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
+import Head from 'next/head'
+import Image from 'next/image'
+import { Inter } from 'next/font/google'
+import styles from '@/styles/Home.module.css'
 
 export default function Home11() {
   return (
@@ -20,7 +20,7 @@ export default function Home11() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              By{" "}
+              By{' '}
               <Image
                 src="/vercel.svg"
                 alt="Vercel Logo"
@@ -35,7 +35,7 @@ export default function Home11() {
 
         <div className={styles.center}>
           <Image
-            className={styles.logo1}
+            className={styles.logo}
             src="/next.svg"
             alt="Next.js Logo"
             width={180}
@@ -51,10 +51,10 @@ export default function Home11() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <h2 className={""}>
+            <h2 className={''}>
               Docs <span>-&gt;</span>
             </h2>
-            <p className={""}>Hello this is the editor!!!!</p>
+            <p className={'sasa'}>Hello this is the editor!!!!</p>
           </a>
 
           <a
@@ -63,12 +63,10 @@ export default function Home11() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <h2 className={""}>
+            <h2 className={''}>
               Learn <span>-&gt;</span>
             </h2>
-            <p className={""}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
+            <p className={''}>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
           </a>
 
           <a
@@ -77,12 +75,10 @@ export default function Home11() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <h2 className={""}>
+            <h2 className={''}>
               Templates <span>-&gt;</span>
             </h2>
-            <p className={""}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
+            <p className={''}>Discover and deploy boilerplate example Next.js&nbsp;projects.</p>
           </a>
 
           <a
@@ -91,16 +87,13 @@ export default function Home11() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <h2 className={""}>
+            <h2 className={''}>
               Deploy <span>-&gt;</span>
             </h2>
-            <p className={""}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
+            <p className={''}>Instantly deploy your Next.js site to a shareable URL with&nbsp;Vercel.</p>
           </a>
         </div>
       </main>
     </>
-  );
+  )
 }

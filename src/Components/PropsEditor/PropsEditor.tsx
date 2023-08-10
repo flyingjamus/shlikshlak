@@ -9,12 +9,11 @@ import {
   Stack,
   TextField,
   ToggleButton,
-  ToggleButtonGroup,
-  Typography,
+  ToggleButtonGroup
 } from '@mui/material'
 import { useIframeMethods, useIframeStore } from '../store'
 import { ExistingAttributeValueObject, PanelAttribute, PanelMatch } from '../../Shared/PanelTypes'
-import React, { createContext, ElementType, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, ElementType, useEffect, useMemo, useRef, useState } from 'react'
 import { partition } from 'lodash-es'
 import { apiClient } from '../../client/apiClient'
 import { useBridge } from './UseBridge'
@@ -26,11 +25,10 @@ import { Launch } from '@mui/icons-material'
 import { DefaultPanelValues } from './DefaultPanelValues'
 import { useGetPanelsQuery } from '../Common/UseQueries'
 import { useYjs, watchYjsString, YjsOriginType } from '../UseYjs'
-import { parse, parseExpression } from '@babel/parser'
+import { parse, ParserOptions } from '@babel/parser'
 import traverse from '@babel/traverse'
 import * as t from '@babel/types'
 import { JSXAttribute } from '@babel/types'
-import generate from '@babel/generator'
 import * as Y from 'yjs'
 import { isDefined } from 'ts-is-defined'
 import { SingleLineMonacoEditor } from '../Editor/SingleLineMonacoEditor'
@@ -147,7 +145,7 @@ const BooleanEditor: BaseEditor<boolean | undefined> = ({ value, onChange, ...pr
   return (
     <Checkbox
       onChange={(e, v) => {
-        onChange(v)
+        onChange(v.toString())
       }}
       checked={value !== false}
       {...props}
@@ -159,7 +157,7 @@ const ChildrenEditor: BaseEditor<string> = ({ ...props }) => {
   return <BaseStringEditor {...props} />
 }
 
-export type OnChangeValue = string | true | false | undefined
+export type OnChangeValue = string
 export type BaseEditor<V, T = {}> = ElementType<T & { value?: V; onChange: (value: OnChangeValue) => void }>
 
 const useFocusValue = () => {
@@ -188,11 +186,11 @@ const PropEditor = ({
   panelMatch?: PanelMatch
   onChange: (value: OnChangeValue) => void
   disabled?: boolean
-  node: t.JSXAttribute
+  node?: t.JSXAttribute
   value: string
 }) => {
-  if (!panelMatch) {
-    return <SingleLineMonacoEditor {...props} />
+  if (!panelMatch || !props.node) {
+    return <SingleLineMonacoEditor {...props} onChange={(value) => props.onChange(value || '')} />
   }
   switch (panelMatch.name) {
     case 'string':
@@ -200,7 +198,7 @@ const PropEditor = ({
     case 'enum':
       return <EnumEditor {...props} values={panelMatch.parameters.values} />
     case 'boolean':
-      return <BooleanEditor {...props} />
+      return <BooleanEditor {...props} value={!(!props.value || props.value === 'false')} />
     // case 'SxProps':
     //   return <SxEditor {...props} />
     case 'Children':
@@ -242,7 +240,7 @@ export const PropsEditorWrapper = () => {
         <LinearProgress />
       </Box>
     )
-  if (!panels || !subdoc) return null
+  if (!panels || !subdoc || !jsxNode) return <>Error</>
 
   return (
     <Box>
@@ -260,54 +258,17 @@ export const PropsEditorWrapper = () => {
           <Launch />
         </IconButton>
       </Stack>
-      <PropsEditor
-        text={text}
-        element={jsxNode}
-        panels={panels}
-        onAttributeChange={async (attr, newValue) => {
-          if (panels?.location && panels.fileName) {
-            if (!jsxNode) return
-            if (attr.name === 'children') {
-              const parsed = newValue !== undefined && parseExpression(newValue, PARSE_OPTIONS)
-              jsxNode.children = Array.isArray(parsed) ? parsed : [parsed]
-
-              subdoc?.transact(() => {
-                text.delete(jsxNode.start, jsxNode.end - jsxNode.start)
-                text.insert(jsxNode.start, generate(jsxNode).code)
-              }, YjsOriginType.PROPS_EDITOR)
-            } else {
-              const jsxAttr: t.JSXAttribute = jsxNode?.openingElement.attributes
-                .filter((v) => t.isJSXAttribute(v))
-                .map((v) => v as t.JSXAttribute)
-                .find((v) => v.name.name === attr.name)
-              if (!jsxAttr) {
-                console.error('JSX attr not found')
-                return
-              }
-
-              jsxAttr.value = t.jsxExpressionContainer(t.valueToNode(newValue))
-              // const { code } = generate(jsxAttr, {concise: true})
-              if (!jsxAttr.value) return
-              subdoc?.transact(() => {
-                text.delete(jsxAttr.start, jsxAttr.end - jsxAttr.start)
-                text.insert(jsxAttr.start, `${attr.name}=${newValue}`)
-              }, YjsOriginType.PROPS_EDITOR)
-            }
-          }
-        }}
-        onBlur={() => refetch()}
-      />
+      <PropsEditor text={text} element={jsxNode} panels={panels} onBlur={() => refetch()} />
     </Box>
   )
 }
 
 const PropsEditorContext = createContext<{ doc: Y.Doc; text: Y.Text }>(null as any)
-const usePropsEditorContext = () => useContext(PropsEditorContext)
 
-const PARSE_OPTIONS = {
+const PARSE_OPTIONS: ParserOptions = {
   sourceType: 'module',
   plugins: ['typescript', 'jsx'],
-} as const
+}
 
 export function findJSXElementByPosition(
   code: string,
@@ -327,7 +288,8 @@ export function findJSXElementByPosition(
           path.node.loc &&
           path.node.loc.start.line <= lineNumber &&
           lineNumber <= path.node.loc.end.line &&
-          path.node.loc.start.column <= columnNumber
+          path.node.loc.start.column <= columnNumber &&
+          path.parent.type === 'JSXElement'
         ) {
           foundNode = path.parent
           path.stop()
@@ -341,16 +303,18 @@ export function findJSXElementByPosition(
   }
 }
 
-type OnAttributeChange = (attr: PanelAttribute, v: OnChangeValue) => void
+type ChildrenAttributeStandin = { start: number; end: number }
+const isChildrenStandin = (
+  parsed: JSXAttribute | ChildrenAttributeStandin
+): parsed is ChildrenAttributeStandin => !('name' in parsed)
+
 export const PropsEditor = ({
-  panels: { attributes, existingAttributes, fileName, location, range },
-  onAttributeChange,
+  panels: { attributes, existingAttributes, fileName, location },
   onBlur,
   element: inputElement,
   text,
 }: {
   panels: panelsResponseSchema
-  onAttributeChange: OnAttributeChange
   onBlur: () => void
   element: t.JSXElement
   text: Y.Text
@@ -359,7 +323,7 @@ export const PropsEditor = ({
   // Element doesnt update in callback for some reason
   elementRef.current = inputElement
   const element = elementRef.current
-  const doc = text.doc
+  const doc = text.doc!
   useEffect(() => {
     setSeenPanels([])
   }, [fileName])
@@ -396,91 +360,91 @@ export const PropsEditor = ({
 
   const showAll = attributes.length < 10
   const panelAttrs = showAll ? attributes : there
-  console.log(element)
 
+  const allParsedProperties: (JSXAttribute | ChildrenAttributeStandin | undefined)[] = [
+    ...existingParsed,
+    element?.children.length
+      ? { start: element.openingElement.end!, end: element.closingElement!.start! }
+      : undefined,
+  ]
   return (
     <PropsEditorContext.Provider value={contextValue}>
       <Box height={'100%'} overflow={'auto'}>
         <List sx={{}} dense onBlur={onBlur}>
-          {[
-            ...existingParsed,
-            element?.children.length
-              ? { start: element.openingElement.end! , end: element.closingElement!.start!  }
-              : undefined,
-          ]
-            .filter(isDefined)
-            .map((parsed) => {
-              console.log(parsed)
-              const isChildren = 'name' in parsed
-              const name = isChildren ? parsed.name.name : 'children'
-              const attr = attributes.find((v) => v.name === name)
-              // if ((element?.children?.length || 0) > 1) {
-              //   console.error('Multiple children', element)
-              // }
-              const existing = existingAttributes.find((v) => v.name === name)
+          {allParsedProperties.filter(isDefined).map((parsed) => {
+            const name = !isChildrenStandin(parsed) ? parsed.name.name : 'children'
+            const attr = attributes.find((v) => v.name === name)
+            const existing = existingAttributes.find((v) => v.name === name)
 
-              const key = [fileName, location, name.toString()].join(':')
-              return (
-                <Row
-                  key={key}
-                  attr={attr}
-                  existing={existing}
-                  onChange={(newValue) => {
-                    const element = elementRef.current
-                    doc?.transact(() => {
-                      if (name === 'children') {
-                        const start = element.openingElement.end!
-                        const end = element.closingElement!.start!
-                        const oldText = text.toString()
-                        const beforeText = oldText.slice(0, start)
-                        const afterText = oldText.slice(end, oldText.length)
-                        const newText = beforeText + newValue + afterText
-                        const formatted = prettier.format(newText, {
-                          parser: 'babel',
-                          plugins: [prettierPluginBabel],
-                        })
-                        if (formatted) {
-                          text.delete(0, oldText.length)
-                          text.insert(0, formatted)
-                        } else {
-                          console.error('Not formatted')
-                        }
-                      } else if (parsed) {
-                        const start = parsed.start!
-                        const end = parsed.end!
-                        text.delete(start, end - start)
-                        text.insert(start, `${name}=${newValue}`)
-                      } else {
-                        console.error('Missing parsed')
-                        return
-                      }
-                    }, YjsOriginType.PROPS_EDITOR)
-                    // onAttributeChange(attr, newValue)
-                  }}
-                  node={parsed}
-                  name={name}
-                  value={getSourceValue(text.toString(), 'value' in parsed ? parsed.value : parsed).trim()}
-                />
-              )
-            })}
-          {showAll ? null : (
-            <ListItem>
-              <Box sx={{ width: '100%' }}>
-                <Box>
-                  <Typography variant={'overline'}>Add</Typography>
-                </Box>
-                <Box sx={{ width: '100%' }}>
-                  <AppAutocomplete
-                    options={notThere.map((v) => v.name)}
-                    onChange={(e, v) => {
-                      setAdded((added) => [...added, v])
-                    }}
-                    fullWidth
-                  />
-                </Box>
-              </Box>
-            </ListItem>
-          )}
+            const key = [fileName, location, name.toString()].join(':')
+            const onChange = (newValue: string) => {
+              const element = elementRef.current
+              doc?.transact(() => {
+                if (name === 'children') {
+                  const start = element.openingElement.end!
+                  const end = element.closingElement!.start!
+                  const oldText = text.toString()
+                  const beforeText = oldText.slice(0, start)
+                  const afterText = oldText.slice(end, oldText.length)
+                  const newText = beforeText + newValue + afterText
+                  const formatted = prettier.format(newText, {
+                    parser: 'babel',
+                    plugins: [prettierPluginBabel],
+                  })
+                  if (formatted) {
+                    text.delete(0, oldText.length)
+                    text.insert(0, formatted)
+                  } else {
+                    console.error('Not formatted')
+                  }
+                } else if (parsed) {
+                  const start = parsed.start!
+                  const end = parsed.end!
+                  text.delete(start, end - start)
+                  text.insert(start, `${name}=${newValue}`)
+                } else {
+                  console.error('Missing parsed')
+                  return
+                }
+              }, YjsOriginType.PROPS_EDITOR)
+              // onAttributeChange(attr, newValue)
+            }
+
+            const value = getSourceValue(
+              text.toString(),
+              !isChildrenStandin(parsed) ? parsed.value || '' : parsed
+            ).trim()
+
+            return (
+              <Row
+                key={key}
+                attr={attr}
+                existing={existing}
+                onChange={onChange}
+                node={!isChildrenStandin(parsed) ? parsed : undefined}
+                name={name.toString()}
+                value={value}
+              />
+            )
+          })}
+          {/*{showAll ? null : (*/}
+          {/*  <ListItem>*/}
+          {/*    <Box sx={{ width: '100%' }}>*/}
+          {/*      <Box>*/}
+          {/*        <Typography variant={'overline'}>Add</Typography>*/}
+          {/*      </Box>*/}
+          {/*      <Box sx={{ width: '100%' }}>*/}
+          {/*        <AppAutocomplete*/}
+          {/*          options={notThere.map((v) => v.name)}*/}
+          {/*          onChange={(e, v) => {*/}
+          {/*            setAdded((added) => [...added, v])*/}
+          {/*          }}*/}
+          {/*          fullWidth*/}
+          {/*        />*/}
+          {/*      </Box>*/}
+          {/*    </Box>*/}
+          {/*  </ListItem>*/}
+          {/*)}*/}
         </List>
       </Box>
     </PropsEditorContext.Provider>
@@ -498,22 +462,14 @@ const Row = ({
   attr?: PanelAttribute
   existing?: existingAttributeSchema
   onChange: (value: OnChangeValue) => void
-  node: t.JSXAttribute
+  node?: t.JSXAttribute
   value: string
   name: string
 }) => {
-  const { doc, text } = usePropsEditorContext()
   const panel = existing
     ? existing.panels?.map((v) => attr?.panels.find((panel) => panel.name === v)).filter(Boolean)?.[0]
     : attr?.panels?.[0]
-  const nodeValue = node.value
   const [prevValue, setPrevValue] = useState<OnChangeValue>()
-  // : nodeValue?.type === 'StringLiteral' ? nodeValue.
-  // if (nodeValue?.type === 'StringLiteral') {
-  //   console.log(2222, nodeValue.value)
-  // } else if (nodeValue?.type === 'JSXExpressionContainer') {
-  //   inputValue = getSourceValue(text.toString(), nodeValue.expression)
-  // }
 
   const [innerValue, setInnerValue] = useState(inputValue)
   const { focused, listeners } = useFocusValue()
@@ -544,8 +500,8 @@ const Row = ({
               setPrevValue(undefined)
             } else {
               setPrevValue(value)
-              setInnerValue(undefined)
-              onChange(undefined)
+              setInnerValue('')
+              onChange('')
             }
           }}
         />
@@ -569,14 +525,3 @@ const Row = ({
     </ListItem>
   )
 }
-
-// const CodePropEditor = () => {
-//   return (
-//     // <SingleLineMonacoEditor
-//     //   onChange={(v) => {
-//     //     console.log('change', v)
-//     //   }}
-//     //   value={}
-//     // />
-//   )
-// }

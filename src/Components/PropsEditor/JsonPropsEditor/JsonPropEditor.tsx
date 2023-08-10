@@ -31,7 +31,7 @@ import { createStore, useStore } from 'zustand'
 import { get as objectGet, isNumber, set as objectSet } from 'lodash-es'
 import { isDefined } from 'ts-is-defined'
 
-export const getSourceValue = (source: string, node: Node) => {
+export const getSourceValue = (source: string, node: Pick<Node, 'start' | 'end'>) => {
   if (node.start === null || node.end === null) return ''
   return source.slice(node.start, node.end)
 }
